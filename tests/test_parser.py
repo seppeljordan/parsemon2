@@ -26,3 +26,6 @@ def test_alternatives_of_two_characters_can_parse_nothing_else():
         parsemon.char('b')
     )
     assert parser.parse('c') is None
+
+def test_map_changes_the_returnvalue_of_a_parser():
+    assert parsemon.char('a').map(lambda x: 'b').parse('a') == 'b'

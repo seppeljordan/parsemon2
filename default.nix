@@ -5,7 +5,7 @@ buildPythonPackage {
   src = lib.cleanSource ./.;
   checkPhase = ''
     mypy src/
-    pytest
+    PYTHONPATH=src/:$PYTHONPATH pytest
   '';
   shellHook = ''
     export PYTHONPATH=$PWD/src:$PYTHONPATH

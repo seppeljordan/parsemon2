@@ -33,6 +33,17 @@ class Parser(object):
                 return result[0]
         return None
 
+    def map(
+            self,
+            mapping: Callable[[Any],Any],
+    ) -> 'Parser':
+        def consume(s):
+            yield from map(
+                lambda result: (mapping(result[0]),result[1]),
+                self.possible_results(s)
+            )
+        return Parser(consume)
+
 
 def char(character):
     def consume_input(s):
