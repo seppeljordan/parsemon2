@@ -1,6 +1,6 @@
 import pytest
 from parsemon import (bind_parser, map_parser, parse_choice, parse_many,
-                      parse_string, run_parser, unit)
+                      parse_string, parse_until, run_parser, unit)
 from parsemon.error import ParsingFailed
 
 
@@ -73,3 +73,34 @@ def test_parse_many_parses_empty_strings():
         parse_string('a')
     )
     assert run_parser(p,'') == []
+
+def test_parse_many_parses_one_occurence():
+    p = parse_many(
+        parse_string('a')
+    )
+    assert run_parser(p, 'a') == ['a']
+
+def test_parse_many_parses_5_occurences():
+    p = parse_many(
+        parse_string('a')
+    )
+    assert run_parser(p, 'aaaaa') == ['a'] * 5
+
+def test_parse_until_parses_only_delimiter():
+    p = parse_until('a')
+    assert run_parser(p, 'a') == ''
+
+def test_parse_until_parses_5_characters_and_delimiter():
+    p = parse_until(',')
+    assert run_parser(p, 'abcde,') == 'abcde'
+
+def test_parse_until_chained_with_string_parser_leaves_out_delimiter():
+    p = parse_until(',')
+    p = bind_parser(
+        lambda x: map_parser(
+            lambda y: [x,y],
+            parse_string('end')
+        ),
+        p
+    )
+    assert run_parser(p, 'abcde,end') == ['abcde','end']

@@ -50,7 +50,12 @@ def run_parser(p, input_string):
         ParserBind()
     )
     if rest:
-        raise Exception('parser did not consume all of the string')
+        raise Exception(
+            'Parser did not consume all of the string, rest was `{rest}`'
+            .format(
+                rest=rest
+            )
+        )
     else:
         return parsing_result
 
@@ -116,4 +121,12 @@ def parse_many(original_parser):
             except ParsingFailed:
                 break
         return Result((accu, rest))
+    return parser
+
+def parse_until(d):
+    def parser(s, parser_bind):
+        splits = s.split(d)
+        value = splits[0]
+        rest = s[len(value) + len(d):]
+        return parser_bind.pass_result(value, rest)
     return parser
