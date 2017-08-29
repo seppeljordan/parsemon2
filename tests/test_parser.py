@@ -32,3 +32,15 @@ def test_bind_can_chain_two_string_parsers():
         parse_string('a'),
     )
     assert run_parser(parser, 'ab') == 'b'
+
+def test_bind_can_chain_3_string_parsers():
+    p = parse_string('a')
+    p = bind_parser(
+        lambda x: parse_string('b'),
+        p
+    )
+    p = bind_parser(
+        lambda x: parse_string('c'),
+        p
+    )
+    assert run_parser(p, 'abc') == 'c'
