@@ -87,3 +87,33 @@ def map_parser(mapping, old_parser):
         lambda x: unit(mapping(x)),
         old_parser
     )
+
+
+def parse_choice(first_parser, second_parser):
+    def parser(s, parser_bind):
+        try:
+            result, rest = with_trampoline(first_parser)(
+                s, parser_bind
+            )
+        except ParsingFailed:
+            result, rest = with_trampoline(second_parser)(
+                s, parser_bind
+            )
+        return Result((result, rest))
+    return parser
+
+
+def parse_many(original_parser):
+    def parser(s, parser_bind):
+        accu = []
+        rest = s
+        while True:
+            try:
+                result, rest = with_trampoline(original_parser)(
+                    rest, parser_bind
+                )
+                accu += [result]
+            except ParsingFailed:
+                break
+        return Result((accu, rest))
+    return parser

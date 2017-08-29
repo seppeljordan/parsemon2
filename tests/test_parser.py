@@ -1,5 +1,6 @@
 import pytest
-from parsemon import bind_parser, map_parser, parse_string, run_parser, unit
+from parsemon import (bind_parser, map_parser, parse_choice, parse_many,
+                      parse_string, run_parser, unit)
 from parsemon.error import ParsingFailed
 
 
@@ -49,3 +50,26 @@ def test_bind_can_chain_3_string_parsers():
 def test_string_parser_throws_ParsingFailed_when_seeing_non_matching_string():
     with pytest.raises(ParsingFailed):
         run_parser(parse_string('a'), 'b')
+
+
+def test_parse_string_alternatives_can_parse_both_possibilities():
+    p = parse_choice(
+        parse_string('a'),
+        parse_string('b'),
+    )
+    assert run_parser(p, 'a') == 'a'
+    assert run_parser(p, 'b') == 'b'
+
+def test_parse_choice_throws_ParsingFailed_when_both_alternatives_fail():
+    p = parse_choice(
+        parse_string('a'),
+        parse_string('b'),
+    )
+    with pytest.raises(ParsingFailed):
+        run_parser(p, 'c')
+
+def test_parse_many_parses_empty_strings():
+    p = parse_many(
+        parse_string('a')
+    )
+    assert run_parser(p,'') == []
