@@ -1,5 +1,6 @@
 import pytest
 from parsemon import bind_parser, map_parser, parse_string, run_parser, unit
+from parsemon.error import ParsingFailed
 
 
 def test_string_parses_a_single_string():
@@ -44,3 +45,7 @@ def test_bind_can_chain_3_string_parsers():
         p
     )
     assert run_parser(p, 'abc') == 'c'
+
+def test_string_parser_throws_ParsingFailed_when_seeing_non_matching_string():
+    with pytest.raises(ParsingFailed):
+        run_parser(parse_string('a'), 'b')

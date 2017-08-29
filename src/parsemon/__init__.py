@@ -1,5 +1,6 @@
 from copy import copy
 
+from parsemon.error import ParsingFailed
 from parsemon.stack import Stack, StackEmptyError
 from parsemon.trampoline import Call, Result, with_trampoline
 
@@ -53,6 +54,7 @@ def run_parser(p, input_string):
     else:
         return parsing_result
 
+
 def bind_parser(binding, old_parser):
     def parser(s, parser_bind):
         return Call(old_parser, s, parser_bind.add_binding(binding))
@@ -65,7 +67,12 @@ def parse_string(string_to_parse):
             rest = s[len(string_to_parse):]
             return parser_bind.pass_result(string_to_parse, rest)
         else:
-            raise Exception("parse error")
+            raise ParsingFailed(
+                'Expected string `{expected}`, but saw `{actual}`'.format(
+                    expected=string_to_parse,
+                    actual=s[:len(string_to_parse)],
+                )
+            )
     return parser
 
 
