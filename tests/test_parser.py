@@ -1,5 +1,5 @@
 import pytest
-from parsemon import parse_string, run_parser, unit
+from parsemon import map_parser, parse_string, run_parser, unit
 
 
 def test_string_parses_a_single_string():
@@ -12,8 +12,10 @@ def tests_unit_parses_only_the_empty_string():
     with pytest.raises(Exception):
         run_parser(unit('a'), 'a')
 
-# def test_map_parser_can_replace_parsing_result():
-#     assert run_parser(map_parser(
-#         lambda x: 'b',
-#         parse_string('a'))
-#     ) == 'b'
+def test_map_parser_can_replace_parsing_result():
+    assert run_parser(
+        map_parser(
+            lambda x: 'b',
+            parse_string('a')),
+        'a'
+    ) == 'b'

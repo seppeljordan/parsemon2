@@ -1,8 +1,18 @@
 from parsemon.trampoline import Call, Result, with_trampoline
 
+def trampoline_const(v):
+    return lambda x: Result(v)
+
+
+def const(v):
+    return lambda x: None
+
 
 def run_parser(p, input_string):
-    parsing_result, rest = with_trampoline(p)(input_string, lambda x: None)
+    parsing_result, rest = with_trampoline(p)(
+        input_string,
+        const(None)
+    )
     if rest:
         raise Exception('parser did not consume all of the string')
     else:
@@ -17,25 +27,26 @@ def parse_string(string_to_parse):
             if next_parser is None:
                 return Result((string_to_parse, rest))
             else:
-                return Call(next_parser, rest)
+                return Call(next_parser, rest, const(None))
         else:
             raise Exception("parse error")
     return parser
 
 
 def unit(u):
-    def parser(s, get_next_parser):
+    def unit_parser(s, get_next_parser):
         next_parser = get_next_parser(u)
         if next_parser is None:
             return Result((u, s))
         else:
-            return Call(next_parser, s)
+            return Call(next_parser, s, const(None))
 
-    return parser
+    return unit_parser
 
 
-def map_parser(mapping, parser):
-    def parser(s, get_next_parser):
+def map_parser(mapping, old_parser):
+    def mapped_parser(s, get_next_parser):
+
         def mapped_get_next_parser(unmapped_result):
             result = mapping(unmapped_result)
             next_parser = get_next_parser(result)
@@ -43,5 +54,6 @@ def map_parser(mapping, parser):
                 return unit(result)
             else:
                 return next_parser
-        return Call(parser, mapped_get_next_parser)
-    return parser
+
+        return Call(old_parser, s, mapped_get_next_parser)
+    return mapped_parser
