@@ -123,10 +123,28 @@ def parse_many(original_parser):
         return Result((accu, rest))
     return parser
 
+
 def parse_until(d):
     def parser(s, parser_bind):
         splits = s.split(d)
         value = splits[0]
         rest = s[len(value) + len(d):]
         return parser_bind.pass_result(value, rest)
+    return parser
+
+
+def parse_none_of(chars):
+    def parser(s, parser_bind):
+        value = s[0]
+        rest = s[1:]
+        if value in chars:
+            raise ParsingFailed(
+                ('Expected character other that `{forbidden}`, '
+                 'but got `{actual}`').format(
+                     forbidden=chars,
+                     actual=value
+                 )
+            )
+        else:
+            return parser_bind.pass_result(value,rest)
     return parser

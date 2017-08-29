@@ -1,6 +1,7 @@
 import pytest
 from parsemon import (bind_parser, map_parser, parse_choice, parse_many,
-                      parse_string, parse_until, run_parser, unit)
+                      parse_none_of, parse_string, parse_until, run_parser,
+                      unit)
 from parsemon.error import ParsingFailed
 
 
@@ -104,3 +105,12 @@ def test_parse_until_chained_with_string_parser_leaves_out_delimiter():
         p
     )
     assert run_parser(p, 'abcde,end') == ['abcde','end']
+
+def test_parse_none_of_parses_character_when_passed_empty_string():
+    p = parse_none_of('')
+    assert run_parser(p, 'a') == 'a'
+
+def test_parse_none_of_raises_ParsingFailed_when_encountering_forbidden_char():
+    p = parse_none_of('a')
+    with pytest.raises(ParsingFailed):
+        run_parser(p, 'a')
