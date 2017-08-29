@@ -1,33 +1,38 @@
+from copy import copy
+
+from parsemon.stack import Stack, StackEmptyError
 from parsemon.trampoline import Call, Result, with_trampoline
 
 
 class ParserBind(object):
-    def __init__(self, callback=None):
-        self.callback = callback
-        self.value_mapping = lambda x: Result(x)
+    def __init__(self):
+        self.callbacks = Stack()
 
-    def get_bind(self, value):
-        if self.callback is not None:
-            return (self.callback)(value)
-        else:
-            return None
-
-    def map_bind(self, mapping):
+    def __copy__(self):
         newbind = ParserBind()
-        newbind.callback = self.callback
-        newbind.value_mapping = lambda x: Call(self.value_mapping, mapping(x))
+        newbind.callbacks = self.callbacks
         return newbind
 
-    def map_value(self, value):
-        return with_trampoline(self.value_mapping)(value)
+    def get_bind(self, value):
+        try:
+            parser_generator = self.callbacks.top()
+            next_parser_bind = copy(self)
+            next_parser_bind.callbacks = self.callbacks.pop()
+            return (parser_generator(value), next_parser_bind)
+        except StackEmptyError:
+            return (None, None)
 
-    def pass_result(self, old_value, rest):
-        value = self.map_value(old_value)
-        next_parser = self.get_bind(value)
+    def add_binding(self, binding):
+        newbind = copy(self)
+        newbind.callbacks = self.callbacks.push(binding)
+        return newbind
+
+    def pass_result(self, value, rest):
+        next_parser, next_bind = self.get_bind(value)
         if next_parser is None:
             return Result((value, rest))
         else:
-            return Call(next_parser, rest, ParserBind())
+            return Call(next_parser, rest, next_bind)
 
 
 def trampoline_const(v):
@@ -48,6 +53,11 @@ def run_parser(p, input_string):
     else:
         return parsing_result
 
+def bind_parser(binding, old_parser):
+    def parser(s, parser_bind):
+        return Call(old_parser, s, parser_bind.add_binding(binding))
+    return parser
+
 
 def parse_string(string_to_parse):
     def parser(s, parser_bind):
@@ -66,6 +76,7 @@ def unit(u):
 
 
 def map_parser(mapping, old_parser):
-    def mapped_parser(s, parser_bind):
-        return Call(old_parser, s, parser_bind.map_bind(mapping))
-    return mapped_parser
+    return bind_parser(
+        lambda x: unit(mapping(x)),
+        old_parser
+    )
