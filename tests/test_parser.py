@@ -1,31 +1,19 @@
-import parsemon
+import pytest
+from parsemon import parse_string, run_parser, unit
 
-def test_can_parse_single_char():
-    assert parsemon.char('a').parse('a') == 'a'
 
-def test_parse_wrong_char_returns_none():
-    parser = parsemon.char('a')
-    assert parser.parse('b') is None
+def test_string_parses_a_single_string():
+    assert run_parser(parse_string('a'), 'a') == 'a'
 
-def test_char_and_then_char_parses_two_character_string():
-    parser = parsemon.char('a').and_then(
-        lambda r: parsemon.char('b'))
-    assert parser.parse('ab') is not None
+def test_unit_parses_the_empty_string():
+    assert run_parser(unit('a'), '') == 'a'
 
-def test_alternatives_of_two_characters_can_parse_both_possible_characters():
-    parser = parsemon.alternatives(
-        parsemon.char('a'),
-        parsemon.char('b')
-    )
-    assert parser.parse('a') is not None
-    assert parser.parse('b') is not None
+def tests_unit_parses_only_the_empty_string():
+    with pytest.raises(Exception):
+        run_parser(unit('a'), 'a')
 
-def test_alternatives_of_two_characters_can_parse_nothing_else():
-    parser = parsemon.alternatives(
-        parsemon.char('a'),
-        parsemon.char('b')
-    )
-    assert parser.parse('c') is None
-
-def test_map_changes_the_returnvalue_of_a_parser():
-    assert parsemon.char('a').map(lambda x: 'b').parse('a') == 'b'
+# def test_map_parser_can_replace_parsing_result():
+#     assert run_parser(map_parser(
+#         lambda x: 'b',
+#         parse_string('a'))
+#     ) == 'b'

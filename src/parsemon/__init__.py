@@ -1,59 +1,47 @@
-from typing import Any, Callable, Iterator, Tuple
+from parsemon.trampoline import Call, Result, with_trampoline
 
 
-class Parser(object):
-    def __init__(
-            self,
-            consume_input: Callable[[str], Iterator[Tuple[Any, str]]]
-    ) -> None:
-        self.consume_input = consume_input
-
-    def and_then(
-            self,
-            generate_next_parser: Callable[[Any],'Parser'],
-    ):
-        def consume(input_string):
-            for result, input_rest in self.possible_results(input_string):
-                next_parser = generate_next_parser(result)
-                yield from next_parser.possible_results(input_rest)
-        return Parser(consume)
-
-    def possible_results(
-            self,
-            input_string: str
-    ) -> Iterator[Tuple[Any,str]]:
-        yield from self.consume_input(input_string)
-
-    def parse(
-            self,
-            input_string: str
-    ):
-        for result in self.possible_results(input_string):
-            if not result[1]:
-                return result[0]
-        return None
-
-    def map(
-            self,
-            mapping: Callable[[Any],Any],
-    ) -> 'Parser':
-        def consume(s):
-            yield from map(
-                lambda result: (mapping(result[0]),result[1]),
-                self.possible_results(s)
-            )
-        return Parser(consume)
+def run_parser(p, input_string):
+    parsing_result, rest = with_trampoline(p)(input_string, lambda x: None)
+    if rest:
+        raise Exception('parser did not consume all of the string')
+    else:
+        return parsing_result
 
 
-def char(character):
-    def consume_input(s):
-        if s[0] == character:
-            yield (s,s[1:])
-    return Parser(consume_input)
+def parse_string(string_to_parse):
+    def parser(s,get_next_parser):
+        if s.startswith(string_to_parse):
+            rest = s[len(string_to_parse):]
+            next_parser = get_next_parser(string_to_parse)
+            if next_parser is None:
+                return Result((string_to_parse, rest))
+            else:
+                return Call(next_parser, rest)
+        else:
+            raise Exception("parse error")
+    return parser
 
 
-def alternatives(parser, alternative):
-    def consume(s):
-        yield from parser.possible_results(s)
-        yield from alternative.possible_results(s)
-    return Parser(consume)
+def unit(u):
+    def parser(s, get_next_parser):
+        next_parser = get_next_parser(u)
+        if next_parser is None:
+            return Result((u, s))
+        else:
+            return Call(next_parser, s)
+
+    return parser
+
+
+def map_parser(mapping, parser):
+    def parser(s, get_next_parser):
+        def mapped_get_next_parser(unmapped_result):
+            result = mapping(unmapped_result)
+            next_parser = get_next_parser(result)
+            if next_parser is None:
+                return unit(result)
+            else:
+                return next_parser
+        return Call(parser, mapped_get_next_parser)
+    return parser
