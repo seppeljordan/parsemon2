@@ -170,3 +170,14 @@ def parse_fail(msg):
     def parser(s, parser_bind):
         return parser_bind.parser_failed(msg)
     return parser
+
+
+def parse_char():
+    def parser(s, bind):
+        if s:
+            return bind.pass_result(s[0], s[1:])
+        else:
+            return bind.parser_failed(
+                'Excected character but there is nothing left to parse'
+            )
+    return parser
