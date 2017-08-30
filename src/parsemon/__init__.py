@@ -80,13 +80,13 @@ def run_parser(p, input_string):
         return parsing_result
 
 
-def bind_parser(binding, old_parser):
+def bind(binding, old_parser):
     def parser(s, parser_bind):
         return Call(old_parser, s, parser_bind.add_binding(binding))
     return parser
 
 
-def parse_string(string_to_parse):
+def literal(string_to_parse):
     def parser(s, parser_bind):
         if s.startswith(string_to_parse):
             rest = s[len(string_to_parse):]
@@ -107,14 +107,14 @@ def unit(u):
     return unit_parser
 
 
-def map_parser(mapping, old_parser):
-    return bind_parser(
+def fmap(mapping, old_parser):
+    return bind(
         lambda x: unit(mapping(x)),
         old_parser
     )
 
 
-def parse_choice(first_parser, second_parser):
+def choice(first_parser, second_parser):
     def parser(s, parser_bind):
         return Call(
             first_parser,
@@ -124,7 +124,7 @@ def parse_choice(first_parser, second_parser):
     return parser
 
 
-def parse_many(original_parser):
+def many(original_parser):
     def parser(s, parser_bind):
         accu = []
         rest = s
@@ -140,7 +140,7 @@ def parse_many(original_parser):
     return parser
 
 
-def parse_until(d: str):
+def until(d: str):
     def parser(s, parser_bind: ParserBind):
         splits = s.split(d)
         value = splits[0]
@@ -149,7 +149,7 @@ def parse_until(d: str):
     return parser
 
 
-def parse_none_of(chars: str):
+def none_of(chars: str):
     def parser(s, parser_bind):
         value = s[0]
         rest = s[1:]
@@ -166,13 +166,13 @@ def parse_none_of(chars: str):
     return parser
 
 
-def parse_fail(msg):
+def fail(msg):
     def parser(s, parser_bind):
         return parser_bind.parser_failed(msg)
     return parser
 
 
-def parse_char():
+def character():
     def parser(s, bind):
         if s:
             return bind.pass_result(s[0], s[1:])

@@ -1,12 +1,11 @@
 import pytest
-from parsemon import (bind_parser, map_parser, parse_char, parse_choice,
-                      parse_fail, parse_many, parse_none_of, parse_string,
-                      parse_until, run_parser, unit)
+from parsemon import (bind, character, choice, fail, fmap, literal, many,
+                      none_of, run_parser, unit, until)
 from parsemon.error import ParsingFailed
 
 
-def test_string_parses_a_single_string():
-    assert run_parser(parse_string('a'), 'a') == 'a'
+def test_literal_parses_a_single_string():
+    assert run_parser(literal('a'), 'a') == 'a'
 
 def test_unit_parses_the_empty_string():
     assert run_parser(unit('a'), '') == 'a'
@@ -15,129 +14,129 @@ def tests_unit_parses_only_the_empty_string():
     with pytest.raises(Exception):
         run_parser(unit('a'), 'a')
 
-def test_map_parser_can_replace_parsing_result():
+def test_fmap_can_replace_parsing_result():
     assert run_parser(
-        map_parser(
+        fmap(
             lambda x: 'b',
-            parse_string('a')),
+            literal('a')),
         'a'
     ) == 'b'
 
-def test_map_parser_can_map_1000_time():
-    parser = parse_string('a')
+def test_fmap_can_map_1000_time():
+    parser = literal('a')
     for i in range(0,1000):
-        parser = map_parser(lambda x: 'b', parser)
+        parser = fmap(lambda x: 'b', parser)
     assert run_parser(parser, 'a') == 'b'
 
-def test_bind_can_chain_two_string_parsers():
-    parser = bind_parser(
-        lambda x: parse_string('b'),
-        parse_string('a'),
+def test_bind_can_chain_two_literal_parsers():
+    parser = bind(
+        lambda x: literal('b'),
+        literal('a'),
     )
     assert run_parser(parser, 'ab') == 'b'
 
-def test_bind_can_chain_3_string_parsers():
-    p = parse_string('a')
-    p = bind_parser(
-        lambda x: parse_string('b'),
+def test_bind_can_chain_3_literal_parsers():
+    p = literal('a')
+    p = bind(
+        lambda x: literal('b'),
         p
     )
-    p = bind_parser(
-        lambda x: parse_string('c'),
+    p = bind(
+        lambda x: literal('c'),
         p
     )
     assert run_parser(p, 'abc') == 'c'
 
-def test_string_parser_throws_ParsingFailed_when_seeing_non_matching_string():
+def test_literal_parser_throws_ParsingFailed_when_seeing_non_matching_string():
     with pytest.raises(ParsingFailed):
-        run_parser(parse_string('a'), 'b')
+        run_parser(literal('a'), 'b')
 
 
-def test_parse_string_alternatives_can_parse_both_possibilities():
-    p = parse_choice(
-        parse_string('a'),
-        parse_string('b'),
+def test_literal_choice_can_parse_both_possibilities():
+    p = choice(
+        literal('a'),
+        literal('b'),
     )
     assert run_parser(p, 'a') == 'a'
     assert run_parser(p, 'b') == 'b'
 
-def test_parse_choice_can_be_chained_1000_times():
-    c = parse_choice(
-        parse_string('a'),
-        parse_string('b'),
+def test_choice_can_be_chained_1000_times():
+    c = choice(
+        literal('a'),
+        literal('b'),
     )
     p = unit('')
     for i in range(0,1000):
-        p = bind_parser(
+        p = bind(
             lambda x: c,
             p
         )
     assert run_parser(p, 'a' * 999 + 'b') == 'b'
 
-def test_parse_choice_throws_ParsingFailed_when_both_alternatives_fail():
-    p = parse_choice(
-        parse_string('a'),
-        parse_string('b'),
+def test_choice_throws_ParsingFailed_when_both_choices_fail():
+    p = choice(
+        literal('a'),
+        literal('b'),
     )
     with pytest.raises(ParsingFailed):
         run_parser(p, 'c')
 
-def test_parse_many_parses_empty_strings():
-    p = parse_many(
-        parse_string('a')
+def test_many_parses_empty_strings():
+    p = many(
+        literal('a')
     )
     assert run_parser(p,'') == []
 
-def test_parse_many_parses_one_occurence():
-    p = parse_many(
-        parse_string('a')
+def test_many_parses_one_occurence():
+    p = many(
+        literal('a')
     )
     assert run_parser(p, 'a') == ['a']
 
-def test_parse_many_parses_5_occurences():
-    p = parse_many(
-        parse_string('a')
+def test_many_parses_5_occurences():
+    p = many(
+        literal('a')
     )
     assert run_parser(p, 'aaaaa') == ['a'] * 5
 
-def test_parse_until_parses_only_delimiter():
-    p = parse_until('a')
+def test_until_parses_only_delimiter():
+    p = until('a')
     assert run_parser(p, 'a') == ''
 
-def test_parse_until_parses_5_characters_and_delimiter():
-    p = parse_until(',')
+def test_until_parses_5_characters_and_delimiter():
+    p = until(',')
     assert run_parser(p, 'abcde,') == 'abcde'
 
-def test_parse_until_chained_with_string_parser_leaves_out_delimiter():
-    p = parse_until(',')
-    p = bind_parser(
-        lambda x: map_parser(
+def test_until_chained_with_literal_parser_leaves_out_delimiter():
+    p = until(',')
+    p = bind(
+        lambda x: fmap(
             lambda y: [x,y],
-            parse_string('end')
+            literal('end')
         ),
         p
     )
     assert run_parser(p, 'abcde,end') == ['abcde','end']
 
 def test_parse_none_of_parses_character_when_passed_empty_string():
-    p = parse_none_of('')
+    p = none_of('')
     assert run_parser(p, 'a') == 'a'
 
-def test_parse_none_of_raises_ParsingFailed_when_encountering_forbidden_char():
-    p = parse_none_of('a')
+def test_none_of_raises_ParsingFailed_when_encountering_forbidden_char():
+    p = none_of('a')
     with pytest.raises(ParsingFailed):
         run_parser(p, 'a')
 
-def test_parse_fail_throws_ParsingFailed_error():
-    p = parse_fail('error')
+def test_fail_throws_ParsingFailed_error():
+    p = fail('error')
     with pytest.raises(ParsingFailed):
         run_parser(p, '')
 
-def test_parse_char_parses_a_single_A_character():
-    p = parse_char()
+def test_character_parses_a_single_A_character():
+    p = character()
     assert run_parser(p, 'A') == 'A'
 
-def test_parse_char_raises_ParsingFailed_on_empty_string():
-    p = parse_char()
+def test_character_raises_ParsingFailed_on_empty_string():
+    p = character()
     with pytest.raises(ParsingFailed):
         run_parser(p, '')
