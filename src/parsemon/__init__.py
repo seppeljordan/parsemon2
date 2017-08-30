@@ -70,7 +70,7 @@ def run_parser(p, input_string):
         ParserBind()
     )
     if rest:
-        raise Exception(
+        raise ParsingFailed(
             'Parser did not consume all of the string, rest was `{rest}`'
             .format(
                 rest=rest
