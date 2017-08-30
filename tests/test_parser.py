@@ -61,6 +61,19 @@ def test_parse_string_alternatives_can_parse_both_possibilities():
     assert run_parser(p, 'a') == 'a'
     assert run_parser(p, 'b') == 'b'
 
+def test_parse_choice_can_be_chained_1000_times():
+    c = parse_choice(
+        parse_string('a'),
+        parse_string('b'),
+    )
+    p = unit('')
+    for i in range(0,1000):
+        p = bind_parser(
+            lambda x: c,
+            p
+        )
+    assert run_parser(p, 'a' * 999 + 'b') == 'b'
+
 def test_parse_choice_throws_ParsingFailed_when_both_alternatives_fail():
     p = parse_choice(
         parse_string('a'),

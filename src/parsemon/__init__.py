@@ -8,10 +8,12 @@ from parsemon.trampoline import Call, Result, with_trampoline
 class ParserBind(object):
     def __init__(self):
         self.callbacks = Stack()
+        self.choices = Stack()
 
     def __copy__(self):
         newbind = ParserBind()
         newbind.callbacks = self.callbacks
+        newbind.choices = self.choices
         return newbind
 
     def get_bind(self, value):
@@ -28,11 +30,29 @@ class ParserBind(object):
         newbind.callbacks = self.callbacks.push(binding)
         return newbind
 
+    def add_choice(self, parser, rest):
+        newbind = copy(self)
+        newbind.choices = self.choices.push((parser,rest,self))
+        return newbind
+
+    def next_choice(self):
+        try:
+            return self.choices.top()
+        except StackEmptyError:
+            return None
+
     def pass_result(self, value, rest):
         next_parser, next_bind = self.get_bind(value)
         if next_parser is None:
             return Result((value, rest))
         else:
+            return Call(next_parser, rest, next_bind)
+
+    def parser_failed(self, msg):
+        if self.next_choice() is None:
+            raise ParsingFailed(msg)
+        else:
+            next_parser, rest, next_bind = self.next_choice()
             return Call(next_parser, rest, next_bind)
 
 
@@ -72,7 +92,7 @@ def parse_string(string_to_parse):
             rest = s[len(string_to_parse):]
             return parser_bind.pass_result(string_to_parse, rest)
         else:
-            raise ParsingFailed(
+            return parser_bind.parser_failed(
                 'Expected string `{expected}`, but saw `{actual}`'.format(
                     expected=string_to_parse,
                     actual=s[:len(string_to_parse)],
@@ -96,15 +116,11 @@ def map_parser(mapping, old_parser):
 
 def parse_choice(first_parser, second_parser):
     def parser(s, parser_bind):
-        try:
-            result, rest = with_trampoline(first_parser)(
-                s, parser_bind
-            )
-        except ParsingFailed:
-            result, rest = with_trampoline(second_parser)(
-                s, parser_bind
-            )
-        return Result((result, rest))
+        return Call(
+            first_parser,
+            s,
+            parser_bind.add_choice(second_parser, s)
+        )
     return parser
 
 
@@ -138,7 +154,7 @@ def parse_none_of(chars):
         value = s[0]
         rest = s[1:]
         if value in chars:
-            raise ParsingFailed(
+            return parser_bind.parser_failed(
                 ('Expected character other that `{forbidden}`, '
                  'but got `{actual}`').format(
                      forbidden=chars,
