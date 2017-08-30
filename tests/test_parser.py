@@ -1,7 +1,7 @@
 import pytest
-from parsemon import (bind_parser, map_parser, parse_choice, parse_many,
-                      parse_none_of, parse_string, parse_until, run_parser,
-                      unit)
+from parsemon import (bind_parser, map_parser, parse_choice, parse_fail,
+                      parse_many, parse_none_of, parse_string, parse_until,
+                      run_parser, unit)
 from parsemon.error import ParsingFailed
 
 
@@ -127,3 +127,8 @@ def test_parse_none_of_raises_ParsingFailed_when_encountering_forbidden_char():
     p = parse_none_of('a')
     with pytest.raises(ParsingFailed):
         run_parser(p, 'a')
+
+def test_parse_fail_throws_ParsingFailed_error():
+    p = parse_fail('error')
+    with pytest.raises(ParsingFailed):
+        run_parser(p, '')

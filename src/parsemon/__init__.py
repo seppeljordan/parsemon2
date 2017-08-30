@@ -30,7 +30,7 @@ class ParserBind(object):
         newbind.callbacks = self.callbacks.push(binding)
         return newbind
 
-    def add_choice(self, parser, rest):
+    def add_choice(self, parser, rest: str):
         newbind = copy(self)
         newbind.choices = self.choices.push((parser,rest,self))
         return newbind
@@ -41,7 +41,7 @@ class ParserBind(object):
         except StackEmptyError:
             return None
 
-    def pass_result(self, value, rest):
+    def pass_result(self, value, rest: str):
         next_parser, next_bind = self.get_bind(value)
         if next_parser is None:
             return Result((value, rest))
@@ -140,8 +140,8 @@ def parse_many(original_parser):
     return parser
 
 
-def parse_until(d):
-    def parser(s, parser_bind):
+def parse_until(d: str):
+    def parser(s, parser_bind: ParserBind):
         splits = s.split(d)
         value = splits[0]
         rest = s[len(value) + len(d):]
@@ -149,7 +149,7 @@ def parse_until(d):
     return parser
 
 
-def parse_none_of(chars):
+def parse_none_of(chars: str):
     def parser(s, parser_bind):
         value = s[0]
         rest = s[1:]
@@ -163,4 +163,10 @@ def parse_none_of(chars):
             )
         else:
             return parser_bind.pass_result(value,rest)
+    return parser
+
+
+def parse_fail(msg):
+    def parser(s, parser_bind):
+        return parser_bind.parser_failed(msg)
     return parser
