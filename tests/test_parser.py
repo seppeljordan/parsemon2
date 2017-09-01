@@ -137,6 +137,11 @@ def test_none_of_raises_ParsingFailed_when_encountering_forbidden_char():
     with pytest.raises(ParsingFailed):
         run_parser(p, 'a')
 
+def test_none_of_raises_ParsingFailed_when_nothing_to_consume():
+    p = none_of('a')
+    with pytest.raises(ParsingFailed):
+        run_parser(p,'')
+
 def test_fail_throws_ParsingFailed_error():
     p = fail('error')
     with pytest.raises(ParsingFailed):

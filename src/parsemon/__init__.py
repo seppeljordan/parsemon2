@@ -151,11 +151,18 @@ def until(d: str):
 
 def none_of(chars: str):
     def parser(s, parser_bind):
+        if not s:
+            return parser_bind.parser_failed(
+                ('Excpected character other than `{forbidden}` but stream was '
+                 'empty.').format(
+                     forbidden=chars
+                 )
+            )
         value = s[0]
         rest = s[1:]
         if value in chars:
             return parser_bind.parser_failed(
-                ('Expected character other that `{forbidden}`, '
+                ('Expected character other than `{forbidden}`, '
                  'but got `{actual}`').format(
                      forbidden=chars,
                      actual=value
