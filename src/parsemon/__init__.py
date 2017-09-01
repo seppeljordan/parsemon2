@@ -131,12 +131,12 @@ def many(original_parser):
         while True:
             try:
                 result, rest = with_trampoline(original_parser)(
-                    rest, parser_bind
+                    rest, ParserBind()
                 )
                 accu += [result]
             except ParsingFailed:
                 break
-        return Result((accu, rest))
+        return parser_bind.pass_result(accu, rest)
     return parser
 
 

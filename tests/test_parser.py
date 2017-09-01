@@ -99,6 +99,16 @@ def test_many_parses_5_occurences():
     )
     assert run_parser(p, 'aaaaa') == ['a'] * 5
 
+def test_we_can_chain_many_with_something_else():
+    p = many(
+        literal('a')
+    )
+    p = bind(
+        lambda _: literal('b'),
+        p
+    )
+    assert run_parser(p,'aaaab') == 'b'
+
 def test_until_parses_only_delimiter():
     p = until('a')
     assert run_parser(p, 'a') == ''
