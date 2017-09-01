@@ -86,6 +86,13 @@ def bind(binding, old_parser):
     return parser
 
 
+def chain(first, second):
+    return bind(
+        lambda _: second,
+        first,
+    )
+
+
 def literal(string_to_parse):
     def parser(s, parser_bind):
         if s.startswith(string_to_parse):
