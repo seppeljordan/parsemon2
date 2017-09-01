@@ -1,6 +1,6 @@
 from copy import copy
 
-from parsemon.error import ParsingFailed
+from parsemon.error import NotEnoughInput, ParsingFailed
 from parsemon.stack import Stack, StackEmptyError
 from parsemon.trampoline import Call, Result, with_trampoline
 
@@ -48,9 +48,9 @@ class ParserBind(object):
         else:
             return Call(next_parser, rest, next_bind)
 
-    def parser_failed(self, msg):
+    def parser_failed(self, msg, exception=ParsingFailed):
         if self.next_choice() is None:
-            raise ParsingFailed(msg)
+            raise exception(msg)
         else:
             next_parser, rest, next_bind = self.next_choice()
             return Call(next_parser, rest, next_bind)
@@ -172,12 +172,18 @@ def fail(msg):
     return parser
 
 
-def character():
+def character(n=1):
     def parser(s, bind):
-        if s:
-            return bind.pass_result(s[0], s[1:])
+        rest_length = len(s)
+        if rest_length >= n:
+            return bind.pass_result(s[:n], s[n:])
         else:
             return bind.parser_failed(
-                'Excected character but there is nothing left to parse'
+                'Expected `{expected}` characters of input but got only '
+                '`{actual}`.'.format(
+                    expected=n,
+                    actual=rest_length
+                ),
+                exception=NotEnoughInput,
             )
     return parser

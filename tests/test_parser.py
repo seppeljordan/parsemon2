@@ -1,7 +1,7 @@
 import pytest
 from parsemon import (bind, character, choice, fail, fmap, literal, many,
                       none_of, run_parser, unit, until)
-from parsemon.error import ParsingFailed
+from parsemon.error import ParsingFailed, NotEnoughInput
 
 
 def test_literal_parses_a_single_string():
@@ -140,3 +140,12 @@ def test_character_raises_ParsingFailed_on_empty_string():
     p = character()
     with pytest.raises(ParsingFailed):
         run_parser(p, '')
+
+def test_character_can_parse_5_characters():
+    p = character(n=5)
+    assert run_parser(p, '12345') == '12345'
+
+def test_character_raises_ParsingFailed_when_too_few_characters_in_stream():
+    p = character(n=5)
+    with pytest.raises(NotEnoughInput):
+        run_parser(p, '1234')
