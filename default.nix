@@ -4,8 +4,7 @@ buildPythonPackage {
   buildInputs = [ pytest mypy ];
   src = lib.cleanSource ./.;
   checkPhase = ''
-    mypy src/
-    PYTHONPATH=src/:$PYTHONPATH pytest
+    sh run-tests.sh
   '';
   shellHook = ''
     export PYTHONPATH=$PWD/src:$PYTHONPATH
