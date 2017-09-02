@@ -1,15 +1,7 @@
 from parsemon.error import NotEnoughInput, ParsingFailed
 
 from parsemon.internals import ParserBind
-from parsemon.trampoline import Call, Result, with_trampoline
-
-
-def trampoline_const(v):
-    return lambda x: Result(v)
-
-
-def const(v):
-    return lambda x: None
+from parsemon.trampoline import Call, with_trampoline
 
 
 def run_parser(p, input_string):
