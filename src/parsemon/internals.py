@@ -5,13 +5,13 @@ from parsemon.stack import Stack, StackEmptyError
 from parsemon.trampoline import Call, Result
 
 
-class ParserBind(object):
+class ParserState(object):
     def __init__(self):
         self.callbacks = Stack()
         self.choices = Stack()
 
     def __copy__(self):
-        newbind = ParserBind()
+        newbind = ParserState()
         newbind.callbacks = self.callbacks
         newbind.choices = self.choices
         return newbind

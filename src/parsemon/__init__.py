@@ -1,13 +1,13 @@
 from parsemon.error import NotEnoughInput, ParsingFailed
 
-from parsemon.internals import ParserBind
+from parsemon.internals import ParserState
 from parsemon.trampoline import Call, with_trampoline
 
 
 def run_parser(p, input_string):
     parsing_result, rest = with_trampoline(p)(
         input_string,
-        ParserBind()
+        ParserState()
     )
     if rest:
         raise ParsingFailed(
@@ -78,7 +78,7 @@ def many(original_parser):
         while True:
             try:
                 result, rest = with_trampoline(original_parser)(
-                    rest, ParserBind()
+                    rest, ParserState()
                 )
                 accu += [result]
             except ParsingFailed:
@@ -88,7 +88,7 @@ def many(original_parser):
 
 
 def until(d: str):
-    def parser(s, parser_bind: ParserBind):
+    def parser(s, parser_bind: ParserState):
         splits = s.split(d)
         value = splits[0]
         rest = s[len(value) + len(d):]
