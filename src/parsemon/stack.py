@@ -5,6 +5,7 @@ class StackBottom(object):
 class StackEmptyError(Exception):
     pass
 
+
 stack_bottom = StackBottom()
 
 

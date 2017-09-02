@@ -1,8 +1,9 @@
 from functools import wraps
-from typing import Callable, Generic, TypeVar, Any
+from typing import Callable, Generic, TypeVar
 import abc
 
 T = TypeVar('T')
+
 
 class Trampoline(Generic[T], metaclass=abc.ABCMeta):
 
@@ -32,7 +33,7 @@ class Result(Trampoline, Generic[T]):
 class Call(Trampoline, Generic[T]):
     def __init__(
             self,
-            f: Callable[...,T],
+            f: Callable[..., T],
             *args,
             **kwargs
     ) -> None:
@@ -46,10 +47,11 @@ class Call(Trampoline, Generic[T]):
     def __call__(self):
         return self.fun(*(self.args), **(self.kwargs))
 
-def with_trampoline(f: Callable[...,Trampoline[T]]) -> Callable[...,T]:
+
+def with_trampoline(f: Callable[..., Trampoline[T]]) -> Callable[..., T]:
     @wraps(f)
-    def g(*args,**kwargs):
-        iteration_result = f(*args,**kwargs)
+    def g(*args, **kwargs):
+        iteration_result = f(*args, **kwargs)
         while True:
             if iteration_result.is_result():
                 return iteration_result()
