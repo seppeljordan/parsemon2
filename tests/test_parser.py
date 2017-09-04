@@ -81,6 +81,18 @@ def test_choice_throws_ParsingFailed_when_both_choices_fail():
     with pytest.raises(ParsingFailed):
         run_parser(p, 'c')
 
+def test_choice_should_not_retry_if_the_parser_after_choice_fails():
+    p = choice(
+        literal('a'),
+        literal('aa'),
+    )
+    p = chain(
+        p,
+        literal('b')
+    )
+    with pytest.raises(ParsingFailed):
+        run_parser(p, 'aab')
+
 def test_many_parses_empty_strings():
     p = many(
         literal('a')

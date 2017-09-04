@@ -32,7 +32,11 @@ def bind(
         old_parser: Parser[S]
 ) -> Parser[T]:
     def parser(s, parser_bind):
-        return Call(old_parser, s, parser_bind.add_binding(binding))
+        return Call(
+            old_parser,
+            s,
+            parser_bind.add_binding(binding)
+        )
     return parser
 
 

@@ -34,10 +34,18 @@ class ParserState(Generic[T]):
         except StackEmptyError:
             return (None, None)
 
-    def add_binding(self, binding):
+    def add_binding(
+            self,
+            binding: Callable[[T], Parser[T]]
+    ):
         newbind = copy(self)
         newbind.callbacks = self.callbacks.push(binding)
         return newbind
+
+    def without_choices(self):
+        result = copy(self)
+        result.choices = Stack()
+        return result
 
     def add_choice(
             self,
@@ -59,7 +67,11 @@ class ParserState(Generic[T]):
         if next_parser is None:
             return Result((value, rest))
         else:
-            return Call(next_parser, rest, next_bind)
+            return Call(
+                next_parser,
+                rest,
+                next_bind.without_choices()
+            )
 
     def parser_failed(self, msg, exception=ParsingFailed):
         if self.next_choice() is None:
