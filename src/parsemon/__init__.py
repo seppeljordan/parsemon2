@@ -1,10 +1,17 @@
-from parsemon.error import NotEnoughInput, ParsingFailed
+from typing import Callable, TypeVar
 
-from parsemon.internals import ParserState
+from parsemon.error import NotEnoughInput, ParsingFailed
+from parsemon.internals import ParserState, Parser
 from parsemon.trampoline import Call, with_trampoline
 
+S = TypeVar('S')
+T = TypeVar('T')
 
-def run_parser(p, input_string):
+
+def run_parser(
+        p: Parser[T],
+        input_string: str
+) -> T:
     parsing_result, rest = with_trampoline(p)(
         input_string,
         ParserState()
@@ -20,20 +27,26 @@ def run_parser(p, input_string):
         return parsing_result
 
 
-def bind(binding, old_parser):
+def bind(
+        binding: Callable[[S], Parser[T]],
+        old_parser: Parser[S]
+) -> Parser[T]:
     def parser(s, parser_bind):
         return Call(old_parser, s, parser_bind.add_binding(binding))
     return parser
 
 
-def chain(first, second):
+def chain(
+        first: Parser[S],
+        second: Parser[T]
+) -> Parser[T]:
     return bind(
         lambda _: second,
         first,
     )
 
 
-def literal(string_to_parse):
+def literal(string_to_parse: str) -> Parser[str]:
     def parser(s, parser_bind):
         if s.startswith(string_to_parse):
             rest = s[len(string_to_parse):]
@@ -48,21 +61,27 @@ def literal(string_to_parse):
     return parser
 
 
-def unit(u):
+def unit(u: T) -> Parser[T]:
     def unit_parser(s, parser_bind):
         return parser_bind.pass_result(u, s)
     return unit_parser
 
 
-def fmap(mapping, old_parser):
+def fmap(
+        mapping: Callable[[S], T],
+        old_parser: Parser[S]
+) -> Parser[T]:
     return bind(
         lambda x: unit(mapping(x)),
         old_parser
     )
 
 
-def choice(first_parser, second_parser):
-    def parser(s, parser_bind):
+def choice(
+        first_parser: Parser[T],
+        second_parser: Parser[T]
+) -> Parser[T]:
+    def parser(s: str, parser_bind: ParserState):
         return Call(
             first_parser,
             s,

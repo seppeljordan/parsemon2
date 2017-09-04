@@ -10,7 +10,7 @@ def test_literal_parses_a_single_string():
 def test_unit_parses_the_empty_string():
     assert run_parser(unit('a'), '') == 'a'
 
-def tests_unit_parses_only_the_empty_string():
+def test_unit_parses_only_the_empty_string():
     with pytest.raises(Exception):
         run_parser(unit('a'), 'a')
 
