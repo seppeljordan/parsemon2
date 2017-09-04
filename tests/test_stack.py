@@ -34,3 +34,13 @@ def test_iterating_over_stack_sees_pushed_elems_in_reverse():
         s = s.push(e)
     elems.reverse()
     assert list(s) == elems
+
+
+def test_if_we_append_an_item_it_is_the_last_item_popped():
+    elems = [1,2,3]
+    s = Stack()
+    for e in elems:
+        s = s.push(e)
+    s = s.append(0)
+    elems.reverse()
+    assert list(s) == elems + [0]
