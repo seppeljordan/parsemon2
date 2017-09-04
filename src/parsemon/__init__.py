@@ -28,8 +28,8 @@ def run_parser(
 
 
 def bind(
-        binding: Callable[[S], Parser[T]],
-        old_parser: Parser[S]
+        old_parser: Parser[S],
+        binding: Callable[[S], Parser[T]]
 ) -> Parser[T]:
     def parser(s, parser_bind):
         return Call(
@@ -45,8 +45,8 @@ def chain(
         second: Parser[T]
 ) -> Parser[T]:
     return bind(
-        lambda _: second,
         first,
+        lambda _: second,
     )
 
 
@@ -76,8 +76,8 @@ def fmap(
         old_parser: Parser[S]
 ) -> Parser[T]:
     return bind(
+        old_parser,
         lambda x: unit(mapping(x)),
-        old_parser
     )
 
 

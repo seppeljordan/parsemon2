@@ -30,20 +30,20 @@ def test_fmap_can_map_1000_time():
 
 def test_bind_can_chain_two_literal_parsers():
     parser = bind(
-        lambda x: literal('b'),
         literal('a'),
+        lambda x: literal('b'),
     )
     assert run_parser(parser, 'ab') == 'b'
 
 def test_bind_can_chain_3_literal_parsers():
     p = literal('a')
     p = bind(
+        p,
         lambda x: literal('b'),
-        p
     )
     p = bind(
+        p,
         lambda x: literal('c'),
-        p
     )
     assert run_parser(p, 'abc') == 'c'
 
@@ -68,8 +68,8 @@ def test_choice_can_be_chained_1000_times():
     p = unit('')
     for i in range(0,1000):
         p = bind(
+            p,
             lambda x: c,
-            p
         )
     assert run_parser(p, 'a' * 999 + 'b') == 'b'
 
@@ -116,8 +116,8 @@ def test_we_can_chain_many_with_something_else():
         literal('a')
     )
     p = bind(
+        p,
         lambda _: literal('b'),
-        p
     )
     assert run_parser(p,'aaaab') == 'b'
 
@@ -132,11 +132,11 @@ def test_until_parses_5_characters_and_delimiter():
 def test_until_chained_with_literal_parser_leaves_out_delimiter():
     p = until(',')
     p = bind(
+        p,
         lambda x: fmap(
             lambda y: [x,y],
             literal('end')
         ),
-        p
     )
     assert run_parser(p, 'abcde,end') == ['abcde','end']
 
