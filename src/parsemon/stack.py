@@ -52,7 +52,9 @@ class Stack():
                     rest.pop(),
                     accu.push(rest.top()),
                 )
-        reverse = lambda s: with_trampoline(_reverse)(s,Stack())
+
+        def reverse(s):
+            return with_trampoline(_reverse)(s, Stack())
         return reverse(reverse(self).push(elem))
 
     def __iter__(self):

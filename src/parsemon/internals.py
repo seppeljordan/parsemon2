@@ -42,10 +42,14 @@ class ParserState(Generic[T]):
         newbind.callbacks = self.callbacks.push(binding)
         return newbind
 
-    def without_choices(self):
-        result = copy(self)
-        result.choices = Stack()
-        return result
+    def finally_remove_choice(self):
+        def pop_choice_parser(value):
+            return lambda rest, bindings: (
+                bindings.pop_choice().pass_result(value, rest)
+            )
+        newbind = copy(self)
+        newbind.callbacks = self.callbacks.push(pop_choice_parser)
+        return newbind
 
     def add_choice(
             self,
@@ -54,7 +58,7 @@ class ParserState(Generic[T]):
     ) -> 'ParserState[T]':
         newbind = copy(self)
         newbind.choices = self.choices.push((parser, rest, self))
-        return newbind
+        return newbind.finally_remove_choice()
 
     def next_choice(self):
         try:
@@ -62,7 +66,16 @@ class ParserState(Generic[T]):
         except StackEmptyError:
             return None
 
-    def pass_result(self, value: T, rest: str) -> Trampoline[str]:
+    def pop_choice(self):
+        newbind = copy(self)
+        newbind.choices = self.choices.pop()
+        return newbind
+
+    def pass_result(
+            self,
+            value: T,
+            rest: str
+    ) -> Trampoline:
         next_parser, next_bind = self.get_bind(value)
         if next_parser is None:
             return Result((value, rest))
@@ -70,7 +83,7 @@ class ParserState(Generic[T]):
             return Call(
                 next_parser,
                 rest,
-                next_bind.without_choices()
+                next_bind
             )
 
     def parser_failed(self, msg, exception=ParsingFailed):
