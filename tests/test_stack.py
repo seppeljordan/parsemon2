@@ -44,3 +44,10 @@ def test_if_we_append_an_item_it_is_the_last_item_popped():
     s = s.append(0)
     elems.reverse()
     assert list(s) == elems + [0]
+
+def test_reversed_iterates_over_elements_in_order_of_push():
+    elems = [1,2,3]
+    s = Stack()
+    for e in elems:
+        s = s.push(e)
+    assert elems == list(reversed(s))

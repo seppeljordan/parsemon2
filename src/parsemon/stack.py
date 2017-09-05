@@ -62,3 +62,6 @@ class Stack():
         while not i.empty():
             yield i.value
             i = i.next_elem
+
+    def __reversed__(self):
+        yield from reversed(list(self))
