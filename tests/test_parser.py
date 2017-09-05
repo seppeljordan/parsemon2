@@ -205,3 +205,19 @@ def test_many1_fails_for_empty_strings():
 def test_many1_behaves_like_many_for_1_occurence():
     p = literal('a')
     assert run_parser(many1(p), 'a') == run_parser(many(p), 'a')
+
+def test_failure_of_literal_contains_expected_string():
+    p = literal('abcde')
+    with pytest.raises(ParsingFailed) as err:
+        run_parser(p, 'xxxxx')
+    assert 'abcde' in str(err.value)
+
+def test_failure_of_choice_of_2_literals_should_contain_both_literals():
+    p = choice(
+        literal('first_literal'),
+        literal('second_literal'),
+    )
+    with pytest.raises(ParsingFailed) as err:
+        run_parser(p, 'xxxxxxxxxxxxxxxxxxx')
+    assert 'first_literal' in str(err.value)
+    assert 'second_literal' in str(err.value)

@@ -15,11 +15,13 @@ class ParserState(Generic[T]):
     def __init__(self):
         self.callbacks = Stack()
         self.choices = Stack()
+        self.error_messages = Stack()
 
     def __copy__(self):
         newbind = ParserState()
         newbind.callbacks = self.callbacks
         newbind.choices = self.choices
+        newbind.error_messages = self.error_messages
         return newbind
 
     def get_bind(
@@ -42,14 +44,32 @@ class ParserState(Generic[T]):
         newbind.callbacks = self.callbacks.push(binding)
         return newbind
 
+    def finally_remove_error_message(self):
+        def pop_error_message(value):
+            return lambda rest, bindings: (
+                bindings.pop_error_message().pass_result(value, rest)
+            )
+        self.add_binding(pop_error_message)
+
+    def pop_error_message(self):
+        newbind = copy(self)
+        newbind.error_messages = self.error_messages.pop()
+        return newbind
+
+    def push_error_message(self, msg):
+        newbind = copy(self)
+        newbind.error_messages = self.error_messages.push(msg)
+        return newbind
+
+    def get_error_messages(self):
+        return list(self.error_messages)
+
     def finally_remove_choice(self):
         def pop_choice_parser(value):
             return lambda rest, bindings: (
                 bindings.pop_choice().pass_result(value, rest)
             )
-        newbind = copy(self)
-        newbind.callbacks = self.callbacks.push(pop_choice_parser)
-        return newbind
+        return self.add_binding(pop_choice_parser)
 
     def add_choice(
             self,
@@ -57,19 +77,23 @@ class ParserState(Generic[T]):
             rest: str
     ) -> 'ParserState[T]':
         newbind = copy(self)
-        newbind.choices = self.choices.push((parser, rest, self))
+        newbind.choices = self.choices.push((
+            parser,
+            rest,
+            self.finally_remove_error_message()
+        ))
         return newbind.finally_remove_choice()
+
+    def pop_choice(self):
+        newbind = copy(self)
+        newbind.choices = self.choices.pop()
+        return newbind
 
     def next_choice(self):
         try:
             return self.choices.top()
         except StackEmptyError:
             return None
-
-    def pop_choice(self):
-        newbind = copy(self)
-        newbind.choices = self.choices.pop()
-        return newbind
 
     def pass_result(
             self,
@@ -88,7 +112,21 @@ class ParserState(Generic[T]):
 
     def parser_failed(self, msg, exception=ParsingFailed):
         if self.next_choice() is None:
-            raise exception(msg)
+            old_messages = self.get_error_messages()
+            final_message = ' OR '.join(
+                [msg] + old_messages
+            )
+            raise exception(final_message)
         else:
             next_parser, rest, next_bind = self.next_choice()
-            return Call(next_parser, rest, next_bind)
+            if next_bind is None:
+                next_bind_with_error_message = \
+                    ParserState().push_error_message(msg)
+            else:
+                next_bind_with_error_message = \
+                    next_bind.push_error_message(msg)
+            return Call(
+                next_parser,
+                rest,
+                next_bind_with_error_message
+            )
