@@ -1,6 +1,6 @@
 import pytest
 from parsemon import (bind, chain, character, choice, fail, fmap, literal,
-                      many, none_of, run_parser, unit, until)
+                      many, many1, none_of, run_parser, unit, until)
 from parsemon.error import NotEnoughInput, ParsingFailed
 
 
@@ -196,3 +196,12 @@ def test_if_a_choice_failes_in_the_middle_of_chain_it_retries_other_option():
         )
     )
     assert run_parser(p, 'ab') == 'b'
+
+def test_many1_fails_for_empty_strings():
+    p = many1(literal('a'))
+    with pytest.raises(ParsingFailed):
+        run_parser(p, '')
+
+def test_many1_behaves_like_many_for_1_occurence():
+    p = literal('a')
+    assert run_parser(many1(p), 'a') == run_parser(many(p), 'a')

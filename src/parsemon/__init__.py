@@ -110,6 +110,16 @@ def many(original_parser):
     return parser
 
 
+def many1(original_parser):
+    return bind(
+        original_parser,
+        lambda first_result: fmap(
+            lambda rest_result: [first_result] + rest_result,
+            many(original_parser),
+        )
+    )
+
+
 def until(d: str):
     def parser(s, parser_bind: ParserState):
         splits = s.split(d)
