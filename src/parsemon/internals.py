@@ -49,7 +49,7 @@ class ParserState(Generic[T]):
             return lambda rest, bindings: (
                 bindings.pop_error_message().pass_result(value, rest)
             )
-        self.add_binding(pop_error_message)
+        return self.add_binding(pop_error_message)
 
     def pop_error_message(self):
         newbind = copy(self)
@@ -60,6 +60,12 @@ class ParserState(Generic[T]):
         newbind = copy(self)
         newbind.error_messages = self.error_messages.push(msg)
         return newbind
+
+    def copy_error_messages_from(self, other):
+        p = copy(self)
+        for msg in reversed(other.error_messages):
+            p.push_error_message(msg)
+        return p
 
     def get_error_messages(self):
         return list(self.error_messages)
@@ -119,14 +125,10 @@ class ParserState(Generic[T]):
             raise exception(final_message)
         else:
             next_parser, rest, next_bind = self.next_choice()
-            if next_bind is None:
-                next_bind_with_error_message = \
-                    ParserState().push_error_message(msg)
-            else:
-                next_bind_with_error_message = \
-                    next_bind.push_error_message(msg)
             return Call(
                 next_parser,
                 rest,
-                next_bind_with_error_message
+                (next_bind
+                 .copy_error_messages_from(self)
+                 .push_error_message(msg))
             )

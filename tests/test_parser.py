@@ -221,3 +221,18 @@ def test_failure_of_choice_of_2_literals_should_contain_both_literals():
         run_parser(p, 'xxxxxxxxxxxxxxxxxxx')
     assert 'first_literal' in str(err.value)
     assert 'second_literal' in str(err.value)
+
+def test_failure_of_choice_of_3_literals_should_contain_all_3_literal():
+    p = choice(
+        literal('first'),
+        choice(
+            literal('second'),
+            literal('third')
+        )
+    )
+    with pytest.raises(ParsingFailed) as err:
+        run_parser(p, 'xxxxxxxxxxxxxxxx')
+    error_message = str(err.value)
+    assert 'first' in error_message
+    assert 'second' in error_message
+    assert 'third' in error_message
