@@ -95,19 +95,16 @@ def choice(
 
 
 def many(original_parser):
-    def parser(s, parser_bind):
-        accu = []
-        rest = s
-        while True:
-            try:
-                result, rest = with_trampoline(original_parser)(
-                    rest, ParserState()
-                )
-                accu += [result]
-            except ParsingFailed:
-                break
-        return parser_bind.pass_result(accu, rest)
-    return parser
+    return choice(
+        bind(
+            original_parser,
+            lambda first_result: fmap(
+                lambda rest_result: [first_result] + rest_result,
+                many(original_parser),
+            ),
+        ),
+        unit([]),
+    )
 
 
 def many1(original_parser):
