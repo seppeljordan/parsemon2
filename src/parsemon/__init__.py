@@ -52,9 +52,12 @@ def chain(
 
 def literal(string_to_parse: str) -> Parser[str]:
     def parser(s, parser_bind):
+        expected_length = len(string_to_parse)
         if s.startswith(string_to_parse):
-            rest = s[len(string_to_parse):]
-            return parser_bind.pass_result(string_to_parse, rest)
+            rest = s[expected_length:]
+            return parser_bind.pass_result(
+                string_to_parse, rest, characters_consumed=expected_length
+            )
         else:
             return parser_bind.parser_failed(
                 'Expected string `{expected}`, but saw `{actual}`'.format(
@@ -67,7 +70,7 @@ def literal(string_to_parse: str) -> Parser[str]:
 
 def unit(u: T) -> Parser[T]:
     def unit_parser(s, parser_bind):
-        return parser_bind.pass_result(u, s)
+        return parser_bind.pass_result(u, s, characters_consumed=0)
     return unit_parser
 
 
@@ -121,8 +124,11 @@ def until(d: str):
     def parser(s, parser_bind: ParserState):
         splits = s.split(d)
         value = splits[0]
-        rest = s[len(value) + len(d):]
-        return parser_bind.pass_result(value, rest)
+        characters_consumed = len(value) + len(d)
+        rest = s[characters_consumed:]
+        return parser_bind.pass_result(
+            value, rest, characters_consumed=characters_consumed
+        )
     return parser
 
 
@@ -146,7 +152,7 @@ def none_of(chars: str):
                  )
             )
         else:
-            return parser_bind.pass_result(value, rest)
+            return parser_bind.pass_result(value, rest, characters_consumed=1)
     return parser
 
 
@@ -160,7 +166,9 @@ def character(n=1):
     def parser(s, bind):
         rest_length = len(s)
         if rest_length >= n:
-            return bind.pass_result(s[:n], s[n:])
+            return bind.pass_result(
+                s[:n], s[n:], characters_consumed=n
+            )
         else:
             return bind.parser_failed(
                 'Expected `{expected}` characters of input but got only '

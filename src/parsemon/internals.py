@@ -120,16 +120,21 @@ class ParserState(Generic[T]):
     def pass_result(
             self,
             value: T,
-            rest: str
+            rest: str,
+            characters_consumed=None,
     ) -> Trampoline:
         next_parser, next_bind = self.get_bind(value)
         if next_parser is None:
             return Result((value, rest))
         else:
+            if characters_consumed is None:
+                new_location = len(self.document) - len(rest)
+            else:
+                new_location = self.location + characters_consumed
             return Call(
                 next_parser,
                 rest,
-                next_bind.set_location(len(self.document) - len(rest))
+                next_bind.set_location(new_location)
             )
 
     @property
