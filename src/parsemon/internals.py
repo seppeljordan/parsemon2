@@ -69,15 +69,18 @@ class ParserState(Generic[T]):
         newbind.error_messages = self.error_messages.pop()
         return newbind
 
-    def push_error_message(self, msg):
+    def push_error_message_generator(
+            self,
+            msg_generator: Callable[[],str]
+    ):
         newbind = copy(self)
-        newbind.error_messages = self.error_messages.push(msg)
+        newbind.error_messages = self.error_messages.push(msg_generator)
         return newbind
 
     def copy_error_messages_from(self, other):
         p = copy(self)
-        for msg in reversed(other.error_messages):
-            p.push_error_message(msg)
+        for item in reversed(other.error_messages):
+            p.push_error_message_generator(item)
         return p
 
     def get_error_messages(self):
@@ -147,15 +150,17 @@ class ParserState(Generic[T]):
             return self._current_location
 
     def parser_failed(self, msg, exception=ParsingFailed):
-        line, column = self.current_location
-        rendered_message = '{message} @ {location}'.format(
-            message=msg,
-            location=display_location(line=line, column=column)
-        )
+        def rendered_message():
+            line, column = self.current_location
+            return '{message} @ {location}'.format(
+                message=msg,
+                location=display_location(line=line, column=column)
+            )
         if self.next_choice() is None:
-            old_messages = self.get_error_messages()
+            old_message_generators = self.get_error_messages()
+            old_messages = list(map(lambda f: f(), old_message_generators))
             final_message = ' OR '.join(
-                [rendered_message] + old_messages
+                [rendered_message()] + old_messages
             )
             raise exception(final_message)
         else:
@@ -165,5 +170,5 @@ class ParserState(Generic[T]):
                 rest,
                 (next_bind
                  .copy_error_messages_from(self)
-                 .push_error_message(rendered_message))
+                 .push_error_message_generator(rendered_message))
             )
