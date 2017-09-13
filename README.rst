@@ -10,3 +10,5 @@ This implementation uses trampolines to get around that.
 Right now this implementation is nothing more but a toy, but the tests
 that come with this package show already that it's parsing ability is
 not dependent on pythons recursion limit.
+
+We also have error messages.
