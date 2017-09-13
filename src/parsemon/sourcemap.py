@@ -23,7 +23,7 @@ def find_line_in_indices(location, indices):
     while True:
         middle = (start + end) // 2
         if end - start <= 1:
-            if indices[middle] <= location:
+            if indices[middle] < location:
                 return middle + 2
             else:
                 return middle + 1

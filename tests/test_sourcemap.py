@@ -24,3 +24,11 @@ def test_find_line_in_indices_returns_1_for_index_0():
 def test_find_line_in_indices_returns_2_after_first_linebreak():
     indices = [4]
     assert find_line_in_indices(5,indices) == 2
+
+def test_find_line_in_indices_returns_2_in_middle_of_two_linebreaks():
+    indices = [0,2]
+    assert find_line_in_indices(1,indices) == 2
+
+def test_find_line_in_indices_returns_1_for_index_0_if_first_char_is_linebreak():
+    indices = [0]
+    assert find_line_in_indices(0,indices) == 1
