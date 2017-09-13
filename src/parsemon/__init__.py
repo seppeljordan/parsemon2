@@ -14,7 +14,7 @@ def run_parser(
 ) -> T:
     parsing_result, rest = with_trampoline(p)(
         input_string,
-        ParserState()
+        ParserState(input_string, 0)
     )
     if rest:
         raise ParsingFailed(

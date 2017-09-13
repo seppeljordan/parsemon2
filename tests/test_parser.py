@@ -2,6 +2,7 @@ import pytest
 from parsemon import (bind, chain, character, choice, fail, fmap, literal,
                       many, many1, none_of, run_parser, unit, until)
 from parsemon.error import NotEnoughInput, ParsingFailed
+from parsemon.sourcemap import display_location
 
 
 def test_literal_parses_a_single_string():
@@ -236,3 +237,18 @@ def test_failure_of_choice_of_3_literals_should_contain_all_3_literal():
     assert 'first' in error_message
     assert 'second' in error_message
     assert 'third' in error_message
+
+def test_a_simple_failing_parser_prints_column_0_as_error():
+    p = fail('error')
+    with pytest.raises(ParsingFailed) as err:
+        run_parser(p, '')
+    assert display_location(line=1, column=0) in str(err.value)
+
+def test_a_simple_failing_parser_after_2_newlines_outputs_linenumber_3_in_error():
+    p = chain(
+        literal('\n\n'),
+        fail('error')
+    )
+    with pytest.raises(ParsingFailed) as err:
+        run_parser(p,'\n\nx')
+    assert display_location(line=3, column=0) in str(err.value)

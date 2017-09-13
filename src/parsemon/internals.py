@@ -2,6 +2,8 @@ from copy import copy
 from typing import Callable, Generic, Tuple, TypeVar
 
 from parsemon.error import ParsingFailed
+from parsemon.sourcemap import (display_location, find_line_in_indices,
+                                find_linebreak_indices)
 from parsemon.stack import Stack, StackEmptyError
 from parsemon.trampoline import Call, Result, Trampoline
 
@@ -12,17 +14,28 @@ Parser = Callable[[str, 'ParserState'], Trampoline[Tuple[T, str]]]
 
 
 class ParserState(Generic[T]):
-    def __init__(self):
+    def __init__(
+            self,
+            document: str,
+            location: int,
+    ) -> None:
         self.callbacks = Stack()
         self.choices = Stack()
         self.error_messages = Stack()
+        self.document = document
+        self.location = location
 
     def __copy__(self):
-        newbind = ParserState()
+        newbind = ParserState(self.document, self.location)
         newbind.callbacks = self.callbacks
         newbind.choices = self.choices
         newbind.error_messages = self.error_messages
         return newbind
+
+    def set_location(self, new_location):
+        new_state = copy(self)
+        new_state.location = new_location
+        return new_state
 
     def get_bind(
             self,
@@ -113,14 +126,36 @@ class ParserState(Generic[T]):
             return Call(
                 next_parser,
                 rest,
-                next_bind
+                next_bind.set_location(len(self.document) - len(rest))
             )
 
+    @property
+    def current_location(self):
+        def do_it():
+            linebreaks = find_linebreak_indices(self.document)
+            line = find_line_in_indices(self.location, linebreaks)
+            if linebreaks:
+                column = self.location - linebreaks[line - 2] - 1
+            else:
+                column = self.location
+            return line, column
+
+        if hasattr(self, "_current_location"):
+            return self._current_location
+        else:
+            self._current_location = do_it()
+            return self._current_location
+
     def parser_failed(self, msg, exception=ParsingFailed):
+        line, column = self.current_location
+        rendered_message = '{message} @ {location}'.format(
+            message=msg,
+            location=display_location(line=line, column=column)
+        )
         if self.next_choice() is None:
             old_messages = self.get_error_messages()
             final_message = ' OR '.join(
-                [msg] + old_messages
+                [rendered_message] + old_messages
             )
             raise exception(final_message)
         else:
@@ -130,5 +165,5 @@ class ParserState(Generic[T]):
                 rest,
                 (next_bind
                  .copy_error_messages_from(self)
-                 .push_error_message(msg))
+                 .push_error_message(rendered_message))
             )
