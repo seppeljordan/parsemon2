@@ -71,7 +71,7 @@ class ParserState(Generic[T]):
 
     def push_error_message_generator(
             self,
-            msg_generator: Callable[[],str]
+            msg_generator: Callable[[], str]
     ):
         newbind = copy(self)
         newbind.error_messages = self.error_messages.push(msg_generator)
