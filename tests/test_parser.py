@@ -1,6 +1,6 @@
 import pytest
 from parsemon import (bind, chain, character, choice, fail, fmap, literal,
-                      many, many1, none_of, run_parser, unit, until)
+                      many, many1, none_of, one_of, run_parser, unit, until)
 from parsemon.error import NotEnoughInput, ParsingFailed
 from parsemon.sourcemap import display_location
 
@@ -252,3 +252,10 @@ def test_a_simple_failing_parser_after_2_newlines_outputs_linenumber_3_in_error(
     with pytest.raises(ParsingFailed) as err:
         run_parser(p,'\n\nx')
     assert display_location(line=3, column=0) in str(err.value)
+
+def test_one_of_fails_if_trying_to_parse_something_not_in_set():
+    with pytest.raises(ParsingFailed):
+        run_parser(one_of('123'), '4')
+
+def test_onf_of_succeeds_if_trying_to_parse_something_in_the_set():
+    assert run_parser(one_of('123'), '1') == '1'

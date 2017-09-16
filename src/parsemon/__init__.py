@@ -156,6 +156,26 @@ def none_of(chars: str):
     return parser
 
 
+def one_of(expected):
+    def parser(s, state):
+        if len(s) < 1:
+            return state.parser_failed(
+                'Expected one of {expected}, but found end of string'.format(
+                    expected=repr(expected),
+                )
+            )
+        elif s[0] in expected:
+            return state.pass_result(s[0], s[1:], characters_consumed=1)
+        else:
+            return state.parser_failed(
+                'Expected one of {expected}, but found {actual}'.format(
+                    expected=repr(expected),
+                    actual=repr(s[0]),
+                )
+            )
+    return parser
+
+
 def fail(msg):
     def parser(s, parser_bind):
         return parser_bind.parser_failed(msg)
