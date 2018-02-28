@@ -199,3 +199,21 @@ def character(n=1):
                 exception=NotEnoughInput,
             )
     return parser
+
+
+def seperated_by(parser, seperator):
+    return choice(
+        bind(
+            parser,
+            lambda first_result: fmap(
+                lambda rest_results: [first_result] + rest_results,
+                many(
+                    chain(
+                        seperator,
+                        parser
+                    )
+                )
+            )
+        ),
+        unit([])
+    )

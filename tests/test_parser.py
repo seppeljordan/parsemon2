@@ -1,6 +1,7 @@
 import pytest
 from parsemon import (bind, chain, character, choice, fail, fmap, literal,
-                      many, many1, none_of, one_of, run_parser, unit, until)
+                      many, many1, none_of, one_of, run_parser, seperated_by,
+                      unit, until)
 from parsemon.error import NotEnoughInput, ParsingFailed
 from parsemon.sourcemap import display_location
 
@@ -259,3 +260,30 @@ def test_one_of_fails_if_trying_to_parse_something_not_in_set():
 
 def test_onf_of_succeeds_if_trying_to_parse_something_in_the_set():
     assert run_parser(one_of('123'), '1') == '1'
+
+def test_seperated_by_empty():
+    assert run_parser(
+        seperated_by(
+            literal('a'),
+            literal(',')
+        ),
+        ''
+    ) == []
+
+def test_seperated_by_one_element():
+    assert run_parser(
+        seperated_by(
+            literal('a'),
+            literal(',')
+        ),
+        'a'
+    ) == ['a']
+
+def test_seperated_by_five_elemts():
+    assert run_parser(
+        seperated_by(
+            literal('a'),
+            literal(',')
+        ),
+        'a,a,a,a,a'
+    ) == ['a','a','a','a','a']
