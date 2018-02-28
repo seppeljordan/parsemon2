@@ -287,3 +287,12 @@ def test_seperated_by_five_elemts():
         ),
         'a,a,a,a,a'
     ) == ['a','a','a','a','a']
+
+def test_seperated_by_1000_elements():
+    assert run_parser(
+        seperated_by(
+            literal('a'),
+            literal(',')
+        ),
+        'a' + ',a' * 999
+    ) == ['a'] * 1000
