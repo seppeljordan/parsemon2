@@ -4,3 +4,4 @@
 /.mypy_cache/
 /result
 /.pytest_cache/
+/build
