@@ -1,7 +1,7 @@
 import pytest
-from parsemon import (bind, chain, character, choice, fail, fmap, literal,
-                      many, many1, none_of, one_of, run_parser, seperated_by,
-                      unit, until)
+from parsemon import (bind, chain, character, choice, enclosed_by, fail, fmap,
+                      literal, many, many1, none_of, one_of, run_parser,
+                      seperated_by, unit, until)
 from parsemon.error import NotEnoughInput, ParsingFailed
 from parsemon.sourcemap import display_location
 
@@ -296,3 +296,12 @@ def test_seperated_by_1000_elements():
         ),
         'a' + ',a' * 999
     ) == ['a'] * 1000
+
+def test_enclosed_by():
+    assert run_parser(
+        enclosed_by(
+            literal('a'),
+            literal('"')
+        ),
+        '"a"'
+    ) == 'a'

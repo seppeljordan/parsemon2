@@ -217,3 +217,21 @@ def seperated_by(parser, seperator):
         ),
         unit([])
     )
+
+
+def enclosed_by(parser, prefix_parser, suffix_parser=None):
+    actual_suffix_parser = (
+        prefix_parser
+        if suffix_parser is None
+        else suffix_parser
+    )
+    return chain(
+        prefix_parser,
+        bind(
+            parser,
+            lambda parser_result: chain(
+                actual_suffix_parser,
+                unit(parser_result)
+            )
+        )
+    )
