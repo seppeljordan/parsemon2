@@ -1,7 +1,8 @@
+from functools import reduce
 from typing import Callable, TypeVar
 
 from parsemon.error import NotEnoughInput, ParsingFailed
-from parsemon.internals import ParserState, Parser
+from parsemon.internals import Parser, ParserState
 from parsemon.trampoline import Call, with_trampoline
 
 S = TypeVar('S')
@@ -111,6 +112,7 @@ def choice(
         first_parser: Parser[T],
         second_parser: Parser[T]
 ) -> Parser[T]:
+    '''Try one parser and try a second one if the first one fails'''
     def parser(s: str, parser_bind: ParserState):
         return Call(
             first_parser,
@@ -118,6 +120,14 @@ def choice(
             parser_bind.add_choice(second_parser, s)
         )
     return parser
+
+
+def choices(parser, *parsers):
+    '''Try the given parsers one at a time until one succeeds'''
+    return reduce(
+        choice,
+        [parser] + list(parsers)
+    )
 
 
 def many(original_parser):

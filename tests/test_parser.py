@@ -1,7 +1,7 @@
 import pytest
-from parsemon import (bind, chain, character, choice, enclosed_by, fail, fmap,
-                      literal, many, many1, none_of, one_of, run_parser,
-                      seperated_by, unit, until)
+from parsemon import (bind, chain, character, choice, choices, enclosed_by,
+                      fail, fmap, literal, many, many1, none_of, one_of,
+                      run_parser, seperated_by, unit, until)
 from parsemon.error import NotEnoughInput, ParsingFailed
 from parsemon.sourcemap import display_location
 
@@ -305,3 +305,13 @@ def test_enclosed_by():
         ),
         '"a"'
     ) == 'a'
+
+def test_choices():
+    assert run_parser(
+        choices(
+            literal('a'),
+            literal('b'),
+            literal('c')
+        ),
+        'b'
+    ) == 'b'
