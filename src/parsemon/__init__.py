@@ -34,8 +34,8 @@ def bind(
 ) -> Parser[T]:
     '''Combine the result of a parser with second parser
 
-    old_parser -- First parser to apply
-    binding -- A function that returns a parser based on the result
+    :param old_parser: First parser to apply
+    :param binding: A function that returns a parser based on the result
         of old_parser
     '''
     def parser(s, parser_bind):
@@ -53,8 +53,8 @@ def chain(
 ) -> Parser[T]:
     '''Combine to parsers and only use the result of the second parser
 
-    first -- a parser that consumes input, the result will be discarded
-    second -- a parser that is applied after first, the result of this
+    :param first: a parser that consumes input, the result will be discarded
+    :param second: a parser that is applied after first, the result of this
         parser will be returned by the resulting parser
     '''
     return bind(
@@ -83,7 +83,7 @@ def literal(string_to_parse: str) -> Parser[str]:
 
 
 def unit(u: T) -> Parser[T]:
-    '''A parser that consumes no input and returns u'''
+    '''A parser that consumes no input and returns ``u``'''
     def unit_parser(s, parser_bind):
         return parser_bind.pass_result(u, s, characters_consumed=0)
     return unit_parser
@@ -95,8 +95,11 @@ def fmap(
 ) -> Parser[T]:
     '''Apply a function to the result of a parser
 
-    mapping -- a function that is applied to the result of old_parser
-    old_parser -- a parser, its result is passed into mapping
+    :param mapping: a function that is applied to the result of
+        ``old_parser``
+
+    :param old_parser: a parser, its result is passed into ``mapping``
+
     '''
     return bind(
         old_parser,
@@ -124,8 +127,8 @@ def many(original_parser):
     applied as often as possible, which also includes 0 times.  Think
     of this as Kleene-Star.
 
-    original_parser -- this parser will be applied as often as possible by the
-        resulting new parser
+    :param original_parser: this parser will be applied as often as
+        possible by the resulting new parser
 
     '''
     return choice(
@@ -161,9 +164,11 @@ def many1(original_parser):
 
 
 def until(d: str):
-    '''Parse the input until string d is found.
+    '''Parse the input until string ``d`` is found.
 
-    The string d won't be consumed
+    The string ``d`` won't be consumed.  Returns the consumed input as
+    a string.
+
     '''
     def parser(s, parser_bind: ParserState):
         splits = s.split(d)
@@ -177,9 +182,11 @@ def until(d: str):
 
 
 def none_of(chars: str):
-    """Parse any character except the ones in 'chars'
+    """Parse any character except the ones in ``chars``
 
-    This parser will fail if it finds a character that is in 'chars'
+    This parser will fail if it finds a character that is in
+    ``chars``.
+
     """
     def parser(s, parser_bind):
         if not s:
@@ -205,7 +212,7 @@ def none_of(chars: str):
 
 
 def one_of(expected):
-    """Parse only characters contained in 'expected'"""
+    """Parse only characters contained in ``expected``."""
     def parser(s, state):
         if len(s) < 1:
             return state.parser_failed(
@@ -226,14 +233,14 @@ def one_of(expected):
 
 
 def fail(msg):
-    """This parser always fails with the message passed as 'msg'"""
+    """This parser always fails with the message passed as ``msg``."""
     def parser(s, parser_bind):
         return parser_bind.parser_failed(msg)
     return parser
 
 
 def character(n=1):
-    """Parse exacly n characters, the default is 1"""
+    """Parse exactly n characters, the default is 1."""
     def parser(s, bind):
         rest_length = len(s)
         if rest_length >= n:
@@ -256,9 +263,10 @@ def seperated_by(parser, seperator):
     """Apply the input parser as often as possible, where occurences are
     seperated by input that can be parsed by 'seperator'.
 
-    This can be useful to parse lists with seperators in between.  The parser
-    `seperated_by(many(none_of(',')), literal(','))` will parse the string
-    `1,2,3,4` and return the list `['1','2','3','4']`
+    This can be useful to parse lists with seperators in between.  The
+    parser ``seperated_by(many(none_of(',')), literal(','))`` will
+    parse the string ``1,2,3,4`` and return the list
+    ``['1','2','3','4']``.
     """
     return choice(
         bind(
@@ -280,8 +288,9 @@ def seperated_by(parser, seperator):
 def enclosed_by(parser, prefix_parser, suffix_parser=None):
     '''Parse a string enclosed by delimeters
 
-    The parser `enclosed_by(many(none_of('"')),literal('"'))` will consume the
-    string `"example"` and return the python string `'example'`.
+    The parser ``enclosed_by(many(none_of('"')),literal('"'))`` will
+    consume the string ``"example"`` and return the python string
+    ``'example'``.
     '''
     actual_suffix_parser = (
         prefix_parser
