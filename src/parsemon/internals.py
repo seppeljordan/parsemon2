@@ -37,17 +37,17 @@ class ParserState(Generic[T]):
         new_state.location = new_location
         return new_state
 
+    def has_binding(self):
+        return not self.callbacks.empty()
+
     def get_bind(
             self,
             value: T
     ) -> Tuple[Parser[S], 'ParserState[T]']:
-        try:
-            parser_generator = self.callbacks.top()
-            next_parser_bind = copy(self)
-            next_parser_bind.callbacks = self.callbacks.pop()
-            return (parser_generator(value), next_parser_bind)
-        except StackEmptyError:
-            return (None, None)
+        parser_generator = self.callbacks.top()
+        next_parser_bind = copy(self)
+        next_parser_bind.callbacks = self.callbacks.pop()
+        return (parser_generator(value), next_parser_bind)
 
     def add_binding(
             self,
@@ -123,10 +123,8 @@ class ParserState(Generic[T]):
             rest: str,
             characters_consumed=None,
     ) -> Trampoline:
-        next_parser, next_bind = self.get_bind(value)
-        if next_parser is None:
-            return Result((value, rest))
-        else:
+        if self.has_binding():
+            next_parser, next_bind = self.get_bind(value)
             if characters_consumed is None:
                 new_location = len(self.document) - len(rest)
             else:
@@ -136,6 +134,8 @@ class ParserState(Generic[T]):
                 rest,
                 next_bind.set_location(new_location)
             )
+        else:
+            return Result((value, rest))
 
     @property
     def current_location(self):
