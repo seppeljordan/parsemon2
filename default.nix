@@ -3,10 +3,24 @@ with (import <nixpkgs> {});
 let
   f =
     { buildPythonPackage, pytest, mypy, flake8, sphinx, lib }:
+    let
+    sourceFilter = name: type:
+      let baseName = with builtins; baseNameOf (toString name); in
+      lib.cleanSourceFilter name type &&
+      !(
+        (type == "directory" && lib.hasSuffix ".egg-info" baseName)||
+        (type == "directory" && baseName == "tmp")||
+        (type == "directory" && baseName == "__pycache__")||
+        (type == "directory" && baseName == ".pytest_cache")
+      );
+    in
     buildPythonPackage {
       name = "parsemon2";
       buildInputs = [ pytest mypy flake8 sphinx];
-      src = lib.cleanSource ./.;
+      src = lib.cleanSourceWith {
+        filter = sourceFilter;
+        src = ./.;
+      };
       checkPhase = ''
         sh run-tests.sh
       '';

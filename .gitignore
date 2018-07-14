@@ -5,3 +5,6 @@
 /result
 /.pytest_cache/
 /build
+/testenv
+/dist
+/MANIFEST

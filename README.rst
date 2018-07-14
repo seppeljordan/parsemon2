@@ -3,7 +3,7 @@ parsemon2
 
 This is yet another attempt to bring monadic parsing to python.  The
 problem the author saw with many other implementations is a limit to
-their composability.  A lot of the times these otherwise quit well
+their composability.  A lot of the times these otherwise quite well
 written implementations suffer pretty bad from pythons lack of TCO.
 This implementation uses trampolines to get around that.
 

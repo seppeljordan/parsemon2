@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+
+INSTALL_ONLY="false"
+
+while getopts "i" options; do
+    case "${options}" in
+        i)
+            INSTALL_ONLY="true"
+            ;;
+    esac
+done
+
+set -e
+
+VERSION=$(cat VERSION)
+
+function upload_check() {
+
+    nix-shell -p python3 --command 'python setup.py sdist'
+    nix-shell -p python3Packages.twine --command \
+              "twine upload -r test-pypi dist/parsemon2-${VERSION}.tar.gz"
+}
+
+function install_check() {
+    rm -rf testenv
+    mkdir -p "testenv"
+    nix-shell \
+        -p python3Packages.virtualenv \
+        --command "virtualenv testenv"
+    testenv/bin/pip install \
+                    --no-cache-dir \
+                    --index-url https://test.pypi.org/simple/ \
+                    parsemon2==${VERSION}
+}
+
+if [ ${INSTALL_ONLY} = "false" ]; then
+    upload_check
+fi
+install_check
