@@ -8,3 +8,5 @@
 /testenv
 /dist
 /MANIFEST
+/htmlcov
+/.coverage

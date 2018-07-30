@@ -1,5 +1,5 @@
 from copy import copy
-from typing import Callable, Generic, Tuple, TypeVar
+from typing import Callable, Generic, Tuple, TypeVar, Sized
 
 from parsemon.error import ParsingFailed
 from parsemon.sourcemap import (display_location, find_line_in_indices,
@@ -7,16 +7,33 @@ from parsemon.sourcemap import (display_location, find_line_in_indices,
 from parsemon.stack import Stack, StackEmptyError
 from parsemon.trampoline import Call, Result, Trampoline
 
-S = TypeVar('S')
 T = TypeVar('T')
+ParserResult = TypeVar('ParserResult')
+ParserInput = TypeVar('ParserInput')
 
-Parser = Callable[[str, 'ParserState'], Trampoline[Tuple[T, str]]]
 
-
-class ParserState(Generic[T]):
+class Parser(Generic[ParserResult, ParserInput]):
     def __init__(
             self,
-            document: str,
+            function: Callable[
+                [ParserInput, 'ParserState'],
+                Trampoline[Tuple[ParserResult, ParserInput]]
+            ]
+    ) -> None:
+        self.function = function
+
+    def __call__(
+            self,
+            input_value: ParserInput,
+            parser_state: 'ParserState'
+    ) -> Trampoline[Tuple[ParserResult, ParserInput]]:
+        return self.function(input_value, parser_state)
+
+
+class ParserState(Generic[T, ParserResult]):
+    def __init__(
+            self,
+            document: Sized,
             location: int,
     ) -> None:
         self.callbacks = Stack()
@@ -43,16 +60,20 @@ class ParserState(Generic[T]):
     def get_bind(
             self,
             value: T
-    ) -> Tuple[Parser[S], 'ParserState[T]']:
+    ) -> Tuple[Parser[ParserResult, Sized], 'ParserState[T, ParserResult]']:
+        parser_generator: Callable[[T], Parser[ParserResult, Sized]]
         parser_generator = self.callbacks.top()
         next_parser_bind = copy(self)
         next_parser_bind.callbacks = self.callbacks.pop()
-        return (parser_generator(value), next_parser_bind)
+        return (
+            parser_generator(value),
+            next_parser_bind
+        )
 
     def add_binding(
             self,
-            binding: Callable[[T], Parser[T]]
-    ):
+            binding: Callable[[T], Parser[T, ParserInput]]
+    ) -> 'ParserState[T, ParserResult]':
         newbind = copy(self)
         newbind.callbacks = self.callbacks.push(binding)
         return newbind
@@ -77,7 +98,10 @@ class ParserState(Generic[T]):
         newbind.error_messages = self.error_messages.push(msg_generator)
         return newbind
 
-    def copy_error_messages_from(self, other):
+    def copy_error_messages_from(
+            self,
+            other: 'ParserState[T, ParserResult]'
+    ) -> 'ParserState[T, ParserResult]':
         p = copy(self)
         for item in reversed(other.error_messages):
             p.push_error_message_generator(item)
@@ -95,9 +119,9 @@ class ParserState(Generic[T]):
 
     def add_choice(
             self,
-            parser: Parser[T],
+            parser: Parser[ParserResult, str],
             rest: str
-    ) -> 'ParserState[T]':
+    ) -> 'ParserState[T, ParserResult]':
         newbind = copy(self)
         newbind.choices = self.choices.push((
             parser,
@@ -120,10 +144,12 @@ class ParserState(Generic[T]):
     def pass_result(
             self,
             value: T,
-            rest: str,
+            rest: Sized,
             characters_consumed=None,
     ) -> Trampoline:
         if self.has_binding():
+            next_parser: 'Parser[ParserResult, Sized]'
+            next_bind: 'ParserState[T, ParserResult]'
             next_parser, next_bind = self.get_bind(value)
             if characters_consumed is None:
                 new_location = len(self.document) - len(rest)

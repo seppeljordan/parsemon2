@@ -2,7 +2,7 @@ with (import <nixpkgs> {});
 
 let
   f =
-    { buildPythonPackage, pytest, mypy, flake8, sphinx, lib }:
+    { buildPythonPackage, pytest, mypy, flake8, sphinx, lib, pytestcov }:
     let
     sourceFilter = name: type:
       let baseName = with builtins; baseNameOf (toString name); in
@@ -16,7 +16,7 @@ let
     in
     buildPythonPackage {
       name = "parsemon2";
-      buildInputs = [ pytest mypy flake8 sphinx];
+      checkInputs = [ pytest mypy flake8 sphinx pytestcov ];
       src = lib.cleanSourceWith {
         filter = sourceFilter;
         src = ./.;
@@ -36,11 +36,6 @@ let
         cp build/man/parsemon2.3 $out/share/man/man3/parsemon2.3
       '';
     };
-  drv = callPackage f {
-    buildPythonPackage = python3Packages.buildPythonPackage;
-    pytest = python3Packages.pytest;
-    flake8 = python3Packages.flake8;
-    sphinx = python3Packages.sphinx;
-  };
+  drv = python3.pkgs.callPackage f {};
 in
 drv

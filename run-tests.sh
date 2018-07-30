@@ -3,5 +3,8 @@
 set -e
 
 mypy src/
-PYTHONPATH=src/:$PYTHONPATH pytest
+PYTHONPATH=src/:$PYTHONPATH pytest \
+          --cov=src \
+          --cov-report=term \
+          --cov-report=html
 flake8 src/
