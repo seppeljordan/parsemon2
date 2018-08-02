@@ -2,7 +2,7 @@ with (import <nixpkgs> {});
 
 let
   f =
-    { buildPythonPackage, pytest, mypy, flake8, sphinx, lib, pytestcov }:
+    { buildPythonPackage, pytest, mypy, flake8, sphinx, lib, pytestcov, attrs }:
     let
     sourceFilter = name: type:
       let baseName = with builtins; baseNameOf (toString name); in
@@ -17,6 +17,7 @@ let
     buildPythonPackage {
       name = "parsemon2";
       checkInputs = [ pytest mypy flake8 sphinx pytestcov ];
+      propagatedBuildInputs = [ attrs ];
       src = lib.cleanSourceWith {
         filter = sourceFilter;
         src = ./.;

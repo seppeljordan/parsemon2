@@ -10,7 +10,29 @@ Welcome to parsemon2's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+parsemon
+--------
+
 .. automodule:: parsemon
+   :members:
+   :imported-members:
+
+parsemon.parser
+---------------
+
+.. automodule:: parsemon.parser
+   :members:
+
+parsemon.trampoline
+-------------------
+
+.. automodule:: parsemon.trampoline
+   :members:
+
+parsemon.validator
+------------------
+
+.. automodule:: parsemon.validator
    :members:
 
 Indices and tables

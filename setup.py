@@ -15,5 +15,8 @@ setup(
     description=u"A monadic parser combinator written purely in python",
     package_dir = {'': 'src'},
     license="GPL-3",
-    packages=['parsemon']
+    packages=['parsemon'],
+    install_requires=[
+        'attrs'
+    ],
 )

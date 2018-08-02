@@ -1,25 +1,10 @@
 from functools import wraps
-from typing import Callable, Generic, TypeVar
-import abc
+from typing import Callable, Generic, TypeVar, Union
 
 T = TypeVar('T')
 
 
-class Trampoline(Generic[T], metaclass=abc.ABCMeta):
-
-    def __init__(self) -> None:
-        pass
-
-    @abc.abstractmethod
-    def is_result(self):
-        pass
-
-    @abc.abstractmethod
-    def __call__(self):
-        pass
-
-
-class Result(Trampoline, Generic[T]):
+class Result(Generic[T]):
     def __init__(self, value: T) -> None:
         self.value = value
 
@@ -30,7 +15,7 @@ class Result(Trampoline, Generic[T]):
         return self.value
 
 
-class Call(Trampoline, Generic[T]):
+class Call(Generic[T]):
     def __init__(
             self,
             f: Callable[..., T],
@@ -41,11 +26,14 @@ class Call(Trampoline, Generic[T]):
         self.args = args
         self.kwargs = kwargs
 
-    def is_result(self):
+    def is_result(self) -> bool:
         return False
 
     def __call__(self):
         return self.fun(*(self.args), **(self.kwargs))
+
+
+Trampoline = Union[Result[T], Call[T]]
 
 
 def with_trampoline(f: Callable[..., Trampoline[T]]) -> Callable[..., T]:

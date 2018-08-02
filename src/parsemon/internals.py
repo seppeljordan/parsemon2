@@ -1,6 +1,7 @@
 from copy import copy
-from typing import Callable, Generic, Tuple, TypeVar, Sized
+from typing import Callable, Generic, Sized, Tuple, TypeVar
 
+from attr import attrib, attrs, evolve
 from parsemon.error import ParsingFailed
 from parsemon.sourcemap import (display_location, find_line_in_indices,
                                 find_linebreak_indices)
@@ -8,46 +9,42 @@ from parsemon.stack import Stack, StackEmptyError
 from parsemon.trampoline import Call, Result, Trampoline
 
 T = TypeVar('T')
+S = TypeVar('S')
 ParserResult = TypeVar('ParserResult')
 ParserInput = TypeVar('ParserInput')
 
 
+@attrs
 class Parser(Generic[ParserResult, ParserInput]):
-    def __init__(
-            self,
-            function: Callable[
+    function: Callable[
                 [ParserInput, 'ParserState'],
                 Trampoline[Tuple[ParserResult, ParserInput]]
-            ]
-    ) -> None:
-        self.function = function
+            ] = attrib()
 
     def __call__(
             self,
             input_value: ParserInput,
-            parser_state: 'ParserState'
+            parser_state: 'ParserState[T, ParserResult]'
     ) -> Trampoline[Tuple[ParserResult, ParserInput]]:
         return self.function(input_value, parser_state)
 
 
+@attrs
 class ParserState(Generic[T, ParserResult]):
-    def __init__(
-            self,
-            document: Sized,
-            location: int,
-    ) -> None:
-        self.callbacks = Stack()
-        self.choices = Stack()
-        self.error_messages = Stack()
-        self.document = document
-        self.location = location
+    document: Sized = attrib()
+    location: int = attrib()
+    callbacks = attrib(default=Stack())
+    choices = attrib(default=Stack())
+    error_messages = attrib(default=Stack())
 
     def __copy__(self):
-        newbind = ParserState(self.document, self.location)
-        newbind.callbacks = self.callbacks
-        newbind.choices = self.choices
-        newbind.error_messages = self.error_messages
-        return newbind
+        return ParserState(
+            document=self.document,
+            location=self.location,
+            callbacks=self.callbacks,
+            choices=self.choices,
+            error_messages=self.error_messages
+        )
 
     def set_location(self, new_location):
         new_state = copy(self)
@@ -72,11 +69,12 @@ class ParserState(Generic[T, ParserResult]):
 
     def add_binding(
             self,
-            binding: Callable[[T], Parser[T, ParserInput]]
-    ) -> 'ParserState[T, ParserResult]':
-        newbind = copy(self)
-        newbind.callbacks = self.callbacks.push(binding)
-        return newbind
+            binding: Callable[[T], Parser[S, ParserInput]]
+    ) -> 'ParserState[T, S]':
+        return evolve(  # type: ignore
+            self,
+            callbacks=self.callbacks.push(binding)
+        )
 
     def finally_remove_error_message(self):
         def pop_error_message(value):
