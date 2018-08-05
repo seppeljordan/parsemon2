@@ -14,9 +14,13 @@ setup(
     long_description=long_description,
     description=u"A monadic parser combinator written purely in python",
     package_dir = {'': 'src'},
-    license="GPL-3",
     packages=['parsemon'],
     install_requires=[
         'attrs'
+    ],
+    classifiers = [
+        'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.6',
     ],
 )
