@@ -175,7 +175,7 @@ def seperated_by(parser, seperator):
 def enclosed_by(
         parser: Parser[S, T],
         prefix_parser: Parser[U, T],
-        suffix_parser: Parser[U, T]=None
+        suffix_parser: Parser[U, T] = None
 ) -> Parser[S, T]:
     '''Parse a string enclosed by delimeters
 
@@ -221,7 +221,7 @@ def run_parser(
         return parsing_result
 
 
-def character(n: int=1) -> Parser[str, str]:
+def character(n: int = 1) -> Parser[str, str]:
     """Parse exactly n characters, the default is 1."""
     def parser(s, bind):
         rest_length = len(s)
