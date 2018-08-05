@@ -1,5 +1,6 @@
 # flake8: noqa: F401
 
+from .coroutine import do
 from .error import NotEnoughInput, ParsingFailed
 from .internals import Parser
 from .parser import (bind, chain, character, choice, choices, enclosed_by,
