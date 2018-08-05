@@ -35,7 +35,8 @@ def bind(
 
 def chain(
         first: Parser[S, U],
-        second: Parser[T, U]
+        second: Parser[T, U],
+        *rest
 ) -> Parser[T, U]:
     '''Combine to parsers and only use the result of the second parser
 
@@ -43,10 +44,13 @@ def chain(
     :param second: a parser that is applied after first, the result of this
         parser will be returned by the resulting parser
     '''
-    return bind(
-        first,
-        lambda _: second,
-    )
+    def _chain(p1, p2):
+        return bind(
+            p1,
+            lambda _: p2
+        )
+    first_and_second_parser_combined = _chain(first, second)
+    return reduce(_chain, rest, first_and_second_parser_combined)
 
 
 def unit(u: T) -> Parser[T, U]:

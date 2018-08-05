@@ -186,6 +186,16 @@ def test_chain_executes_two_parsers_and_returns_result_of_second_one():
     )
     assert run_parser(p, 'ab') == 'b'
 
+
+def test_chain_can_take_3_parsers_as_args():
+    p = chain(
+        literal('a'),
+        literal('b'),
+        literal('c')
+    )
+    assert run_parser(p, 'abc') == 'c'
+
+
 def test_if_a_choice_failes_in_the_middle_of_chain_it_retries_other_option():
     p = choice(
         chain(
