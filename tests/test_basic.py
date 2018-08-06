@@ -1,5 +1,4 @@
-from parsemon import run_parser
-from parsemon import integer
+from parsemon import do, integer, run_parser
 
 
 def test_if_integer_parses_1_digit():
