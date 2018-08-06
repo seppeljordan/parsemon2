@@ -10,15 +10,14 @@ def do(f):
     It expects a generator that returns something in the end and takes
     no arguments.
 
-    It lets you write parsers like the following:
+    It lets you write parsers like the following::
 
-    .. code:: python
-      @do
-      def 3_letters():
-          first = yield character()
-          second = yield character()
-          third = yield character()
-          return first + second + third
+        @do
+        def three_letters():
+            first = yield character()
+            second = yield character()
+            third = yield character()
+            return first + second + third
 
     """
     class StartIteration:
