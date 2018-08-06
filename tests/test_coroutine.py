@@ -32,3 +32,13 @@ def test_can_use_do_notation_in_choice():
 
     assert run_parser(p, 'aba') == 'a'
     assert run_parser(p, 'abb') == 'b'
+
+
+def test_do_can_handle_1000_parsers_combined_in_one_do_block():
+    @do
+    def a_10000_times():
+        for n in range(0,1000):
+            yield literal('a')
+        return True
+
+    assert run_parser(a_10000_times, 'a' * 1000)
