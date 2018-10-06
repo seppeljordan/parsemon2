@@ -1,7 +1,7 @@
 import pytest
 from parsemon import (bind, chain, character, choice, choices, enclosed_by,
                       fail, fmap, literal, many, many1, none_of, one_of,
-                      run_parser, seperated_by, unit, until)
+                      run_parser, seperated_by, unit, until, whitespace)
 from parsemon.error import NotEnoughInput, ParsingFailed
 from parsemon.sourcemap import display_location
 
@@ -325,3 +325,15 @@ def test_choices():
         ),
         'b'
     ) == 'b'
+
+
+def test_whitespace_parses_regular_space_character():
+    assert run_parser(whitespace, "\u0020") == "\u0020"
+
+
+def test_whitespace_parses_tab_char():
+    assert run_parser(whitespace, '\t') == '\t'
+
+
+def test_whitespace_parses_newline_char():
+    assert run_parser(whitespace, '\n') == '\n'

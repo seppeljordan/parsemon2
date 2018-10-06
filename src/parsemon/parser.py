@@ -1,5 +1,5 @@
 from functools import reduce
-from typing import Callable, Sized, TypeVar
+from typing import Callable, Sized, TypeVar, List
 
 from attr import evolve
 from parsemon.error import NotEnoughInput, ParsingFailed
@@ -333,3 +333,36 @@ def literal(string_to_parse: str) -> Parser[str, str]:
                 )
             )
     return Parser(parser)
+
+
+whitespace_unicode_characters_decimals: List[int] = [
+    9,
+    10,
+    11,
+    12,
+    13,
+    32,
+    133,
+    160,
+    5760,
+    8192,
+    8193,
+    8194,
+    8195,
+    8196,
+    8197,
+    8198,
+    8199,
+    8200,
+    8201,
+    8202,
+    8232,
+    8233,
+    8239,
+    8287,
+    12288
+]
+
+whitespace = one_of(
+    ''.join(map(chr, whitespace_unicode_characters_decimals))
+)
