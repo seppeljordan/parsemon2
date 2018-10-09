@@ -1,4 +1,5 @@
 from parsemon.trampoline import Call, Result, with_trampoline
+from functools import reduce
 
 
 class StackBottom(object):
@@ -65,3 +66,10 @@ class Stack():
 
     def __reversed__(self):
         yield from reversed(list(self))
+
+    def flipped(self):
+        return reduce(
+            lambda accu, next: accu.push(next),
+            self,
+            Stack()
+        )

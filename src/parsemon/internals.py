@@ -108,22 +108,22 @@ class ParserState(Generic[T, ParserResult]):
             msg_generator: Callable[[], str]
     ):
         newbind = copy(self)
-        newbind.error_messages = self.error_messages.push(msg_generator)
+        newbind.error_messages = self.error_messages.append(msg_generator)
         return newbind
 
     def copy_error_messages_from(
             self,
             other: 'ParserState[T, ParserResult]'
     ) -> 'ParserState[T, ParserResult]':
-        p = copy(self)
-        for item in reversed(other.error_messages):
-            p.push_error_message_generator(item)
-        return p
+        return evolve(self, error_messages=other.error_messages)
 
     def get_error_messages(self):
         return list(self.error_messages)
 
     def finally_remove_choice(self):
+        """Returns new parser state where all choices are removed after
+        succesfull parsing.
+        """
         def pop_choice_parser(value):
             return lambda rest, bindings: (
                 bindings.pop_choice().pass_result(value, rest)
@@ -212,7 +212,7 @@ class ParserState(Generic[T, ParserResult]):
             old_message_generators = self.get_error_messages()
             old_messages = list(map(lambda f: f(), old_message_generators))
             final_message = ' OR '.join(
-                [rendered_message()] + old_messages
+                old_messages + [rendered_message()]
             )
             raise exception(final_message)
         else:

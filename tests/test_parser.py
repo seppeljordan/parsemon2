@@ -249,6 +249,36 @@ def test_failure_of_choice_of_3_literals_should_contain_all_3_literal():
     assert 'second' in error_message
     assert 'third' in error_message
 
+def test_that_error_message_respects_ordering_of_failing_choices():
+    p = choice(
+        literal('first'),
+        literal('second'),
+    )
+    with pytest.raises(ParsingFailed) as err:
+        run_parser(p, 'xxxxxxxxxxxxxx')
+    error_message = str(err.value)
+    assert 'second' in error_message.split('first')[1]
+    assert 'first' not in error_message.split('second')[1]
+
+
+def test_that_error_message_order_is_preserved_with_3_choices():
+    p = choice(
+        literal('first'),
+        choice(
+            literal('second'),
+            literal('third'),
+        )
+    )
+    with pytest.raises(ParsingFailed) as err:
+        run_parser(p, 'xxxxxxxxxxxxxx')
+    error_message = str(err.value)
+    print(error_message)
+    assert 'second' in error_message.split('first')[1]
+    assert 'third' in error_message.split('first')[1]
+    assert 'first' in error_message.split('second')[0]
+    assert 'third' in error_message.split('second')[1]
+
+
 def test_a_simple_failing_parser_prints_column_0_as_error():
     p = fail('error')
     with pytest.raises(ParsingFailed) as err:
