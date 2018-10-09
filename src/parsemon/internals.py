@@ -1,9 +1,6 @@
 """Contains the implementation of the parser monad.  This module is not intended
 to be used from outside this library
 """
-
-
-from copy import copy
 from typing import Callable, Generic, Sized, Tuple, TypeVar
 
 from attr import attrib, attrs, evolve
@@ -37,27 +34,20 @@ class Parser(Generic[ParserResult, ParserInput]):
 
 @attrs
 class ParserState(Generic[T, ParserResult]):
+    """Class to handle the parsing process"""
     document: Sized = attrib()
     location: int = attrib()
     callbacks = attrib(default=Stack())
     choices = attrib(default=Stack())
     error_messages = attrib(default=Stack())
 
-    def __copy__(self):
-        return ParserState(
-            document=self.document,
-            location=self.location,
-            callbacks=self.callbacks,
-            choices=self.choices,
-            error_messages=self.error_messages
-        )
-
     def set_location(self, new_location):
         """Return new parsing status with document cursor set to given location.
         """
-        new_state = copy(self)
-        new_state.location = new_location
-        return new_state
+        return evolve(
+            self,
+            location=new_location
+        )
 
     def has_binding(self):
         """Check if there are more parsing statements to process."""
@@ -70,19 +60,19 @@ class ParserState(Generic[T, ParserResult]):
         """Get next parser and updated parser state from previous parsing
         result.
         """
-        parser_generator: Callable[[T], Parser[ParserResult, Sized]]
-        parser_generator = self.callbacks.top()
-        next_parser_bind = copy(self)
-        next_parser_bind.callbacks = self.callbacks.pop()
         return (
-            parser_generator(value),
-            next_parser_bind
+            self.callbacks.top()(value),
+            evolve(
+                self,
+                callbacks=self.callbacks.pop()
+            )
         )
 
     def add_binding(
             self,
             binding: Callable[[T], Parser[S, ParserInput]]
     ) -> 'ParserState[T, S]':
+        '''Add parsing continuation to the parser state'''
         return evolve(  # type: ignore
             self,
             callbacks=self.callbacks.push(binding)
@@ -99,25 +89,31 @@ class ParserState(Generic[T, ParserResult]):
         return self.add_binding(pop_error_message)
 
     def pop_error_message(self):
-        newbind = copy(self)
-        newbind.error_messages = self.error_messages.pop()
-        return newbind
+        """Remove error message from message stack"""
+        return evolve(
+            self,
+            error_messages=self.error_messages.pop()
+        )
 
     def push_error_message_generator(
             self,
             msg_generator: Callable[[], str]
     ):
-        newbind = copy(self)
-        newbind.error_messages = self.error_messages.append(msg_generator)
-        return newbind
+        '''Push new error message onto the message stack'''
+        return evolve(
+            self,
+            error_messages=self.error_messages.append(msg_generator)
+        )
 
     def copy_error_messages_from(
             self,
             other: 'ParserState[T, ParserResult]'
     ) -> 'ParserState[T, ParserResult]':
+        """Copy error messages from other parser state"""
         return evolve(self, error_messages=other.error_messages)
 
     def get_error_messages(self):
+        """Get all error messages stored in parser state."""
         return list(self.error_messages)
 
     def finally_remove_choice(self):
@@ -135,19 +131,22 @@ class ParserState(Generic[T, ParserResult]):
             parser: Parser[ParserResult, str],
             rest: str
     ) -> 'ParserState[T, ParserResult]':
-        newbind = copy(self)
-        newbind.choices = self.choices.push((
-            parser,
-            rest,
-            self.finally_remove_error_message()
-        ))
-        return newbind.finally_remove_choice()
+        '''Add a new alternative parser to parser state.'''
+        return evolve(
+            self,
+            choices=self.choices.push((
+                parser,
+                rest,
+                self.finally_remove_error_message()
+            ))
+        ).finally_remove_choice()
 
     def pop_choice(self):
         """Return a new parser state with next choice on stack removed"""
-        newbind = copy(self)
-        newbind.choices = self.choices.pop()
-        return newbind
+        return evolve(
+            self,
+            choices=self.choices.pop()
+        )
 
     def next_choice(self):
         """Returns possibly the next choice given to the parser"""
@@ -183,19 +182,13 @@ class ParserState(Generic[T, ParserResult]):
     @property
     def current_location(self):
         """Current location in the document that is to be parsed"""
-        def do_it():
-            linebreaks = find_linebreak_indices(self.document)
-            line = find_line_in_indices(self.location, linebreaks)
-            if linebreaks:
-                column = self.location - linebreaks[line - 2] - 1
-            else:
-                column = self.location
-            return line, column
-
-        if hasattr(self, "_current_location"):
-            return self._current_location
-        self._current_location = do_it()
-        return self._current_location
+        linebreaks = find_linebreak_indices(self.document)
+        line = find_line_in_indices(self.location, linebreaks)
+        if linebreaks:
+            column = self.location - linebreaks[line - 2] - 1
+        else:
+            column = self.location
+        return line, column
 
     def parser_failed(self, msg, exception=ParsingFailed):
         """Signals that the current parsing attempt failed.
