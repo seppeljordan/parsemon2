@@ -1,0 +1,9 @@
+#!/usr/bin/env sh
+
+# Name of the directory that this script is located in, we need it to
+# find default.nix
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
+
+CMD="exec pylint $*"
+
+exec nix-shell $DIR --command "$CMD"

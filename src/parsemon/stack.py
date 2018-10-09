@@ -18,7 +18,7 @@ class Stack():
         self.next_elem = None
 
     def empty(self):
-        return self.value == stack_bottom
+        return self.value is stack_bottom
 
     def push(self, elem):
         s = Stack()
