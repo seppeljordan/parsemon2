@@ -7,4 +7,3 @@ PYTHONPATH=src/:$PYTHONPATH pytest \
           --cov=src \
           --cov-report=term \
           --cov-report=html
-pylint src/

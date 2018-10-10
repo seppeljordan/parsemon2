@@ -1,7 +1,7 @@
 """Contains the implementation of the parser monad.  This module is not intended
 to be used from outside this library
 """
-from typing import Callable, Generic, Sized, Tuple, TypeVar
+from typing import Callable, Generic, Sized, Tuple, TypeVar, Any
 
 from attr import attrib, attrs, evolve
 from parsemon.error import ParsingFailed
@@ -10,8 +10,8 @@ from parsemon.sourcemap import (display_location, find_line_in_indices,
 from parsemon.stack import Stack, StackEmptyError
 from parsemon.trampoline import Call, Result, Trampoline
 
-T = TypeVar('T')
-S = TypeVar('S')
+CallbackInput = TypeVar('CallbackInput')
+NextParserResult = TypeVar('NextParserResult')
 ParserResult = TypeVar('ParserResult')
 ParserInput = TypeVar('ParserInput')
 
@@ -27,13 +27,13 @@ class Parser(Generic[ParserResult, ParserInput]):
     def __call__(
             self,
             input_value: ParserInput,
-            parser_state: 'ParserState[T, ParserResult]'
+            parser_state: 'ParserState[Any, ParserResult]'
     ) -> Trampoline[Tuple[ParserResult, ParserInput]]:
         return self.function(input_value, parser_state)
 
 
 @attrs
-class ParserState(Generic[T, ParserResult]):
+class ParserState(Generic[CallbackInput, ParserResult]):
     """Class to handle the parsing process"""
     document: Sized = attrib()
     location: int = attrib()
@@ -55,8 +55,11 @@ class ParserState(Generic[T, ParserResult]):
 
     def get_bind(
             self,
-            value: T
-    ) -> Tuple[Parser[ParserResult, Sized], 'ParserState[T, ParserResult]']:
+            value: CallbackInput
+    ) -> Tuple[
+        Parser[ParserResult, Sized],
+        'ParserState[CallbackInput, ParserResult]'
+    ]:
         """Get next parser and updated parser state from previous parsing
         result.
         """
@@ -70,8 +73,11 @@ class ParserState(Generic[T, ParserResult]):
 
     def add_binding(
             self,
-            binding: Callable[[T], Parser[S, ParserInput]]
-    ) -> 'ParserState[T, S]':
+            binding: Callable[
+                [CallbackInput],
+                Parser[NextParserResult, ParserInput]
+            ]
+    ) -> 'ParserState[CallbackInput, NextParserResult]':
         '''Add parsing continuation to the parser state'''
         return evolve(  # type: ignore
             self,
@@ -107,8 +113,8 @@ class ParserState(Generic[T, ParserResult]):
 
     def copy_error_messages_from(
             self,
-            other: 'ParserState[T, ParserResult]'
-    ) -> 'ParserState[T, ParserResult]':
+            other: 'ParserState[Any, ParserResult]'
+    ) -> 'ParserState[CallbackInput, ParserResult]':
         """Copy error messages from other parser state"""
         return evolve(self, error_messages=other.error_messages)
 
@@ -130,7 +136,7 @@ class ParserState(Generic[T, ParserResult]):
             self,
             parser: Parser[ParserResult, str],
             rest: str
-    ) -> 'ParserState[T, ParserResult]':
+    ) -> 'ParserState[CallbackInput, ParserResult]':
         '''Add a new alternative parser to parser state.'''
         return evolve(
             self,
@@ -157,14 +163,14 @@ class ParserState(Generic[T, ParserResult]):
 
     def pass_result(
             self,
-            value: T,
+            value: CallbackInput,
             rest: Sized,
             characters_consumed=None,
     ) -> Trampoline:
         """Signals that parsing was successful"""
         if self.has_binding():
             next_parser: 'Parser[ParserResult, Sized]'
-            next_bind: 'ParserState[T, ParserResult]'
+            next_bind: 'ParserState[CallbackInput, ParserResult]'
 
             next_parser, next_bind = self.get_bind(value)
             if characters_consumed is None:
