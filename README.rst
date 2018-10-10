@@ -12,3 +12,16 @@ that come with this package show already that it's parsing ability is
 not dependent on pythons recursion limit.
 
 We also have error messages.
+
+
+Changes
+=======
+
+1.1
+---
+
+- Implement validators
+- ``chain`` now accepts 1 or more arguments
+- Implement do notation
+- New whitespace parser
+- New parser for integers
