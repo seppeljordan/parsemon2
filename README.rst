@@ -17,6 +17,11 @@ We also have error messages.
 Changes
 =======
 
+2.0
+---
+
+- Parsers constructed with ``do`` can now take arguments
+
 1.1
 ---
 
