@@ -1,4 +1,5 @@
 import pytest
+
 from parsemon import character, fmap, run_parser
 from parsemon.error import ParsingFailed
 from parsemon.parser import many1

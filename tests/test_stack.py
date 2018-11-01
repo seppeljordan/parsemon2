@@ -1,4 +1,5 @@
 import pytest
+
 from parsemon.stack import Stack, StackEmptyError
 
 
