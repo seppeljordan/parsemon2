@@ -9,7 +9,7 @@ def test_can_combine_2_parsers_with_do():
         second = yield literal('b')
         return first + second
 
-    assert run_parser(a_and_b, 'ab') == 'ab'
+    assert run_parser(a_and_b(), 'ab') == 'ab'
 
 
 def test_can_use_do_notation_in_choice():
@@ -21,11 +21,11 @@ def test_can_use_do_notation_in_choice():
 
     p = choice(
         chain(
-            a_and_b,
+            a_and_b(),
             literal('a')
         ),
         chain(
-            a_and_b,
+            a_and_b(),
             literal('b')
         )
     )
@@ -41,4 +41,14 @@ def test_do_can_handle_1000_parsers_combined_in_one_do_block():
             yield literal('a')
         return True
 
-    assert run_parser(a_10000_times, 'a' * 1000)
+    assert run_parser(a_10000_times(), 'a' * 1000)
+
+
+def test_do_can_handle_parameters_correctly():
+    @do
+    def a_for_n_times(n):
+        for _ in range(0,n):
+            yield literal('a')
+        return True
+
+    assert run_parser(a_for_n_times(5), 'a' * 5)

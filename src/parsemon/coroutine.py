@@ -1,5 +1,6 @@
-from .parser import bind
-from .parser import unit
+from functools import wraps
+
+from .parser import bind, unit
 
 
 def do(f):
@@ -20,24 +21,28 @@ def do(f):
             return first + second + third
 
     """
-    class StartIteration:
-        pass
+    @wraps(f)
+    def decorator(*args, **kwargs):
+        class StartIteration:
+            pass
 
-    def inner(value, parser=None):
-        if value is StartIteration:
-            parser = f()
-            value = None
-        try:
-            next_parser = parser.send(value)
-        except StopIteration as e:
-            return unit(e.args[0])
-        else:
-            return bind(
-                next_parser,
-                lambda next_value: inner(next_value, parser)
-            )
+        def inner(value, parser=None):
+            if value is StartIteration:
+                parser = f(*args, **kwargs)
+                value = None
+            try:
+                next_parser = parser.send(value)
+            except StopIteration as e:
+                return unit(e.args[0])
+            else:
+                return bind(
+                    next_parser,
+                    lambda next_value: inner(next_value, parser)
+                )
 
-    return bind(
-        unit(StartIteration),
-        inner
-    )
+        return bind(
+            unit(StartIteration),
+            inner
+        )
+
+    return decorator

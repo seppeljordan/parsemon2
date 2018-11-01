@@ -1,9 +1,10 @@
 """Contains the implementation of the parser monad.  This module is not intended
 to be used from outside this library
 """
-from typing import Callable, Generic, Sized, Tuple, TypeVar, Any
+from typing import Any, Callable, Generic, Sized, Tuple, TypeVar
 
 from attr import attrib, attrs, evolve
+
 from parsemon.error import ParsingFailed
 from parsemon.sourcemap import (display_location, find_line_in_indices,
                                 find_linebreak_indices)

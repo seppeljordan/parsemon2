@@ -1,7 +1,8 @@
 from functools import reduce
-from typing import Callable, Sized, TypeVar, List
+from typing import Callable, List, Sized, TypeVar
 
 from attr import evolve
+
 from parsemon.error import NotEnoughInput, ParsingFailed
 from parsemon.internals import Parser, ParserState
 from parsemon.trampoline import Call, with_trampoline

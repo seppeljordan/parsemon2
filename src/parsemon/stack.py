@@ -1,5 +1,6 @@
-from parsemon.trampoline import Call, Result, with_trampoline
 from functools import reduce
+
+from parsemon.trampoline import Call, Result, with_trampoline
 
 
 class StackBottom(object):
