@@ -21,6 +21,8 @@ Changes
 ---
 
 - Parsers constructed with ``do`` can now take arguments
+- New parser for floating point numbers: ``parsmon.basic.floating_point``
+- ``do`` can now handle wrapped functions without yield
 
 1.1
 ---
