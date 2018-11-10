@@ -34,6 +34,8 @@ def do(f):
                 next_parser = parser.send(value)
             except StopIteration as e:
                 return unit(e.args[0])
+            except AttributeError:
+                return unit(parser)
             else:
                 return bind(
                     next_parser,

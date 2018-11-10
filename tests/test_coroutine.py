@@ -52,3 +52,11 @@ def test_do_can_handle_parameters_correctly():
         return True
 
     assert run_parser(a_for_n_times(5), 'a' * 5)
+
+
+def test_that_do_can_handle_parsers_that_does_not_consume_anything():
+    @do
+    def parse_nothing():
+        return True
+
+    assert run_parser(parse_nothing(), '')
