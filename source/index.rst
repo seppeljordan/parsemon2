@@ -17,6 +17,12 @@ parsemon
    :members:
    :imported-members:
 
+parsemon.basic
+--------------
+
+.. automodule:: parsemon.basic
+   :members:
+
 parsemon.parser
 ---------------
 

@@ -367,3 +367,5 @@ whitespace_unicode_characters_decimals: List[int] = [
 whitespace = one_of(
     ''.join(map(chr, whitespace_unicode_characters_decimals))
 )
+"""Parse any character that is classified as a whitespace character by unicode
+standard.  That includes newline characters."""
