@@ -1,4 +1,6 @@
-from parsemon import do, floating_point, integer, run_parser
+import pytest
+
+from parsemon import ParsingFailed, do, floating_point, integer, run_parser
 
 
 def test_if_integer_parses_1_digit():
@@ -35,3 +37,20 @@ def test_if_floating_point_parses_number_without_rational_part():
 
 def test_if_floating_point_recognizes_one_sign_before_number():
     assert run_parser(floating_point(), '+1.1') == +1.1
+
+
+def test_if_floating_point_recognizes_custom_delimiters():
+    assert run_parser(floating_point(delimiter=','), '123,12') == 123.12
+
+
+def test_if_floating_point_recognizes_custom_delimiters_without_integer_part():
+    assert run_parser(floating_point(delimiter=','), '-,2') == -.2
+
+
+def test_if_floating_point_recognizes_float_with_e_notation():
+    assert run_parser(floating_point(), '1e1') == 1e1
+
+
+def test_that_floating_point_does_not_recognize_number_without_rational_part():
+    with pytest.raises(ParsingFailed):
+        run_parser(floating_point(), '.e1')

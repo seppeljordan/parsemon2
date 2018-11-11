@@ -1,10 +1,12 @@
-from functools import reduce
+"""Implement basic parsers that should be generally useful"""
 
 from .coroutine import do
-from .parser import choice, choices, fmap, literal, many, many1, one_of, unit
+from .parser import (chain, choice, choices, fmap, literal, many, many1,
+                     one_of, unit)
 
 
 def concat(chars):
+    """Concatenate a list of chars to a string"""
     return ''.join(chars)
 
 
@@ -30,24 +32,28 @@ def integer():
 
 
 @do
-def floating_point():
-    """Parse a floating point number."""
+def floating_point(delimiter: str ='.'):
+    """Parse a floating point number.
+
+    :param delimiter: defaults to ., is expected token to seperate integer part
+        from rational part
+    """
     @do
     def without_integer_part():
-        yield literal('.')
+        yield literal(delimiter)
         after_point = yield PARSE_DIGITS
         return '', after_point
 
     @do
     def without_rational_part():
         before_point = yield PARSE_DIGITS
-        yield literal('.')
+        yield literal(delimiter)
         return before_point, ''
 
     @do
     def both_parts():
         before_point = yield PARSE_DIGITS
-        yield literal('.')
+        yield literal(delimiter)
         after_point = yield PARSE_DIGITS
         return before_point, after_point
 
@@ -61,22 +67,42 @@ def floating_point():
         return parsed
 
     @do
-    def actual_float():
+    def float_without_e():
         signum = yield sign()
         before_point, after_point = yield choices(
             both_parts(),
             without_integer_part(),
             without_rational_part(),
         )
-        return float(''.join([
-            signum,
-            before_point,
-            '.',
-            after_point
-        ]))
+        return signum, before_point, after_point
 
-    result = yield choice(
-        actual_float(),
-        fmap(float, integer())
+    @do
+    def parse_exponent():
+         result = yield choice(
+             chain(
+                 one_of('eE'),
+                 fmap(str, integer())
+             ),
+             unit('0')
+         )
+         return result
+
+    signum, before_point, after_point = yield choice(
+        float_without_e(),
+        fmap(
+            lambda i: (
+                '+' if i >= 0 else '-',
+                str(i),
+                ''
+            ),
+            integer()
+        )
     )
-    return result
+
+    exponent = yield parse_exponent()
+    return float("{signum}{before_point}.{after_point}E{exponent}".format(
+        signum=signum,
+        before_point=before_point,
+        after_point=after_point,
+        exponent=exponent
+    ))
