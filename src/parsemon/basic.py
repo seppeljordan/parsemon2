@@ -32,7 +32,7 @@ def integer():
 
 
 @do
-def floating_point(delimiter: str ='.'):
+def floating_point(delimiter: str = '.'):
     """Parse a floating point number.
 
     :param delimiter: defaults to ., is expected token to seperate integer part
@@ -78,14 +78,14 @@ def floating_point(delimiter: str ='.'):
 
     @do
     def parse_exponent():
-         result = yield choice(
-             chain(
-                 one_of('eE'),
-                 fmap(str, integer())
-             ),
-             unit('0')
-         )
-         return result
+        result = yield choice(
+            chain(
+                one_of('eE'),
+                fmap(str, integer())
+            ),
+            unit('0')
+        )
+        return result
 
     signum, before_point, after_point = yield choice(
         float_without_e(),

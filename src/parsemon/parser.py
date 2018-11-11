@@ -1,3 +1,5 @@
+"""This module contains the basic building blocks for implementing parsers"""
+
 from functools import reduce
 from typing import Callable, List, Sized, TypeVar
 
@@ -225,14 +227,14 @@ def run_parser(
 
 def character(n: int = 1) -> Parser[str, str]:
     """Parse exactly n characters, the default is 1."""
-    def parser(s, bind):
+    def parser(s, parser_state):
         rest_length = len(s)
         if rest_length >= n:
-            return bind.pass_result(
+            return parser_state.pass_result(
                 s[:n], s[n:], characters_consumed=n
             )
         else:
-            return bind.parser_failed(
+            return parser_state.parser_failed(
                 'Expected `{expected}` characters of input but got only '
                 '`{actual}`.'.format(
                     expected=n,
@@ -278,7 +280,7 @@ def one_of(
 ) -> Parser[str, str]:
     """Parse only characters contained in ``expected``."""
     def parser(s, state):
-        if len(s) < 1:
+        if not s:
             return state.parser_failed(
                 'Expected one of {expected}, but found end of string'.format(
                     expected=repr(expected),
@@ -318,18 +320,19 @@ def literal(string_to_parse: str) -> Parser[str, str]:
     '''Parse a literal string and return it as a result'''
     def parser(s, parser_bind):
         expected_length = len(string_to_parse)
-        if s.startswith(string_to_parse):
-            rest = s[expected_length:]
-            return parser_bind.pass_result(
-                string_to_parse, rest, characters_consumed=expected_length
-            )
-        else:
-            return parser_bind.parser_failed(
+        return (
+            parser_bind.pass_result(
+                string_to_parse,
+                s[expected_length:],
+                characters_consumed=expected_length
+            ) if s.startswith(string_to_parse) else
+            parser_bind.parser_failed(
                 'Expected string `{expected}`, but saw `{actual}`'.format(
                     expected=string_to_parse,
                     actual=s[:len(string_to_parse)],
                 )
             )
+        )
     return Parser(parser)
 
 

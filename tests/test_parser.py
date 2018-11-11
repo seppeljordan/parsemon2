@@ -373,4 +373,3 @@ def test_whitespace_parses_newline_char():
 def test_that_or_operator_works_as_expected():
     assert run_parser(whitespace | literal('a'), ' ') == ' '
     assert run_parser(whitespace | literal('a'), 'a') == 'a'
-
