@@ -32,6 +32,18 @@ class Parser(Generic[ParserResult, ParserInput]):
     ) -> Trampoline[Tuple[ParserResult, ParserInput]]:
         return self.function(input_value, parser_state)
 
+    def __or__(
+            self,
+            other
+    ):
+        def inner(s, parser_state):
+            return Call(
+                self,
+                s,
+                parser_state.add_choice(other, s)
+            )
+        return Parser(inner)
+
 
 @attrs
 class ParserState(Generic[CallbackInput, ParserResult]):

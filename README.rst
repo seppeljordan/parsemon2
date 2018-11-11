@@ -23,6 +23,8 @@ Changes
 - Parsers constructed with ``do`` can now take arguments
 - New parser for floating point numbers: ``parsmon.basic.floating_point``
 - ``do`` can now handle wrapped functions without yield
+- Implement ``x | y`` operator for parsers, it is a short hand for
+  ``choice(x,y)``
 
 1.1
 ---

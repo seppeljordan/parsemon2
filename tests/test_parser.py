@@ -368,3 +368,9 @@ def test_whitespace_parses_tab_char():
 
 def test_whitespace_parses_newline_char():
     assert run_parser(whitespace, '\n') == '\n'
+
+
+def test_that_or_operator_works_as_expected():
+    assert run_parser(whitespace | literal('a'), ' ') == ' '
+    assert run_parser(whitespace | literal('a'), 'a') == 'a'
+

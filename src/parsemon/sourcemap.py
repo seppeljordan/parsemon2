@@ -1,7 +1,7 @@
 from typing import List, Sized
 
 
-def display_location(line, column):
+def display_location(line, column) -> str:
     return 'L: {line}, C: {column}'.format(
         line=line,
         column=column,

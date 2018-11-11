@@ -83,14 +83,11 @@ def choice(
         first_parser: Parser[T, str],
         second_parser: Parser[T, str]
 ) -> Parser[T, str]:
-    '''Try one parser and try a second one if the first one fails'''
-    def parser(s: str, parser_bind: ParserState):
-        return Call(
-            first_parser,
-            s,
-            parser_bind.add_choice(second_parser, s)
-        )
-    return Parser(parser)
+    '''Try one parser and try a second one if the first one fails
+
+    This behaves the same way as ``first_parser | second_parser`` would.
+    '''
+    return first_parser | second_parser
 
 
 def choices(parser, *parsers):
