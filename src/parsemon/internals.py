@@ -5,11 +5,11 @@ from typing import Any, Callable, Generic, Sized, Tuple, TypeVar
 
 from attr import attrib, attrs, evolve
 
-from parsemon.error import ParsingFailed
-from parsemon.sourcemap import (display_location, find_line_in_indices,
-                                find_linebreak_indices)
-from parsemon.stack import Stack, StackEmptyError
-from parsemon.trampoline import Call, Result, Trampoline
+from .error import ParsingFailed
+from .sourcemap import (display_location, find_line_in_indices,
+                        find_linebreak_indices)
+from .stack import Stack, StackEmptyError
+from .trampoline import Call, Result, Trampoline
 
 CallbackInput = TypeVar('CallbackInput')
 NextParserResult = TypeVar('NextParserResult')

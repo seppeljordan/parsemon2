@@ -5,9 +5,9 @@ from typing import Callable, List, Sized, TypeVar
 
 from attr import evolve
 
-from parsemon.error import NotEnoughInput, ParsingFailed
-from parsemon.internals import Parser, ParserState
-from parsemon.trampoline import Call, with_trampoline
+from .error import NotEnoughInput, ParsingFailed
+from .internals import Parser, ParserState
+from .trampoline import Call, with_trampoline
 
 S = TypeVar('S')
 T = TypeVar('T')
