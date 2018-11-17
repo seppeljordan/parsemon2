@@ -5,9 +5,9 @@ from typing import Callable, List, Sized, TypeVar
 
 from attr import evolve
 
+from .deque import Stack
 from .error import NotEnoughInput, ParsingFailed
 from .internals import Parser, ParserState
-from .stack import Stack
 from .trampoline import Call, with_trampoline
 
 S = TypeVar('S')

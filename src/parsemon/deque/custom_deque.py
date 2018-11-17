@@ -53,7 +53,7 @@ class Deque:
 
     def __iter__(self):
         yield from self.front_stack
-        yield from self.front_stack.flipped()
+        yield from self.back_stack.flipped()
 
     def flipped(self):
         return evolve(

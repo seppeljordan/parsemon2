@@ -5,11 +5,10 @@ from typing import Any, Callable, Generic, Sized, Tuple, TypeVar
 
 from attr import attrib, attrs, evolve
 
+from .deque import StackEmptyError
 from .error import ParsingFailed
 from .sourcemap import (display_location, find_line_in_indices,
                         find_linebreak_indices)
-from .stack import StackEmptyError
-from .deque import Deque
 from .trampoline import Call, Result, Trampoline
 
 CallbackInput = TypeVar('CallbackInput')

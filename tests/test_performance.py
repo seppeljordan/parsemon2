@@ -1,8 +1,7 @@
 import pytest
 
-from parsemon import choices, literal, run_parser, many
-from parsemon.deque import Deque
-from parsemon.stack import Stack
+from parsemon import choices, literal, many, run_parser
+from parsemon.deque import Deque, PyrsistentDeque, Stack
 
 
 @pytest.mark.parametrize(
@@ -10,14 +9,17 @@ from parsemon.stack import Stack
     (
         Stack,
         Deque,
+        PyrsistentDeque,
     )
 )
 @pytest.mark.parametrize(
     'input_string',
     (
-        'a' * 4,
-        'b' * 4,
-        'ab' * 2,
+        'a' * 6,
+        'b' * 6,
+        'c' * 6,
+        'ab' * 3,
+        'abc' * 2,
     )
 )
 def test_stack_performance_with_many_choices(
@@ -29,6 +31,7 @@ def test_stack_performance_with_many_choices(
         choices(
             literal('a'),
             literal('b'),
+            literal('c'),
         )
     )
     benchmark(

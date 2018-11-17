@@ -36,6 +36,16 @@ class Stack():
         else:
             return self.value
 
+    def last(self):
+        if self.empty():
+            raise StackEmptyError(
+                'last on empty stack is not allowed'
+            )
+        current_node = self
+        while not current_node.next_elem.empty():
+            current_node = current_node.pop()
+        return current_node.value
+
     def pop(self):
         if self.empty():
             raise StackEmptyError(

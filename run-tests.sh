@@ -2,8 +2,10 @@
 
 set -e
 
-mypy src/
+# mypy src/
 PYTHONPATH=src/:$PYTHONPATH pytest \
           --cov=src \
           --cov-report=term \
-          --cov-report=html
+          --cov-report=html \
+          --benchmark-disable \
+          -v
