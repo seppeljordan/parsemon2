@@ -68,6 +68,14 @@ class Stack():
     def __reversed__(self):
         yield from reversed(list(self))
 
+    def __len__(self):
+        length = 0
+        iterator = self
+        while not iterator.empty():
+            length += 1
+            iterator = iterator.pop()
+        return length
+
     def flipped(self):
         return reduce(
             lambda accu, next: accu.push(next),

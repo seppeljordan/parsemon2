@@ -8,7 +8,8 @@ from attr import attrib, attrs, evolve
 from .error import ParsingFailed
 from .sourcemap import (display_location, find_line_in_indices,
                         find_linebreak_indices)
-from .stack import Stack, StackEmptyError
+from .stack import StackEmptyError
+from .deque import Deque
 from .trampoline import Call, Result, Trampoline
 
 CallbackInput = TypeVar('CallbackInput')
@@ -50,9 +51,20 @@ class ParserState(Generic[CallbackInput, ParserResult]):
     """Class to handle the parsing process"""
     document: Sized = attrib()
     location: int = attrib()
-    callbacks = attrib(default=Stack())
-    choices = attrib(default=Stack())
-    error_messages = attrib(default=Stack())
+    callbacks = attrib()
+    choices = attrib()
+    error_messages = attrib()
+
+    @classmethod
+    def create(cls, document, stack_implementation):
+        return cls(
+            document=document,
+            location=0,
+            callbacks=stack_implementation(),
+            choices=stack_implementation(),
+            error_messages=stack_implementation(),
+        )
+
 
     def set_location(self, new_location):
         """Return new parsing status with document cursor set to given location.

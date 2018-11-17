@@ -7,6 +7,7 @@ from attr import evolve
 
 from .error import NotEnoughInput, ParsingFailed
 from .internals import Parser, ParserState
+from .stack import Stack
 from .trampoline import Call, with_trampoline
 
 S = TypeVar('S')
@@ -207,12 +208,15 @@ def enclosed_by(
 
 def run_parser(
         p: Parser[T, Sized],
-        input_string: Sized
+        input_string: Sized,
+        stack_implementation=Stack,
 ) -> T:
     '''Parse string input_string with parser p'''
     parsing_result, rest = with_trampoline(p)(
         input_string,
-        ParserState(input_string, 0)
+        ParserState.create(
+            document=input_string,
+            stack_implementation=stack_implementation),
     )
     if rest:
         raise ParsingFailed(
