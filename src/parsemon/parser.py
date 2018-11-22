@@ -60,7 +60,10 @@ def chain(
 def unit(u: T) -> Parser[T, U]:
     '''A parser that consumes no input and returns ``u``'''
     def unit_parser(s, parser_bind):
-        return parser_bind.pass_result(u, s, characters_consumed=0)
+        return parser_bind.pass_result(
+            value=u,
+            characters_consumed=0
+        )
     return Parser(unit_parser)
 
 
@@ -115,8 +118,8 @@ def many(original_parser):
     return choice(
         bind(
             original_parser,
-            lambda first_result: fmap(
-                lambda rest_result: [first_result] + rest_result,
+            lambda first: fmap(
+                lambda rest: [first] + rest,
                 many(original_parser),
             ),
         ),
@@ -137,10 +140,13 @@ def many1(original_parser):
     '''
     return bind(
         original_parser,
-        lambda first_result: fmap(
-            lambda rest_result: [first_result] + rest_result,
-            many(original_parser),
-        )
+        lambda first: bind(
+            choice(
+                many1(original_parser),
+                unit([]),
+            ),
+            lambda rest: unit([first] + rest)
+        ),
     )
 
 
@@ -235,7 +241,8 @@ def character(n: int = 1) -> Parser[str, str]:
         rest_length = len(s)
         if rest_length >= n:
             return parser_state.pass_result(
-                s[:n], s[n:], characters_consumed=n
+                value=s[:n],
+                characters_consumed=n,
             )
         else:
             return parser_state.parser_failed(
@@ -275,7 +282,10 @@ def none_of(chars: str) -> Parser[str, str]:
                  )
             )
         else:
-            return parser_bind.pass_result(value, rest, characters_consumed=1)
+            return parser_bind.pass_result(
+                value=value,
+                characters_consumed=1
+            )
     return Parser(parser)
 
 
@@ -291,7 +301,10 @@ def one_of(
                 )
             )
         elif s[0] in expected:
-            return state.pass_result(s[0], s[1:], characters_consumed=1)
+            return state.pass_result(
+                value=s[0],
+                characters_consumed=1
+            )
         else:
             return state.parser_failed(
                 'Expected one of {expected}, but found {actual}'.format(
@@ -315,7 +328,8 @@ def until(d: str) -> Parser[str, str]:
         characters_consumed = len(value) + len(d)
         rest = s[characters_consumed:]
         return parser_bind.pass_result(
-            value, rest, characters_consumed=characters_consumed
+            value=value,
+            characters_consumed=characters_consumed,
         )
     return Parser(parser)
 
@@ -326,8 +340,7 @@ def literal(string_to_parse: str) -> Parser[str, str]:
         expected_length = len(string_to_parse)
         return (
             parser_bind.pass_result(
-                string_to_parse,
-                s[expected_length:],
+                value=string_to_parse,
                 characters_consumed=expected_length
             ) if s.startswith(string_to_parse) else
             parser_bind.parser_failed(

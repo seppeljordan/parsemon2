@@ -57,14 +57,12 @@ def floating_point(delimiter: str = '.'):
         after_point = yield PARSE_DIGITS
         return before_point, after_point
 
-    @do
     def sign():
-        parsed = yield choices(
+        return choices(
             literal('+'),
             literal('-'),
             unit('+') # default to + when no sign is detected
         )
-        return parsed
 
     @do
     def float_without_e():
@@ -76,16 +74,14 @@ def floating_point(delimiter: str = '.'):
         )
         return signum, before_point, after_point
 
-    @do
     def parse_exponent():
-        result = yield choice(
+        return choice(
             chain(
                 one_of('eE'),
                 fmap(str, integer())
             ),
             unit('0')
         )
-        return result
 
     signum, before_point, after_point = yield choice(
         float_without_e(),

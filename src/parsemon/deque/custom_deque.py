@@ -1,6 +1,7 @@
 from attr import attrib, attrs, evolve
 
-from .stack import Stack, StackEmptyError
+from .empty import deque_empty
+from .stack import Stack
 
 
 @attrs
@@ -10,7 +11,7 @@ class Deque:
 
     def pop(self):
         if self.empty():
-            raise StackEmptyError()
+            return deque_empty
         if self.front_stack.empty():
             return evolve(
                 self,
@@ -36,11 +37,10 @@ class Deque:
         )
 
     def top(self):
-        return (
-            self.back_stack.flipped().top()
-            if self.front_stack.empty()
-            else self.front_stack.top()
-        )
+        if self.front_stack.empty():
+            self.front_stack = self.back_stack.flipped()
+            self.back_stack = Stack()
+        return self.front_stack.top()
 
     def empty(self):
         return self.front_stack.empty() and self.back_stack.empty()
@@ -53,7 +53,7 @@ class Deque:
 
     def __iter__(self):
         yield from self.front_stack
-        yield from self.back_stack.flipped()
+        yield from reversed(self.back_stack)
 
     def flipped(self):
         return evolve(

@@ -1,0 +1,1 @@
+deque_empty = object()

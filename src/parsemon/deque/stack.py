@@ -1,46 +1,37 @@
 from functools import reduce
 
+from attr import attrib, attrs
+
 from parsemon.trampoline import Call, Result, with_trampoline
 
+from .empty import deque_empty
 
-class StackBottom(object):
-    pass
-
-
-class StackEmptyError(Exception):
-    pass
+stack_bottom = object()
 
 
-stack_bottom = StackBottom()
-
-
+@attrs
 class Stack():
-    def __init__(self):
-        self.value = stack_bottom
-        self.next_elem = None
+    value = attrib(default=stack_bottom)
+    next_elem = attrib(default=None)
 
     def empty(self):
         return self.value is stack_bottom
 
     def push(self, elem):
-        s = Stack()
-        s.next_elem = self
-        s.value = elem
-        return s
+        return Stack(
+           next_elem=self,
+            value=elem
+        )
 
     def top(self):
         if self.value == stack_bottom:
-            raise StackEmptyError(
-                'top on stack bottom not allowed'
-            )
+            return deque_empty
         else:
             return self.value
 
     def last(self):
         if self.empty():
-            raise StackEmptyError(
-                'last on empty stack is not allowed'
-            )
+            return deque_empty
         current_node = self
         while not current_node.next_elem.empty():
             current_node = current_node.pop()
@@ -48,26 +39,15 @@ class Stack():
 
     def pop(self):
         if self.empty():
-            raise StackEmptyError(
-                'pop on empty stack is not allowed'
-            )
+            return deque_empty
         else:
             return self.next_elem
 
     def append(self, elem):
-        def _reverse(rest, accu):
-            if rest.empty():
-                return Result(accu)
-            else:
-                return Call(
-                    _reverse,
-                    rest.pop(),
-                    accu.push(rest.top()),
-                )
-
-        def reverse(s):
-            return with_trampoline(_reverse)(s, Stack())
-        return reverse(reverse(self).push(elem))
+        accu = Stack().push(elem)
+        for item in reversed(self):
+            accu = accu.push(item)
+        return accu
 
     def __iter__(self):
         i = self
@@ -76,7 +56,7 @@ class Stack():
             i = i.next_elem
 
     def __reversed__(self):
-        yield from reversed(list(self))
+        yield from self.flipped()
 
     def __len__(self):
         length = 0
@@ -87,8 +67,7 @@ class Stack():
         return length
 
     def flipped(self):
-        return reduce(
-            lambda accu, next: accu.push(next),
-            self,
-            Stack()
-        )
+        accu = Stack()
+        for item in self:
+            accu = accu.push(item)
+        return accu

@@ -1,11 +1,10 @@
 """Contains the implementation of the parser monad.  This module is not intended
 to be used from outside this library
 """
-from typing import Any, Callable, Generic, Sized, Tuple, TypeVar
+from typing import Any, Callable, Generic, Tuple, TypeVar
 
 from attr import attrib, attrs, evolve
 
-from .deque import StackEmptyError
 from .error import ParsingFailed
 from .sourcemap import (display_location, find_line_in_indices,
                         find_linebreak_indices)
@@ -48,7 +47,7 @@ class Parser(Generic[ParserResult, ParserInput]):
 @attrs
 class ParserState(Generic[CallbackInput, ParserResult]):
     """Class to handle the parsing process"""
-    document: Sized = attrib()
+    document: str = attrib()
     location: int = attrib()
     callbacks = attrib()
     choices = attrib()
@@ -81,7 +80,7 @@ class ParserState(Generic[CallbackInput, ParserResult]):
             self,
             value: CallbackInput
     ) -> Tuple[
-        Parser[ParserResult, Sized],
+        Parser[ParserResult, str],
         'ParserState[CallbackInput, ParserResult]'
     ]:
         """Get next parser and updated parser state from previous parsing
@@ -114,7 +113,10 @@ class ParserState(Generic[CallbackInput, ParserResult]):
         """
         def pop_error_message(value):
             return lambda rest, bindings: (
-                bindings.pop_error_message().pass_result(value, rest)
+                bindings.pop_error_message().pass_result(
+                    value=value,
+                    characters_consumed=0
+                )
             )
         return self.add_binding(pop_error_message)
 
@@ -152,7 +154,10 @@ class ParserState(Generic[CallbackInput, ParserResult]):
         """
         def pop_choice_parser(value):
             return lambda rest, bindings: (
-                bindings.pop_choice().pass_result(value, rest)
+                bindings.pop_choice().pass_result(
+                    value=value,
+                    characters_consumed=0,
+                )
             )
         return self.add_binding(pop_choice_parser)
 
@@ -180,27 +185,23 @@ class ParserState(Generic[CallbackInput, ParserResult]):
 
     def next_choice(self):
         """Returns possibly the next choice given to the parser"""
-        try:
-            return self.choices.top()
-        except StackEmptyError:
+        if self.choices.empty():
             return None
+        return self.choices.top()
 
     def pass_result(
             self,
             value: CallbackInput,
-            rest: Sized,
-            characters_consumed=None,
+            characters_consumed,
     ) -> Trampoline:
         """Signals that parsing was successful"""
+        rest = self.document[self.location+characters_consumed:]
         if self.has_binding():
-            next_parser: 'Parser[ParserResult, Sized]'
+            next_parser: 'Parser[ParserResult, str]'
             next_bind: 'ParserState[CallbackInput, ParserResult]'
 
             next_parser, next_bind = self.get_bind(value)
-            if characters_consumed is None:
-                new_location = len(self.document) - len(rest)
-            else:
-                new_location = self.location + characters_consumed
+            new_location = self.location + characters_consumed
             return Call(
                 next_parser,
                 rest,

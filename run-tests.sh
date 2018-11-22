@@ -2,10 +2,9 @@
 
 set -e
 
-# mypy src/
+mypy src/ --ignore-missing-imports
 PYTHONPATH=src/:$PYTHONPATH pytest \
           --cov=src \
           --cov-report=term \
           --cov-report=html \
-          --benchmark-disable \
-          -v
+          --benchmark-skip

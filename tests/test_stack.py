@@ -2,7 +2,7 @@ from functools import reduce
 
 import pytest
 
-from parsemon.deque import Deque, PyrsistentDeque, Stack, StackEmptyError
+from parsemon.deque import Deque, PyrsistentDeque, Stack, deque_empty
 
 
 @pytest.fixture(
@@ -65,9 +65,8 @@ def test_when_we_push_an_elem_and_then_top_we_get_the_same_elem(container):
 def test_when_we_push_and_pop_we_get_the_empty_stack(container):
     assert container().push('a').pop().empty()
 
-def test_pop_on_empty_stack_raises_StackEmptyError(container):
-    with pytest.raises(StackEmptyError):
-        container().pop()
+def test_pop_on_empty_deque_return_deque_empty(container):
+    assert container().top() is deque_empty
 
 
 def test_iterating_over_stack_sees_pushed_elems_in_reverse(container):
@@ -105,12 +104,11 @@ def test_that_flipped_stack_has_reversed_ordering(container):
     assert elems == list(s.flipped())
 
 
-def test_that_pop_from_empty_deque_raises_an_exception(deque):
+def test_that_pop_from_empty_deque_returns_deque_empty(deque):
     if deque.empty():
-        with pytest.raises(StackEmptyError):
-            deque.pop()
+        assert deque.pop() is deque_empty
     else:
-        deque.pop()
+        assert deque.pop() is not deque_empty
 
 
 def test_that_len_of_empty_deque_is_zero(deque):
@@ -183,11 +181,9 @@ def test_that_appending_elements_and_poping_them_yields_same_order(
         deque_without_prefilled_items = deque_without_prefilled_items.pop()
 
 
-def test_top_and_last_on_empty_stack_raises_an_StackEmptyError(deque):
+def test_top_and_last_on_empty_stack_return_deque_empty(deque):
     if deque.empty():
-        with pytest.raises(StackEmptyError):
-            deque.top()
-        with pytest.raises(StackEmptyError):
-            deque.last()
+        assert deque.top() is deque_empty
+        assert deque.last() is deque_empty
     else:
         deque.top()

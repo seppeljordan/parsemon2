@@ -1,7 +1,7 @@
 from attr import attrib, attrs, evolve
 from pyrsistent import pdeque
 
-from .stack import Stack, StackEmptyError
+from .empty import deque_empty
 
 
 @attrs
@@ -10,7 +10,7 @@ class PyrsistentDeque:
 
     def pop(self):
         if self.empty():
-            raise StackEmptyError()
+            return deque_empty
         return evolve(
             self,
             deque=self.deque.popleft()
@@ -30,7 +30,7 @@ class PyrsistentDeque:
 
     def top(self):
         if self.empty():
-            raise StackEmptyError()
+            return deque_empty
         return self.deque.left
 
     def empty(self):
@@ -41,9 +41,7 @@ class PyrsistentDeque:
 
     def last(self):
         if self.empty():
-            raise StackEmptyError(
-                'last on empty PyrsistenStack is not allowed'
-            )
+            return deque_empty
         return self.deque.right
 
     def __iter__(self):
