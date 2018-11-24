@@ -15,12 +15,12 @@ from parsemon.deque import Deque, PyrsistentDeque, Stack
 @pytest.mark.parametrize(
     'input_string',
     (
-        'a' * 600,
-        'b' * 600,
-        'c' * 600,
-        'ab' * 300,
-        'abc' * 200,
-        'aabbcc' * 100,
+        'a' * 60,
+        'b' * 60,
+        'c' * 60,
+        'ab' * 30,
+        'abc' * 20,
+        'aabbcc' * 10,
     ),
     ids=lambda x: x[:10],
 )
@@ -41,3 +41,7 @@ def test_stack_performance_with_many_choices(
         input_string,
         stack_implementation=stack_implementation
     )
+
+
+if __name__ == '__main__':
+    pytest.main(__file__)
