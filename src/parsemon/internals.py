@@ -39,7 +39,7 @@ class Parser(Generic[ParserResult, ParserInput]):
             return Call(
                 self,
                 s,
-                parser_state.add_choice(other, s)
+                parser_state.add_choice(other)
             )
         return Parser(inner)
 
@@ -164,14 +164,13 @@ class ParserState(Generic[CallbackInput, ParserResult]):
     def add_choice(
             self,
             parser: Parser[ParserResult, str],
-            rest: str
     ) -> 'ParserState[CallbackInput, ParserResult]':
         '''Add a new alternative parser to parser state.'''
         return evolve(
             self,
             choices=self.choices.push((
                 parser,
-                rest,
+                self.location,
                 self.finally_remove_error_message()
             ))
         ).finally_remove_choice()
@@ -240,10 +239,10 @@ class ParserState(Generic[CallbackInput, ParserResult]):
             )
             raise exception(final_message)
         else:
-            next_parser, rest, next_bind = self.next_choice()
+            next_parser, location, next_bind = self.next_choice()
             return Call(
                 next_parser,
-                rest,
+                self.document[location:],
                 (next_bind
                  .copy_error_messages_from(self)
                  .push_error_message_generator(rendered_message))
