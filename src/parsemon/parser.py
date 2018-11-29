@@ -5,9 +5,10 @@ from typing import Callable, List, Sized, TypeVar
 
 from attr import evolve
 
+from .coroutine import do
 from .deque import Stack
 from .error import NotEnoughInput, ParsingFailed
-from .internals import Parser, ParserState
+from .internals import Parser, ParserState, unit
 from .trampoline import Call, with_trampoline
 
 S = TypeVar('S')
@@ -15,6 +16,14 @@ T = TypeVar('T')
 U = TypeVar('U')
 ParserInput = TypeVar('ParserInput')
 ParserResult = TypeVar('ParserResult')
+
+
+NO_FURTHER_RESULT = object()
+"""This is only intended for internal use.  We use NO_FURTHER_RESULT
+to signal that a parser was not able to yield a result.  We could use
+None here but then we would not be able to work with parsers that
+would actually return None as a positive parsing result.
+"""
 
 
 def bind(
@@ -27,15 +36,7 @@ def bind(
     :param binding: A function that returns a parser based on the result
         of old_parser
     '''
-    return evolve(  # type: ignore
-        old_parser,
-        function=lambda parser_input, parser_state: Call(
-            old_parser.function,
-            parser_input,
-            parser_state.add_binding(binding)
-        )
-    )
-
+    return old_parser.bind(binding)
 
 def chain(
         first: Parser[S, U],
@@ -55,16 +56,6 @@ def chain(
         )
     first_and_second_parser_combined = _chain(first, second)
     return reduce(_chain, rest, first_and_second_parser_combined)
-
-
-def unit(u: T) -> Parser[T, U]:
-    '''A parser that consumes no input and returns ``u``'''
-    def unit_parser(s, parser_bind):
-        return parser_bind.pass_result(
-            value=u,
-            characters_consumed=0
-        )
-    return Parser(unit_parser)
 
 
 def fmap(
@@ -104,6 +95,7 @@ def choices(parser, *parsers):
     )
 
 
+@do
 def many(original_parser):
     '''Apply a parser 0 or more times
 
@@ -115,18 +107,20 @@ def many(original_parser):
         possible by the resulting new parser
 
     '''
-    return choice(
-        bind(
+    results = []
+    while True:
+        current_result = yield choice(
             original_parser,
-            lambda first: fmap(
-                lambda rest: [first] + rest,
-                many(original_parser),
-            ),
-        ),
-        unit([]),
-    )
+            unit(NO_FURTHER_RESULT)
+        )
+        if current_result is NO_FURTHER_RESULT:
+            break
+        else:
+            results.append(current_result)
+    return results
 
 
+@do
 def many1(original_parser):
     '''Apply a parser 1 or more times
 
@@ -138,16 +132,7 @@ def many1(original_parser):
         resulting parser
 
     '''
-    return bind(
-        original_parser,
-        lambda first: bind(
-            choice(
-                many1(original_parser),
-                unit([]),
-            ),
-            lambda rest: unit([first] + rest)
-        ),
-    )
+    return [(yield original_parser)] + (yield many(original_parser))
 
 
 def fail(msg):

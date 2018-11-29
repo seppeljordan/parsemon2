@@ -1,6 +1,6 @@
 from functools import wraps
 
-from .parser import bind, unit
+from .internals import unit
 
 
 def do(f):
@@ -23,21 +23,20 @@ def do(f):
     """
     @wraps(f)
     def decorator(*args, **kwargs):
-        generator = f(*args, **kwargs)
-
-        def inner(value, parser=None):
+        def inner(value, generator=None):
+            if generator is None:
+                generator = f(*args, **kwargs)
             try:
-                next_parser = parser.send(value)
+                next_parser = generator.send(value)
             except StopIteration as stop:
                 return unit(
                     getattr(stop, 'value', None)
                 )
             else:
-                return bind(
-                    next_parser,
-                    lambda next_value: inner(next_value, parser)
+                return next_parser.bind(
+                    lambda next_value: inner(next_value, generator)
                 )
 
-        return inner(None, generator)
+        return unit(True).bind(lambda _: inner(None))
 
     return decorator

@@ -1,6 +1,6 @@
 import pytest
 
-from parsemon import choices, literal, many, run_parser, many1
+from parsemon import choices, literal, many, many1, run_parser
 from parsemon.deque import Deque, PyrsistentDeque, Stack
 
 

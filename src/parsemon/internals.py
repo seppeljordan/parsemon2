@@ -43,6 +43,26 @@ class Parser(Generic[ParserResult, ParserInput]):
             )
         return Parser(inner)
 
+    def bind(self, binding):
+        return evolve(
+            self,
+            function=lambda parser_input, parser_state: Call(
+                self.function,
+                parser_input,
+                parser_state.add_binding(binding)
+            )
+        )
+
+
+def unit(u):
+    '''A parser that consumes no input and returns ``u``'''
+    def unit_parser(s, parser_state):
+        return parser_state.pass_result(
+            value=u,
+            characters_consumed=0
+        )
+    return Parser(unit_parser)
+
 
 @attrs
 class ParserState(Generic[CallbackInput, ParserResult]):
@@ -191,7 +211,7 @@ class ParserState(Generic[CallbackInput, ParserResult]):
     def pass_result(
             self,
             value: CallbackInput,
-            characters_consumed,
+            characters_consumed: int,
     ) -> Trampoline:
         """Signals that parsing was successful"""
         rest = self.document[self.location+characters_consumed:]
@@ -239,11 +259,12 @@ class ParserState(Generic[CallbackInput, ParserResult]):
             )
             raise exception(final_message)
         else:
-            next_parser, location, next_bind = self.next_choice()
+            next_parser, new_location, new_parser_state = self.next_choice()
             return Call(
                 next_parser,
-                self.document[location:],
-                (next_bind
+                self.document[new_location:],
+                (new_parser_state
+                 .set_location(new_location)
                  .copy_error_messages_from(self)
                  .push_error_message_generator(rendered_message))
             )

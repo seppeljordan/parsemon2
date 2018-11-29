@@ -59,3 +59,13 @@ def test_that_do_can_handle_parsers_that_do_not_return_anything():
     def trivial():
         yield literal('a')
     assert run_parser(trivial(), 'a') is None
+
+
+def test_that_parsers_with_do_notation_can_excecute_twice_with_same_result():
+    @do
+    def trivial():
+        yield literal('a')
+    parser = trivial()
+    is_success = lambda: run_parser(parser, 'a') is None
+    assert is_success()
+    assert is_success()
