@@ -46,6 +46,6 @@ let
         cp build/man/parsemon2.3 $out/share/man/man3/parsemon2.3
       '';
     };
-  drv = python3.pkgs.callPackage f {};
+  drv = python36.pkgs.callPackage f {};
 in
 drv
