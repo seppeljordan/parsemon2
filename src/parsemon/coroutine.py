@@ -37,6 +37,6 @@ def do(f):
                     lambda next_value: inner(next_value, generator)
                 )
 
-        return unit(True).bind(lambda _: inner(None))
+        return unit(None).bind(inner)
 
     return decorator
