@@ -72,15 +72,17 @@ class ParserState(Generic[CallbackInput, ParserResult]):
     callbacks = attrib()
     choices = attrib()
     error_messages = attrib()
+    show_error_messages: bool = attrib()
 
     @classmethod
-    def create(cls, document, stack_implementation):
+    def create(cls, document, stack_implementation, show_error_messages):
         return cls(
             document=document,
             location=0,
             callbacks=stack_implementation(),
             choices=stack_implementation(),
             error_messages=stack_implementation(),
+            show_error_messages=show_error_messages,
         )
 
 
@@ -191,7 +193,11 @@ class ParserState(Generic[CallbackInput, ParserResult]):
             choices=self.choices.push((
                 parser,
                 self.location,
-                self.finally_remove_error_message()
+                (
+                    self.finally_remove_error_message()
+                    if self.show_error_messages
+                    else self
+                )
             ))
         ).finally_remove_choice()
 
@@ -252,19 +258,28 @@ class ParserState(Generic[CallbackInput, ParserResult]):
                 location=display_location(line=line, column=column)
             )
         if self.next_choice() is None:
-            old_message_generators = self.get_error_messages()
-            old_messages = list(map(lambda f: f(), old_message_generators))
-            final_message = ' OR '.join(
-                old_messages + [rendered_message()]
-            )
+            if self.show_error_messages:
+                old_message_generators = self.get_error_messages()
+                old_messages = list(map(lambda f: f(), old_message_generators))
+                final_message = ' OR '.join(
+                    old_messages + [rendered_message()]
+                )
+            else:
+                final_message = 'Error messages disabled'
             raise exception(final_message)
         else:
-            next_parser, new_location, new_parser_state = self.next_choice()
+            next_parser, new_location, choice_state = self.next_choice()
+            if self.show_error_messages:
+                new_parser_state = (
+                    choice_state
+                    .set_location(new_location)
+                    .copy_error_messages_from(self)
+                    .push_error_message_generator(rendered_message)
+                )
+            else:
+                new_parser_state = choice_state.set_location(new_location)
             return Call(
                 next_parser,
                 self.document[new_location:],
-                (new_parser_state
-                 .set_location(new_location)
-                 .copy_error_messages_from(self)
-                 .push_error_message_generator(rendered_message))
+                new_parser_state
             )

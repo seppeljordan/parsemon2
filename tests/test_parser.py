@@ -7,38 +7,55 @@ from parsemon.error import NotEnoughInput, ParsingFailed
 from parsemon.sourcemap import display_location
 
 
-def test_literal_parses_a_single_string():
-    assert run_parser(literal('a'), 'a') == 'a'
+@pytest.fixture(
+    params=(
+        'with_error_messages',
+        'without_error_messages',
+    )
+)
+def runner(request):
+    if request.param == 'with_error_messages':
+        def fixture(*args, **kwargs):
+            return run_parser(*args, show_error_messages=True, **kwargs)
+    else:
+        def fixture(*args, **kwargs):
+            return run_parser(*args, show_error_messages=False, **kwargs)
+    return fixture
 
-def test_unit_parses_the_empty_string():
-    assert run_parser(unit('a'), '') == 'a'
 
-def test_unit_parses_only_the_empty_string():
+
+def test_literal_parses_a_single_string(runner):
+    assert runner(literal('a'), 'a') == 'a'
+
+def test_unit_parses_the_empty_string(runner):
+    assert runner(unit('a'), '') == 'a'
+
+def test_unit_parses_only_the_empty_string(runner):
     with pytest.raises(Exception):
-        run_parser(unit('a'), 'a')
+        runner(unit('a'), 'a')
 
-def test_fmap_can_replace_parsing_result():
-    assert run_parser(
+def test_fmap_can_replace_parsing_result(runner):
+    assert runner(
         fmap(
             lambda x: 'b',
             literal('a')),
         'a'
     ) == 'b'
 
-def test_fmap_can_map_1000_time():
+def test_fmap_can_map_1000_time(runner):
     parser = literal('a')
     for i in range(0,1000):
         parser = fmap(lambda x: 'b', parser)
-    assert run_parser(parser, 'a') == 'b'
+    assert runner(parser, 'a') == 'b'
 
-def test_bind_can_chain_two_literal_parsers():
+def test_bind_can_chain_two_literal_parsers(runner):
     parser = bind(
         literal('a'),
         lambda x: literal('b'),
     )
-    assert run_parser(parser, 'ab') == 'b'
+    assert runner(parser, 'ab') == 'b'
 
-def test_bind_can_chain_3_literal_parsers():
+def test_bind_can_chain_3_literal_parsers(runner):
     p = literal('a')
     p = bind(
         p,
@@ -48,22 +65,22 @@ def test_bind_can_chain_3_literal_parsers():
         p,
         lambda x: literal('c'),
     )
-    assert run_parser(p, 'abc') == 'c'
+    assert runner(p, 'abc') == 'c'
 
-def test_literal_parser_throws_ParsingFailed_when_seeing_non_matching_string():
+def test_literal_parser_throws_ParsingFailed_when_seeing_non_matching_string(runner):
     with pytest.raises(ParsingFailed):
-        run_parser(literal('a'), 'b')
+        runner(literal('a'), 'b')
 
 
-def test_literal_choice_can_parse_both_possibilities():
+def test_literal_choice_can_parse_both_possibilities(runner):
     p = choice(
         literal('a'),
         literal('b'),
     )
-    assert run_parser(p, 'a') == 'a'
-    assert run_parser(p, 'b') == 'b'
+    assert runner(p, 'a') == 'a'
+    assert runner(p, 'b') == 'b'
 
-def test_choice_can_be_chained_1000_times():
+def test_choice_can_be_chained_1000_times(runner):
     c = choice(
         literal('a'),
         literal('b'),
@@ -74,17 +91,17 @@ def test_choice_can_be_chained_1000_times():
             p,
             lambda x: c,
         )
-    assert run_parser(p, 'a' * 999 + 'b') == 'b'
+    assert runner(p, 'a' * 999 + 'b') == 'b'
 
-def test_choice_throws_ParsingFailed_when_both_choices_fail():
+def test_choice_throws_ParsingFailed_when_both_choices_fail(runner):
     p = choice(
         literal('a'),
         literal('b'),
     )
     with pytest.raises(ParsingFailed):
-        run_parser(p, 'c')
+        runner(p, 'c')
 
-def test_choice_should_not_retry_if_the_parser_after_choice_fails():
+def test_choice_should_not_retry_if_the_parser_after_choice_fails(runner):
     p = choice(
         literal('a'),
         literal('aa'),
@@ -94,27 +111,27 @@ def test_choice_should_not_retry_if_the_parser_after_choice_fails():
         literal('b')
     )
     with pytest.raises(ParsingFailed):
-        run_parser(p, 'aab')
+        runner(p, 'aab')
 
-def test_many_parses_empty_strings():
+def test_many_parses_empty_strings(runner):
     p = many(
         literal('a')
     )
-    assert run_parser(p,'') == []
+    assert runner(p,'') == []
 
-def test_many_parses_one_occurence():
+def test_many_parses_one_occurence(runner):
     p = many(
         literal('a')
     )
-    assert run_parser(p, 'a') == ['a']
+    assert runner(p, 'a') == ['a']
 
-def test_many_parses_5_occurences():
+def test_many_parses_5_occurences(runner):
     p = many(
         literal('a')
     )
-    assert run_parser(p, 'aaaaa') == ['a'] * 5
+    assert runner(p, 'aaaaa') == ['a'] * 5
 
-def test_we_can_chain_many_with_something_else():
+def test_we_can_chain_many_with_something_else(runner):
     p = many(
         literal('a')
     )
@@ -122,17 +139,17 @@ def test_we_can_chain_many_with_something_else():
         p,
         lambda _: literal('b'),
     )
-    assert run_parser(p,'aaaab') == 'b'
+    assert runner(p,'aaaab') == 'b'
 
-def test_until_parses_only_delimiter():
+def test_until_parses_only_delimiter(runner):
     p = until('a')
-    assert run_parser(p, 'a') == ''
+    assert runner(p, 'a') == ''
 
-def test_until_parses_5_characters_and_delimiter():
+def test_until_parses_5_characters_and_delimiter(runner):
     p = until(',')
-    assert run_parser(p, 'abcde,') == 'abcde'
+    assert runner(p, 'abcde,') == 'abcde'
 
-def test_until_chained_with_literal_parser_leaves_out_delimiter():
+def test_until_chained_with_literal_parser_leaves_out_delimiter(runner):
     p = until(',')
     p = bind(
         p,
@@ -141,63 +158,63 @@ def test_until_chained_with_literal_parser_leaves_out_delimiter():
             literal('end')
         ),
     )
-    assert run_parser(p, 'abcde,end') == ['abcde','end']
+    assert runner(p, 'abcde,end') == ['abcde','end']
 
-def test_parse_none_of_parses_character_when_passed_empty_string():
+def test_parse_none_of_parses_character_when_passed_empty_string(runner):
     p = none_of('')
-    assert run_parser(p, 'a') == 'a'
+    assert runner(p, 'a') == 'a'
 
-def test_none_of_raises_ParsingFailed_when_encountering_forbidden_char():
+def test_none_of_raises_ParsingFailed_when_encountering_forbidden_char(runner):
     p = none_of('a')
     with pytest.raises(ParsingFailed):
-        run_parser(p, 'a')
+        runner(p, 'a')
 
-def test_none_of_raises_ParsingFailed_when_nothing_to_consume():
+def test_none_of_raises_ParsingFailed_when_nothing_to_consume(runner):
     p = none_of('a')
     with pytest.raises(ParsingFailed):
-        run_parser(p,'')
+        runner(p,'')
 
-def test_fail_throws_ParsingFailed_error():
+def test_fail_throws_ParsingFailed_error(runner):
     p = fail('error')
     with pytest.raises(ParsingFailed):
-        run_parser(p, '')
+        runner(p, '')
 
-def test_character_parses_a_single_A_character():
+def test_character_parses_a_single_A_character(runner):
     p = character()
-    assert run_parser(p, 'A') == 'A'
+    assert runner(p, 'A') == 'A'
 
-def test_character_raises_ParsingFailed_on_empty_string():
+def test_character_raises_ParsingFailed_on_empty_string(runner):
     p = character()
     with pytest.raises(ParsingFailed):
-        run_parser(p, '')
+        runner(p, '')
 
-def test_character_can_parse_5_characters():
+def test_character_can_parse_5_characters(runner):
     p = character(n=5)
-    assert run_parser(p, '12345') == '12345'
+    assert runner(p, '12345') == '12345'
 
-def test_character_raises_ParsingFailed_when_too_few_characters_in_stream():
+def test_character_raises_ParsingFailed_when_too_few_characters_in_stream(runner):
     p = character(n=5)
     with pytest.raises(NotEnoughInput):
-        run_parser(p, '1234')
+        runner(p, '1234')
 
-def test_chain_executes_two_parsers_and_returns_result_of_second_one():
+def test_chain_executes_two_parsers_and_returns_result_of_second_one(runner):
     p = chain(
         literal('a'),
         literal('b')
     )
-    assert run_parser(p, 'ab') == 'b'
+    assert runner(p, 'ab') == 'b'
 
 
-def test_chain_can_take_3_parsers_as_args():
+def test_chain_can_take_3_parsers_as_args(runner):
     p = chain(
         literal('a'),
         literal('b'),
         literal('c')
     )
-    assert run_parser(p, 'abc') == 'c'
+    assert runner(p, 'abc') == 'c'
 
 
-def test_if_a_choice_failes_in_the_middle_of_chain_it_retries_other_option():
+def test_if_a_choice_failes_in_the_middle_of_chain_it_retries_other_option(runner):
     p = choice(
         chain(
             literal('a'),
@@ -208,16 +225,16 @@ def test_if_a_choice_failes_in_the_middle_of_chain_it_retries_other_option():
             literal('b'),
         )
     )
-    assert run_parser(p, 'ab') == 'b'
+    assert runner(p, 'ab') == 'b'
 
-def test_many1_fails_for_empty_strings():
+def test_many1_fails_for_empty_strings(runner):
     p = many1(literal('a'))
     with pytest.raises(ParsingFailed):
-        run_parser(p, '')
+        runner(p, '')
 
-def test_many1_behaves_like_many_for_1_occurence():
+def test_many1_behaves_like_many_for_1_occurence(runner):
     p = literal('a')
-    assert run_parser(many1(p), 'a') == run_parser(many(p), 'a')
+    assert runner(many1(p), 'a') == runner(many(p), 'a')
 
 def test_failure_of_literal_contains_expected_string():
     p = literal('abcde')
@@ -295,15 +312,15 @@ def test_a_simple_failing_parser_after_2_newlines_outputs_linenumber_3_in_error(
         run_parser(p,'\n\nx')
     assert display_location(line=3, column=0) in str(err.value)
 
-def test_one_of_fails_if_trying_to_parse_something_not_in_set():
+def test_one_of_fails_if_trying_to_parse_something_not_in_set(runner):
     with pytest.raises(ParsingFailed):
-        run_parser(one_of('123'), '4')
+        runner(one_of('123'), '4')
 
-def test_onf_of_succeeds_if_trying_to_parse_something_in_the_set():
-    assert run_parser(one_of('123'), '1') == '1'
+def test_onf_of_succeeds_if_trying_to_parse_something_in_the_set(runner):
+    assert runner(one_of('123'), '1') == '1'
 
-def test_seperated_by_empty():
-    assert run_parser(
+def test_seperated_by_empty(runner):
+    assert runner(
         seperated_by(
             literal('a'),
             literal(',')
@@ -311,8 +328,8 @@ def test_seperated_by_empty():
         ''
     ) == []
 
-def test_seperated_by_one_element():
-    assert run_parser(
+def test_seperated_by_one_element(runner):
+    assert runner(
         seperated_by(
             literal('a'),
             literal(',')
@@ -320,8 +337,8 @@ def test_seperated_by_one_element():
         'a'
     ) == ['a']
 
-def test_seperated_by_five_elemts():
-    assert run_parser(
+def test_seperated_by_five_elemts(runner):
+    assert runner(
         seperated_by(
             literal('a'),
             literal(',')
@@ -329,8 +346,8 @@ def test_seperated_by_five_elemts():
         'a,a,a,a,a'
     ) == ['a','a','a','a','a']
 
-def test_seperated_by_1000_elements():
-    assert run_parser(
+def test_seperated_by_1000_elements(runner):
+    assert runner(
         seperated_by(
             literal('a'),
             literal(',')
@@ -338,8 +355,8 @@ def test_seperated_by_1000_elements():
         'a' + ',a' * 999
     ) == ['a'] * 1000
 
-def test_enclosed_by():
-    assert run_parser(
+def test_enclosed_by(runner):
+    assert runner(
         enclosed_by(
             literal('a'),
             literal('"')
@@ -347,8 +364,8 @@ def test_enclosed_by():
         '"a"'
     ) == 'a'
 
-def test_choices():
-    assert run_parser(
+def test_choices(runner):
+    assert runner(
         choices(
             literal('a'),
             literal('b'),
@@ -358,18 +375,18 @@ def test_choices():
     ) == 'b'
 
 
-def test_whitespace_parses_regular_space_character():
-    assert run_parser(whitespace, "\u0020") == "\u0020"
+def test_whitespace_parses_regular_space_character(runner):
+    assert runner(whitespace, "\u0020") == "\u0020"
 
 
-def test_whitespace_parses_tab_char():
-    assert run_parser(whitespace, '\t') == '\t'
+def test_whitespace_parses_tab_char(runner):
+    assert runner(whitespace, '\t') == '\t'
 
 
-def test_whitespace_parses_newline_char():
-    assert run_parser(whitespace, '\n') == '\n'
+def test_whitespace_parses_newline_char(runner):
+    assert runner(whitespace, '\n') == '\n'
 
 
-def test_that_or_operator_works_as_expected():
-    assert run_parser(whitespace | literal('a'), ' ') == ' '
-    assert run_parser(whitespace | literal('a'), 'a') == 'a'
+def test_that_or_operator_works_as_expected(runner):
+    assert runner(whitespace | literal('a'), ' ') == ' '
+    assert runner(whitespace | literal('a'), 'a') == 'a'

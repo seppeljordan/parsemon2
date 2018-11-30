@@ -201,13 +201,16 @@ def run_parser(
         p: Parser[T, Sized],
         input_string: Sized,
         stack_implementation=Stack,
+        show_error_messages=True,
 ) -> T:
     '''Parse string input_string with parser p'''
     parsing_result, rest = with_trampoline(p)(
         input_string,
         ParserState.create(
             document=input_string,
-            stack_implementation=stack_implementation),
+            stack_implementation=stack_implementation,
+            show_error_messages=show_error_messages,
+        ),
     )
     if rest:
         raise ParsingFailed(

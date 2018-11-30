@@ -5,6 +5,13 @@ from parsemon.deque import Deque, PyrsistentDeque, Stack
 
 
 @pytest.mark.parametrize(
+    'show_error_messages',
+    (
+        True,
+        False,
+    )
+)
+@pytest.mark.parametrize(
     'stack_implementation',
     (
         Stack,
@@ -28,6 +35,7 @@ def test_stack_performance_with_many_choices(
         benchmark,
         stack_implementation,
         input_string,
+        show_error_messages,
 ):
     parser = many(choices(
         literal('a'),
@@ -39,7 +47,8 @@ def test_stack_performance_with_many_choices(
         run_parser,
         parser,
         input_string,
-        stack_implementation=stack_implementation
+        stack_implementation=stack_implementation,
+        show_error_messages=show_error_messages,
     )
 
 
