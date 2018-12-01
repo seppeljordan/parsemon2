@@ -142,6 +142,7 @@ def fail(msg):
     return parser
 
 
+@do
 def seperated_by(parser, seperator):
     """Apply the input parser as often as possible, where occurences are
     seperated by input that can be parsed by 'seperator'.
@@ -151,50 +152,30 @@ def seperated_by(parser, seperator):
     parse the string ``1,2,3,4`` and return the list
     ``['1','2','3','4']``.
     """
-    return choice(
-        bind(
-            parser,
-            lambda first_result: fmap(
-                lambda rest_results: [first_result] + rest_results,
-                many(
-                    chain(
-                        seperator,
-                        parser
-                    )
-                )
-            )
-        ),
-        unit([])
-    )
+    results = []
+    first_elem = yield (parser | unit(NO_FURTHER_RESULT))
+    if first_elem is NO_FURTHER_RESULT:
+        return results
+    rest_elems = yield many(chain(seperator, parser))
+    return [first_elem] + rest_elems
 
 
+@do
 def enclosed_by(
-        parser: Parser[S, T],
-        prefix_parser: Parser[U, T],
-        suffix_parser: Parser[U, T] = None
-) -> Parser[S, T]:
+        parser,
+        prefix_parser,
+        suffix_parser=None,
+):
     '''Parse a string enclosed by delimeters
 
     The parser ``enclosed_by(many(none_of('"')),literal('"'))`` will
     consume the string ``"example"`` and return the python string
     ``'example'``.
     '''
-    actual_suffix_parser: Parser[U, T]
-    actual_suffix_parser = (
-        prefix_parser
-        if suffix_parser is None
-        else suffix_parser
-    )
-    return chain(
-        prefix_parser,
-        bind(
-            parser,
-            lambda parser_result: chain(
-                actual_suffix_parser,
-                unit(parser_result)
-            )
-        )
-    )
+    yield prefix_parser
+    result = yield parser
+    yield suffix_parser or prefix_parser
+    return result
 
 
 def run_parser(
