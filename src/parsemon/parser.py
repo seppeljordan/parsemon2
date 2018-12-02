@@ -6,7 +6,7 @@ from typing import Callable, List, Sized, TypeVar
 from attr import evolve
 
 from .coroutine import do
-from .deque import Stack
+from .deque import Deque
 from .error import NotEnoughInput, ParsingFailed
 from .internals import Parser, ParserState, unit
 from .trampoline import Call, with_trampoline
@@ -181,7 +181,7 @@ def enclosed_by(
 def run_parser(
         p: Parser[T, Sized],
         input_string: Sized,
-        stack_implementation=Stack,
+        stack_implementation=Deque,
         show_error_messages=True,
 ) -> T:
     '''Parse string input_string with parser p'''
