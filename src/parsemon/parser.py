@@ -139,7 +139,7 @@ def fail(msg):
     """This parser always fails with the message passed as ``msg``."""
     def parser(s, parser_bind):
         return parser_bind.parser_failed(msg)
-    return parser
+    return Parser(parser)
 
 
 @do
