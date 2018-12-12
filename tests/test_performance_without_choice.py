@@ -5,7 +5,7 @@ from parsemon import do, literal, run_parser, chain, unit
 
 @pytest.fixture(
     params=[
-        1,2,3,4,5,10,20
+        1,2,3,4,5,10,20,
     ]
 )
 def document(request):
@@ -15,7 +15,7 @@ def document(request):
 
 @pytest.fixture(
     params=(
-        'do', 'chain'
+        'do', 'chain',
     )
 )
 def implementation(request):
@@ -36,6 +36,9 @@ def implementation(request):
     return wrapper
 
 
+@pytest.mark.benchmark(
+    group='linear-performance'
+)
 def test_performance_without_choice(document, benchmark, implementation):
     parser = implementation(document)
     assert benchmark(run_parser, parser, document)

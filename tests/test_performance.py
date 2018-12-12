@@ -31,6 +31,9 @@ from parsemon.deque import Deque, PyrsistentDeque, Stack
     ),
     ids=lambda x: x[:10],
 )
+@pytest.mark.benchmark(
+    group='general-performance'
+)
 def test_stack_performance_with_many_choices(
         benchmark,
         stack_implementation,

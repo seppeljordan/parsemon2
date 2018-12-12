@@ -156,7 +156,7 @@ class ParserState(Generic[CallbackInput, ParserResult]):
         '''Push new error message onto the message stack'''
         return evolve(
             self,
-            error_messages=self.error_messages.append(msg_generator)
+            error_messages=self.error_messages.push(msg_generator)
         )
 
     def copy_error_messages_from(
@@ -165,10 +165,6 @@ class ParserState(Generic[CallbackInput, ParserResult]):
     ) -> 'ParserState[CallbackInput, ParserResult]':
         """Copy error messages from other parser state"""
         return evolve(self, error_messages=other.error_messages)
-
-    def get_error_messages(self):
-        """Get all error messages stored in parser state."""
-        return list(self.error_messages)
 
     def finally_remove_choice(self):
         """Returns new parser state where all choices are removed after
@@ -259,8 +255,9 @@ class ParserState(Generic[CallbackInput, ParserResult]):
             )
         if self.next_choice() is None:
             if self.show_error_messages:
-                old_message_generators = self.get_error_messages()
-                old_messages = list(map(lambda f: f(), old_message_generators))
+                old_messages = list(map(
+                    lambda f: f(), self.error_messages
+                ))
                 final_message = ' OR '.join(
                     old_messages + [rendered_message()]
                 )
