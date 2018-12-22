@@ -27,6 +27,7 @@ Changes
 - Change ordering of error messages.  Now the last error message that
   was raised (last branch that was tried) is shown first and the
   message from the first branch tried is shown last.
+- It is now possible to disable error messages when running a parser.
 
 1.1
 ---
