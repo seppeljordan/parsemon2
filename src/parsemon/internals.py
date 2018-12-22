@@ -259,7 +259,7 @@ class ParserState(Generic[CallbackInput, ParserResult]):
                     lambda f: f(), self.error_messages
                 ))
                 final_message = ' OR '.join(
-                    old_messages + [rendered_message()]
+                    [rendered_message()] + old_messages
                 )
             else:
                 final_message = 'Error messages disabled'

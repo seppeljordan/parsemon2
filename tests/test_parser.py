@@ -275,8 +275,8 @@ def test_that_error_message_respects_ordering_of_failing_choices():
     with pytest.raises(ParsingFailed) as err:
         run_parser(p, 'xxxxxxxxxxxxxx')
     error_message = str(err.value)
-    assert 'second' in error_message.split('first')[1]
-    assert 'first' not in error_message.split('second')[1]
+    assert 'second' not in error_message.split('first')[1]
+    assert 'first' in error_message.split('second')[1]
 
 
 def test_that_error_message_order_is_preserved_with_3_choices():
@@ -291,10 +291,10 @@ def test_that_error_message_order_is_preserved_with_3_choices():
         run_parser(p, 'xxxxxxxxxxxxxx')
     error_message = str(err.value)
     print(error_message)
-    assert 'second' in error_message.split('first')[1]
-    assert 'third' in error_message.split('first')[1]
-    assert 'first' in error_message.split('second')[0]
-    assert 'third' in error_message.split('second')[1]
+    assert 'second' in error_message.split('first')[0]
+    assert 'third' in error_message.split('first')[0]
+    assert 'first' in error_message.split('second')[1]
+    assert 'third' in error_message.split('second')[0]
 
 
 def test_a_simple_failing_parser_prints_column_0_as_error():
