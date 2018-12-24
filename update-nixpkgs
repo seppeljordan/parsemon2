@@ -1,0 +1,6 @@
+#!/usr/bin/env sh
+
+nix-prefetch-github \
+    NixOS \
+    nixpkgs-channels \
+    --rev nixos-18.09 > nixpkgs.json

@@ -1,4 +1,10 @@
-with (import <nixpkgs> {});
+let
+  nixpkgs-host = import <nixpkgs> {};
+  nixos-stable = with builtins; nixpkgs-host.fetchFromGitHub (
+    fromJSON (readFile ./nixpkgs.json)
+  );
+in
+with (import nixos-stable {});
 
 let
   f =
