@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+
+pytest \
+    tests/test_performance.py \
+    tests/test_performance_without_choice.py
