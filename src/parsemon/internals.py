@@ -201,18 +201,19 @@ def literal(expected):
     def parser(stream, cont):
         result = []
         for expected_char in expected:
-            if not stream:
+            old_stream = stream
+            next_char, stream = stream.read()
+            if next_char is None:
                 return Call(
                     cont,
                     failure(
                         'Expected `{expected}` but found end of string'.format(
                             expected=expected,
                         ),
-                        stream
+                        old_stream,
                     )
                 )
-            if expected_char == stream.next():
-                _, stream = stream.read()
+            if expected_char == next_char:
                 result.append(expected_char)
             else:
                 return Call(
@@ -220,9 +221,9 @@ def literal(expected):
                     failure(
                         message='Expected {expected} but found {actual}.'.format(
                             expected=expected,
-                            actual=''.join(result) + stream.next()
+                            actual=''.join(result) + next_char
                         ),
-                        stream=stream
+                        stream=old_stream
                     )
                 )
         return Call(
