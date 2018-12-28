@@ -1,6 +1,6 @@
 import pytest
 
-from parsemon import do, literal, run_parser, chain, unit
+from parsemon import chain, do, literal, run_parser, unit
 
 
 @pytest.fixture(

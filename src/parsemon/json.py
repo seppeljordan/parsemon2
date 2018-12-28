@@ -1,9 +1,9 @@
 """This module parses json to python"""
 
-from parsemon.coroutine import do
-from parsemon.parser import (chain, choice, choices, enclosed_by, fail, fmap,
-                             literal, many, many1, none_of, one_of,
-                             seperated_by, unit, whitespace)
+from .coroutine import do
+from .internals import literal, none_of, try_parser, unit
+from .parser import (chain, choice, choices, enclosed_by, fmap, many, many1,
+                     one_of, seperated_by, whitespace)
 
 whitespaces = many(whitespace)
 
@@ -97,7 +97,7 @@ def json_number():
         return sign + (yield parser)
 
     integer_part = yield maybe_leading_zero(choice(
-        multiple_digits(),
+        try_parser(multiple_digits()),
         just_one_digit,
     ))
 

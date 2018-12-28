@@ -4,26 +4,17 @@ from hypothesis import example, given
 
 from parsemon import (bind, chain, character, choice, choices, enclosed_by,
                       fail, fmap, literal, many, many1, none_of, one_of,
-                      run_parser, seperated_by, unit, until, whitespace)
+                      run_parser, seperated_by, try_parser, unit, until,
+                      whitespace)
 from parsemon.error import NotEnoughInput, ParsingFailed
 from parsemon.sourcemap import display_location
 
 
-@pytest.fixture(
-    params=(
-        'with_error_messages',
-        'without_error_messages',
-    )
-)
+@pytest.fixture
 def runner(request):
-    if request.param == 'with_error_messages':
-        def fixture(*args, **kwargs):
-            return run_parser(*args, show_error_messages=True, **kwargs)
-    else:
-        def fixture(*args, **kwargs):
-            return run_parser(*args, show_error_messages=False, **kwargs)
+    def fixture(*args, **kwargs):
+        return run_parser(*args, **kwargs)
     return fixture
-
 
 
 @given(text=st.text())
@@ -31,14 +22,17 @@ def runner(request):
 def test_literal_parses_a_single_string(runner, text):
     assert runner(literal(text), text) == text
 
+
 @given(char=st.characters())
 @example(char=None)
 def test_unit_parses_the_empty_string(runner, char):
     assert runner(unit(char), '') == char
 
+
 def test_unit_parses_only_the_empty_string(runner):
     with pytest.raises(Exception):
         runner(unit('a'), 'a')
+
 
 def test_fmap_can_replace_parsing_result(runner):
     assert runner(
@@ -96,10 +90,10 @@ def test_literal_choice_can_parse_both_possibilities(runner, a, b):
     # we must order the two strings because of the possibility that a
     # can be a prefix of b or the other way around
     p = choice(
-        literal(a),
+        try_parser(literal(a)),
         literal(b),
     ) if len(a) > len(b) else choice(
-        literal(b),
+        try_parser(literal(b)),
         literal(a),
     )
     assert runner(p, a) == a
@@ -166,21 +160,36 @@ def test_we_can_chain_many_with_something_else(runner):
     )
     assert runner(p,'aaaab') == 'b'
 
-def test_until_parses_only_delimiter(runner):
-    p = until('a')
+def test_until_parses_empty_string_when_finding_delimiter_immediately(runner):
+    p = bind(
+        until('a'),
+        lambda s: chain(
+            literal('a'),
+            unit('')
+        )
+    )
     assert runner(p, 'a') == ''
 
-def test_until_parses_5_characters_and_delimiter(runner):
-    p = until(',')
+def test_until_parses_5_characters_but_not_the_delimiter(runner):
+    p = bind(
+        until(','),
+        lambda s: chain(
+            literal(','),
+            unit(s)
+        )
+    )
     assert runner(p, 'abcde,') == 'abcde'
 
-def test_until_chained_with_literal_parser_leaves_out_delimiter(runner):
+def test_until_chained_with_literal_parser_requires_explicit_parsing_of_delimiter(runner):
     p = until(',')
     p = bind(
         p,
         lambda x: fmap(
             lambda y: [x,y],
-            literal('end')
+            chain(
+                literal(','),
+                literal('end')
+            )
         ),
     )
     assert runner(p, 'abcde,end') == ['abcde','end']
@@ -219,7 +228,7 @@ def test_character_can_parse_5_characters(runner):
 
 def test_character_raises_ParsingFailed_when_too_few_characters_in_stream(runner):
     p = character(n=5)
-    with pytest.raises(NotEnoughInput):
+    with pytest.raises(ParsingFailed):
         runner(p, '1234')
 
 def test_chain_executes_two_parsers_and_returns_result_of_second_one(runner):
@@ -241,10 +250,10 @@ def test_chain_can_take_3_parsers_as_args(runner):
 
 def test_if_a_choice_failes_in_the_middle_of_chain_it_retries_other_option(runner):
     p = choice(
-        chain(
+        try_parser(chain(
             literal('a'),
             literal('a')
-        ),
+        )),
         chain(
             literal('a'),
             literal('b'),
@@ -300,8 +309,8 @@ def test_that_error_message_respects_ordering_of_failing_choices():
     with pytest.raises(ParsingFailed) as err:
         run_parser(p, 'xxxxxxxxxxxxxx')
     error_message = str(err.value)
-    assert 'second' not in error_message.split('first')[1]
-    assert 'first' in error_message.split('second')[1]
+    assert 'second' in error_message.split('first')[1]
+    assert 'first' in error_message.split('second')[0]
 
 
 def test_that_error_message_order_is_preserved_with_3_choices():
@@ -316,10 +325,10 @@ def test_that_error_message_order_is_preserved_with_3_choices():
         run_parser(p, 'xxxxxxxxxxxxxx')
     error_message = str(err.value)
     print(error_message)
-    assert 'second' in error_message.split('first')[0]
-    assert 'third' in error_message.split('first')[0]
-    assert 'first' in error_message.split('second')[1]
-    assert 'third' in error_message.split('second')[0]
+    assert 'second' in error_message.split('first')[1]
+    assert 'third' in error_message.split('first')[1]
+    assert 'first' in error_message.split('second')[0]
+    assert 'third' in error_message.split('second')[1]
 
 
 def test_a_simple_failing_parser_prints_column_0_as_error():

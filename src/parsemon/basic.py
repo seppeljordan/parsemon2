@@ -1,8 +1,10 @@
 """Implement basic parsers that should be generally useful"""
 
+from typing import Tuple
+
 from .coroutine import do
-from .parser import (chain, choice, choices, fmap, literal, many, many1,
-                     one_of, unit)
+from .internals import literal, try_parser
+from .parser import chain, choice, choices, fmap, many, many1, one_of, unit
 
 
 def concat(chars):
@@ -68,8 +70,8 @@ def floating_point(delimiter: str = '.'):
     def float_without_e():
         signum = yield sign()
         before_point, after_point = yield choices(
-            both_parts(),
             without_integer_part(),
+            try_parser(both_parts()),
             without_rational_part(),
         )
         return signum, before_point, after_point
@@ -83,14 +85,16 @@ def floating_point(delimiter: str = '.'):
             unit('0')
         )
 
+    def int_to_signum(n: int) -> Tuple[str,str,str]:
+        return (
+            '+' if n >= 0 else '-',
+            str(n),
+            ''
+        )
     signum, before_point, after_point = yield choice(
-        float_without_e(),
+        try_parser(float_without_e()),
         fmap(
-            lambda i: (
-                '+' if i >= 0 else '-',
-                str(i),
-                ''
-            ),
+            int_to_signum,
             integer()
         )
     )

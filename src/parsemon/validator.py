@@ -1,6 +1,7 @@
 from typing import Callable, Generic, Sized, Tuple, TypeVar
 
-from .parser import Parser, bind, fail, unit
+from .internals import fail
+from .parser import bind, unit
 from .trampoline import Call, Result, Trampoline, with_trampoline
 
 T = TypeVar('T')
@@ -15,12 +16,12 @@ class Validator(Generic[T]):
 
     def validates(
             self,
-            parser: Parser[T, Sized]
-    ) -> Parser[T, Sized]:
+            parser,
+    ):
 
         def do_validation(
                 to_validate: T,
-        ) -> Parser[T, Sized]:
+        ):
             is_validated, error_message = with_trampoline(
                 self.function
             )(

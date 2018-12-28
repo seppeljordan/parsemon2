@@ -1,4 +1,4 @@
-from parsemon import chain, choice, literal, run_parser
+from parsemon import chain, choice, literal, run_parser, try_parser
 from parsemon.coroutine import do
 
 
@@ -20,14 +20,14 @@ def test_can_use_do_notation_in_choice():
         return a + b
 
     p = choice(
-        chain(
+        try_parser(chain(
             a_and_b(),
             literal('a')
-        ),
-        chain(
+        )),
+        try_parser(chain(
             a_and_b(),
             literal('b')
-        )
+        ))
     )
 
     assert run_parser(p, 'aba') == 'a'

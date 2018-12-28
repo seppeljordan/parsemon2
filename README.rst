@@ -24,10 +24,7 @@ Changes
 - New parser for floating point numbers: ``parsmon.basic.floating_point``
 - Implement ``x | y`` operator for parsers, it is a short hand for
   ``choice(x,y)``
-- Change ordering of error messages.  Now the last error message that
-  was raised (last branch that was tried) is shown first and the
-  message from the first branch tried is shown last.
-- It is now possible to disable error messages when running a parser.
+- Improved performance parsing speed by factor 4 - 6
 
 1.1
 ---

@@ -8,7 +8,10 @@ from attr import evolve
 from .coroutine import do
 from .deque import Deque
 from .error import NotEnoughInput, ParsingFailed
-from .internals import Parser, ParserState, unit
+from .internals import (Failures, Parser, character, literal, look_ahead,
+                        one_of, try_parser, unit)
+from .sourcemap import (display_location, find_line_in_indices,
+                        find_linebreak_indices)
 from .trampoline import Call, with_trampoline
 
 S = TypeVar('S')
@@ -27,9 +30,9 @@ would actually return None as a positive parsing result.
 
 
 def bind(
-        old_parser: Parser[ParserResult, ParserInput],
-        binding: Callable[[ParserResult], Parser[T, ParserInput]]
-) -> Parser[T, ParserInput]:
+        old_parser,
+        binding,
+):
     '''Combine the result of a parser with second parser
 
     :param old_parser: First parser to apply
@@ -39,10 +42,10 @@ def bind(
     return old_parser.bind(binding)
 
 def chain(
-        first: Parser[S, U],
-        second: Parser[T, U],
+        first,
+        second,
         *rest
-) -> Parser[T, U]:
+):
     '''Combine to parsers and only use the result of the second parser
 
     :param first: a parser that consumes input, the result will be discarded
@@ -60,8 +63,8 @@ def chain(
 
 def fmap(
         mapping: Callable[[S], T],
-        old_parser: Parser[S, U]
-) -> Parser[T, U]:
+        old_parser,
+):
     '''Apply a function to the result of a parser
 
     :param mapping: a function that is applied to the result of
@@ -77,9 +80,9 @@ def fmap(
 
 
 def choice(
-        first_parser: Parser[T, str],
-        second_parser: Parser[T, str]
-) -> Parser[T, str]:
+        first_parser,
+        second_parser,
+):
     '''Try one parser and try a second one if the first one fails
 
     This behaves the same way as ``first_parser | second_parser`` would.
@@ -110,7 +113,7 @@ def many(original_parser):
     results = []
     while True:
         current_result = yield choice(
-            original_parser,
+            try_parser(original_parser),
             unit(NO_FURTHER_RESULT)
         )
         if current_result is NO_FURTHER_RESULT:
@@ -135,13 +138,6 @@ def many1(original_parser):
     return [(yield original_parser)] + (yield many(original_parser))
 
 
-def fail(msg):
-    """This parser always fails with the message passed as ``msg``."""
-    def parser(s, parser_bind):
-        return parser_bind.parser_failed(msg)
-    return Parser(parser)
-
-
 @do
 def seperated_by(parser, seperator):
     """Apply the input parser as often as possible, where occurences are
@@ -153,7 +149,7 @@ def seperated_by(parser, seperator):
     ``['1','2','3','4']``.
     """
     results = []
-    first_elem = yield (parser | unit(NO_FURTHER_RESULT))
+    first_elem = yield (try_parser(parser) | unit(NO_FURTHER_RESULT))
     if first_elem is NO_FURTHER_RESULT:
         return results
     rest_elems = yield many(chain(seperator, parser))
@@ -179,147 +175,40 @@ def enclosed_by(
 
 
 def run_parser(
-        p: Parser[T, Sized],
-        input_string: Sized,
-        stack_implementation=Deque,
-        show_error_messages=True,
+        p,
+        input_string: str,
 ) -> T:
     '''Parse string input_string with parser p'''
-    parsing_result, rest = with_trampoline(p)(
-        input_string,
-        ParserState.create(
-            document=input_string,
-            stack_implementation=stack_implementation,
-            show_error_messages=show_error_messages,
-        ),
-    )
-    if rest:
-        raise ParsingFailed(
-            'Parser did not consume all of the string, rest was `{rest}`'
-            .format(
-                rest=rest
-            )
+    total_length = len(input_string)
+    def render_failure(failure):
+        location = total_length - len(failure.stream)
+        linebreaks = find_linebreak_indices(input_string)
+        line = find_line_in_indices(location, linebreaks)
+        if linebreaks:
+            column = location - linebreaks[line - 2] - 1
+        else:
+            column = location
+        return '{message} @ {location}'.format(
+            message=failure.message,
+            location=display_location(line,column)
         )
+    result = p.run(input_string)
+    if isinstance(result, Failures):
+        final_message = ' OR '.join(map(
+            render_failure,
+            result.failures
+        ))
+        raise ParsingFailed(final_message)
     else:
-        return parsing_result
-
-
-def character(n: int = 1) -> Parser[str, str]:
-    """Parse exactly n characters, the default is 1."""
-    def parser(s, parser_state):
-        rest_length = len(s)
-        if rest_length >= n:
-            return parser_state.pass_result(
-                value=s[:n],
-                characters_consumed=n,
-            )
-        else:
-            return parser_state.parser_failed(
-                'Expected `{expected}` characters of input but got only '
-                '`{actual}`.'.format(
-                    expected=n,
-                    actual=rest_length
-                ),
-                exception=NotEnoughInput,
-            )
-    return Parser(parser)
-
-
-def none_of(chars: str) -> Parser[str, str]:
-    """Parse any character except the ones in ``chars``
-
-    This parser will fail if it finds a character that is in
-    ``chars``.
-
-    """
-    def parser(s, parser_bind):
-        if not s:
-            return parser_bind.parser_failed(
-                ('Excpected character other than `{forbidden}` but stream was '
-                 'empty.').format(
-                     forbidden=chars
-                 )
-            )
-        value = s[0]
-        rest = s[1:]
-        if value in chars:
-            return parser_bind.parser_failed(
-                ('Expected character other than `{forbidden}`, '
-                 'but got `{actual}`').format(
-                     forbidden=chars,
-                     actual=value
-                 )
-            )
-        else:
-            return parser_bind.pass_result(
-                value=value,
-                characters_consumed=1
-            )
-    return Parser(parser)
-
-
-def one_of(
-        expected: str
-) -> Parser[str, str]:
-    """Parse only characters contained in ``expected``."""
-    def parser(s, state):
-        if not s:
-            return state.parser_failed(
-                'Expected one of {expected}, but found end of string'.format(
-                    expected=repr(expected),
+        rest = result.stream
+        if rest:
+            raise NotEnoughInput(
+                'Parser did not consume all of the string, rest was `{rest}`'
+                .format(
+                    rest=rest.to_string()
                 )
             )
-        elif s[0] in expected:
-            return state.pass_result(
-                value=s[0],
-                characters_consumed=1
-            )
-        else:
-            return state.parser_failed(
-                'Expected one of {expected}, but found {actual}'.format(
-                    expected=repr(expected),
-                    actual=repr(s[0]),
-                )
-            )
-    return Parser(parser)
-
-
-def until(d: str) -> Parser[str, str]:
-    '''Parse the input until string ``d`` is found.
-
-    The string ``d`` won't be consumed.  Returns the consumed input as
-    a string.
-
-    '''
-    def parser(s, parser_bind: ParserState):
-        splits = s.split(d)
-        value = splits[0]
-        characters_consumed = len(value) + len(d)
-        rest = s[characters_consumed:]
-        return parser_bind.pass_result(
-            value=value,
-            characters_consumed=characters_consumed,
-        )
-    return Parser(parser)
-
-
-def literal(string_to_parse: str) -> Parser[str, str]:
-    '''Parse a literal string and return it as a result'''
-    def parser(s, parser_bind):
-        expected_length = len(string_to_parse)
-        return (
-            parser_bind.pass_result(
-                value=string_to_parse,
-                characters_consumed=expected_length
-            ) if s.startswith(string_to_parse) else
-            parser_bind.parser_failed(
-                'Expected string `{expected}`, but saw `{actual}`'.format(
-                    expected=string_to_parse,
-                    actual=s[:len(string_to_parse)],
-                )
-            )
-        )
-    return Parser(parser)
+        return result.value
 
 
 whitespace_unicode_characters_decimals: List[int] = [
@@ -355,3 +244,23 @@ whitespace = one_of(
 )
 """Parse any character that is classified as a whitespace character by unicode
 standard.  That includes newline characters."""
+
+
+@do
+def until(delimiter):
+    ending = object()
+
+    @do
+    def found_end():
+        yield literal(delimiter)
+        return ending
+
+    result = []
+    while True:
+        parsing_result = yield choice(
+            look_ahead(found_end()),
+            character(),
+        )
+        if parsing_result is ending:
+            return ''.join(result)
+        result.append(parsing_result)
