@@ -1,4 +1,6 @@
+import hypothesis.strategies as st
 import pytest
+from hypothesis import example, given
 
 from parsemon import (bind, chain, character, choice, choices, enclosed_by,
                       fail, fmap, literal, many, many1, none_of, one_of,
@@ -24,11 +26,15 @@ def runner(request):
 
 
 
-def test_literal_parses_a_single_string(runner):
-    assert runner(literal('a'), 'a') == 'a'
+@given(text=st.text())
+@example(text='')
+def test_literal_parses_a_single_string(runner, text):
+    assert runner(literal(text), text) == text
 
-def test_unit_parses_the_empty_string(runner):
-    assert runner(unit('a'), '') == 'a'
+@given(char=st.characters())
+@example(char=None)
+def test_unit_parses_the_empty_string(runner, char):
+    assert runner(unit(char), '') == char
 
 def test_unit_parses_only_the_empty_string(runner):
     with pytest.raises(Exception):
@@ -48,37 +54,56 @@ def test_fmap_can_map_1000_time(runner):
         parser = fmap(lambda x: 'b', parser)
     assert runner(parser, 'a') == 'b'
 
-def test_bind_can_chain_two_literal_parsers(runner):
+@given(
+    a=st.characters(),
+    b=st.characters(),
+)
+def test_bind_can_chain_two_literal_parsers(runner, a, b):
     parser = bind(
-        literal('a'),
-        lambda x: literal('b'),
+        literal(a),
+        lambda x: literal(b),
     )
-    assert runner(parser, 'ab') == 'b'
+    assert runner(parser, a + b) == b
 
-def test_bind_can_chain_3_literal_parsers(runner):
-    p = literal('a')
+
+@given(
+    a=st.text(),
+    b=st.text(),
+    c=st.text(),
+)
+def test_bind_can_chain_3_literal_parsers(runner, a, b, c):
+    p = literal(a)
     p = bind(
         p,
-        lambda x: literal('b'),
+        lambda x: literal(b),
     )
     p = bind(
         p,
-        lambda x: literal('c'),
+        lambda x: literal(c),
     )
-    assert runner(p, 'abc') == 'c'
+    assert runner(p, a + b + c) == c
 
 def test_literal_parser_throws_ParsingFailed_when_seeing_non_matching_string(runner):
     with pytest.raises(ParsingFailed):
         runner(literal('a'), 'b')
 
 
-def test_literal_choice_can_parse_both_possibilities(runner):
+@given(
+    a=st.text(min_size=1),
+    b=st.text(min_size=1),
+)
+def test_literal_choice_can_parse_both_possibilities(runner, a, b):
+    # we must order the two strings because of the possibility that a
+    # can be a prefix of b or the other way around
     p = choice(
-        literal('a'),
-        literal('b'),
+        literal(a),
+        literal(b),
+    ) if len(a) > len(b) else choice(
+        literal(b),
+        literal(a),
     )
-    assert runner(p, 'a') == 'a'
-    assert runner(p, 'b') == 'b'
+    assert runner(p, a) == a
+    assert runner(p, b) == b
 
 def test_choice_can_be_chained_1000_times(runner):
     c = choice(
