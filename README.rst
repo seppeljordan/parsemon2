@@ -25,6 +25,8 @@ Changes
 - Implement ``x | y`` operator for parsers, it is a short hand for
   ``choice(x,y)``
 - Improved performance parsing speed by factor 4 - 6
+- There is now an example of a parser included in this package.  It is
+  the worlds slowest json parser
 
 1.1
 ---
