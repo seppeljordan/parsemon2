@@ -205,7 +205,9 @@ def literal(expected):
                 return Call(
                     cont,
                     failure(
-                        'test',
+                        'Expected `{expected}` but found end of string'.format(
+                            expected=expected,
+                        ),
                         stream
                     )
                 )
@@ -282,7 +284,9 @@ def one_of(
             return Call(
                 cont,
                 failure(
-                    message='Expected on of `{expected}` but found end of string',
+                    message='Expected on of `{expected}` but found end of string'.format(
+                        expected=expected
+                    ),
                     stream=stream
                 )
             )
