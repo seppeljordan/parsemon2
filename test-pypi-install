@@ -4,9 +4,9 @@ INSTALL_ONLY="false"
 
 while getopts "i" options; do
     case "${options}" in
-        i)
-            INSTALL_ONLY="true"
-            ;;
+	i)
+	    INSTALL_ONLY="true"
+	    ;;
     esac
 done
 
@@ -14,25 +14,52 @@ set -e
 
 VERSION=$(cat VERSION)
 
-function upload_check() {
+TARBALL="dist/parsemon2-${VERSION}.tar.gz"
 
+function build_tarball() {
     nix-shell -p python3 --command 'python setup.py sdist'
+}
+
+function upload_check() {
     nix-shell -p python3Packages.twine --command \
-              "twine upload -r test-pypi dist/parsemon2-${VERSION}.tar.gz"
+	  "twine upload -r test-pypi ${TARBALL}"
+}
+
+function do_import_check() {
+    python -c 'import parsemon' || (echo $1 && exit 1)
+}
+
+function remove_parsemon() {
+    pip uninstall parsemon2 -y
 }
 
 function install_check() {
     rm -rf testenv
     mkdir -p "testenv"
     nix-shell \
-        -p python3Packages.virtualenv \
-        --command "virtualenv testenv"
-    testenv/bin/pip install \
-                    --no-cache-dir \
-                    --index-url https://test.pypi.org/simple/ \
-                    parsemon2==${VERSION}
+	-p python3Packages.virtualenv \
+	--command "virtualenv testenv"
+    source testenv/bin/activate
+
+    # install dependencies from regular pypi
+    pip install -e .
+    remove_parsemon
+
+    # install parsemon2 from generated dist file
+    pip install "${TARBALL}"
+    do_import_check "Installation from tarball failed"
+    remove_parsemon
+
+    # install parsemon2 from pypi test
+    pip install \
+		    --no-cache-dir \
+		    --index-url https://test.pypi.org/simple/ \
+		    parsemon2==${VERSION}
+    do_import_check "Installation from PyPI failed"
+    deactivate
 }
 
+build_tarball
 if [ ${INSTALL_ONLY} = "false" ]; then
     upload_check
 fi

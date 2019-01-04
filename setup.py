@@ -13,10 +13,14 @@ setup(
     author_email='sebastian.jordan.mail@googlemail.com',
     long_description=long_description,
     description=u"A monadic parser combinator written purely in python",
-    package_dir = {'': 'src'},
-    packages=['parsemon'],
+    package_dir = {
+        'parsemon': 'src/parsemon',
+        'parsemon.deque': 'src/parsemon/deque',
+    },
+    packages=['parsemon', 'parsemon.deque'],
     install_requires=[
-        'attrs'
+        'attrs',
+        'pyrsistent',
     ],
     classifiers = [
         'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
