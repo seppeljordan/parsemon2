@@ -1,9 +1,9 @@
 """This module parses json to python"""
 
 from .coroutine import do
-from .internals import literal, none_of, try_parser, unit
-from .parser import (chain, choice, choices, enclosed_by, fmap, many, many1,
-                     one_of, seperated_by, whitespace)
+from .internals import fmap, literal, none_of, try_parser, unit
+from .parser import (chain, choice, choices, enclosed_by, many, many1, one_of,
+                     seperated_by, whitespace)
 
 whitespaces = many(whitespace)
 

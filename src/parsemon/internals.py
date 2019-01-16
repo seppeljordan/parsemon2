@@ -14,12 +14,19 @@ class Success:
     value = attrib()
     stream = attrib()
 
+    def map_value(self, mapping):
+        return evolve(
+            self,
+            value=mapping(self.value),
+        )
 
 @attrs
 class Failure:
     message = attrib()
     stream = attrib()
 
+    def map_value(self, _):
+        return self
 
 @attrs
 class Failures:
@@ -29,6 +36,9 @@ class Failures:
         return Failures(
             failures = self.failures + other.failures
         )
+
+    def map_value(self, _):
+        return self
 
 
 def failure(message, stream):
@@ -40,6 +50,38 @@ def failure(message, stream):
 
 @attrs
 class Parser:
+    """Constructs a Parser object from a function.
+
+    The passed function must be a higher-order function.  The expected
+    parameters are a parsermon.stream.CharacterStream first and a continuation
+    function second.
+
+    The function argument: The funtion parameter is expected to be a
+    Callable.  Arguments that will be passed to that callable will be
+    a CharacterStream `stream` and a continuation function
+    `continuation`.  The function is expected to return either a
+    Success or a Failure object.  When you write your own parser you
+    get can read from the stream argument.  The return object will
+    contain the remainder of the stream.  This is how you represent
+    the amount of characters that your parser consumed.  Theoratically
+    you can even write to that stream, but the author of this document
+    can not come up with a good reason to do so.  The second expected
+    parameter of that function is a little bit tricky.  `continuation`
+    is expected to be a function that takes in the result of your
+    parser and transforms it into another result object.  You as the
+    author of parser function are responsible to call the
+    `continuation` function on your parsing result.
+
+    If you plan to write your own parsing function, the author
+    recommends to look at the parser functions supplied with the
+    parsemon package.
+
+    Also: Your parsing function must implement the
+    `parsemon.trampoline` protocol.  This means that if you do tail
+    calls you implement them by returning a `parsemon.trampoline.Call`
+    object.  Use `parseon.trampoline.Value` to return a plain value
+    without doing a tail call.
+    """
     function = attrib()
 
     def bind(self, binding):
@@ -312,3 +354,18 @@ def one_of(
                 )
             )
     return Parser(parser)
+
+
+def fmap(mapping, parser):
+    def mapped_parser(stream, cont):
+        def continuation(parsing_result):
+            return Call(
+                cont,
+                parsing_result.map_value(mapping)
+            )
+        return Call(
+            parser.function,
+            stream,
+            continuation,
+        )
+    return Parser(mapped_parser)

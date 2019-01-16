@@ -3,8 +3,8 @@
 from typing import Tuple
 
 from .coroutine import do
-from .internals import literal, try_parser
-from .parser import chain, choice, choices, fmap, many, many1, one_of, unit
+from .internals import fmap, literal, try_parser
+from .parser import chain, choice, choices, many, many1, one_of, unit
 
 
 def concat(chars):

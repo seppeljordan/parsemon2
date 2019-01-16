@@ -61,24 +61,6 @@ def chain(
     return reduce(_chain, rest, first_and_second_parser_combined)
 
 
-def fmap(
-        mapping: Callable[[S], T],
-        old_parser,
-):
-    '''Apply a function to the result of a parser
-
-    :param mapping: a function that is applied to the result of
-        ``old_parser``
-
-    :param old_parser: a parser, its result is passed into ``mapping``
-
-    '''
-    return bind(
-        old_parser,
-        lambda x: unit(mapping(x)),
-    )
-
-
 def choice(
         first_parser,
         second_parser,
