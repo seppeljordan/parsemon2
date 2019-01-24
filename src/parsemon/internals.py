@@ -18,6 +18,15 @@ class Success:
             value=mapping(self.value),
         )
 
+    def is_failure(_):
+        return False
+
+    def map_stream(self, mapping):
+        return evolve(
+            self,
+            stream=mapping(self.stream)
+        )
+
 
 @attrs
 class Failure:
@@ -27,14 +36,44 @@ class Failure:
     def map_value(self, _):
         return self
 
+    def __add__(self, other):
+        if isinstance(other, Failures):
+            return evolve(
+                other,
+                failures=[self] + other.failures
+            )
+        return Failures(
+            failures=[
+                self,
+                other
+            ]
+        )
+
+    def last_stream(self):
+        return self.stream
+
+    def is_failure(_):
+        return True
+
+    def map_stream(self, mapping):
+        return evolve(
+            self,
+            stream=mapping(self.stream)
+        )
+
 
 @attrs
 class Failures:
     failures = attrib()
 
     def __add__(self, other):
+        other_failures = (
+            other.failures
+            if isinstance(other, Failures)
+            else [other]
+        )
         return Failures(
-            failures=self.failures + other.failures
+            failures=self.failures + other_failures
         )
 
     def map_value(self, fun):
@@ -46,12 +85,30 @@ class Failures:
             ))
         )
 
+    def last_stream(self):
+        if self.failures:
+            return self.failures[-1].stream
+        else:
+            return None
+
+    def is_failure(_):
+        return True
+
+    def map_stream(self, mapping):
+        return evolve(
+            self,
+            failures=list(map(
+                lambda f: f.map_stream(mapping),
+                self.failures
+            ))
+        )
+
 
 def failure(message, stream):
-    return Failures([Failure(
+    return Failure(
         message=message,
         stream=stream,
-    )])
+    )
 
 
 @attrs
@@ -93,7 +150,7 @@ class Parser:
     def bind(self, binding):
         def function(stream, cont):
             def continuation(first_result):
-                if isinstance(first_result, Failures):
+                if first_result.is_failure():
                     return Call(cont, first_result)
                 other = binding(first_result.value)
                 return Call(
@@ -110,22 +167,25 @@ class Parser:
 
     def __or__(self, other):
         def parser(stream, cont):
-            def continuation(first_result):
-                if isinstance(first_result, Failures):
-                    if len(first_result.failures[-1].stream) == len(stream):
+            def continuation(result_of_self):
+                if result_of_self.is_failure():
+                    if len(result_of_self.last_stream()) == len(stream):
                         return Call(
                             other.function,
                             stream,
-                            lambda second_result: Call(
-                                cont,
-                                (
-                                    first_result + second_result
-                                    if isinstance(second_result, Failures)
-                                    else second_result
+                            lambda result_of_other: (
+                                Call(
+                                    cont,
+                                    result_of_self + result_of_other
                                 )
-                            ),
+                                if result_of_other.is_failure()
+                                else Call(
+                                        cont,
+                                        result_of_other
+                                )
+                            )
                         )
-                return Call(cont, first_result)
+                return Call(cont, result_of_self)
             return Call(
                 self.function,
                 stream,
@@ -148,7 +208,7 @@ def look_ahead(parser):
     @Parser.from_function
     def function(stream, cont):
         def continuation(result):
-            if isinstance(result, Failures):
+            if result.is_failure():
                 return Call(
                     cont,
                     result
@@ -156,10 +216,7 @@ def look_ahead(parser):
             else:
                 return Call(
                     cont,
-                    evolve(
-                        result,
-                        stream=stream
-                    )
+                    result.map_stream(lambda _: stream),
                 )
         return Call(
             parser.function,
@@ -173,20 +230,10 @@ def try_parser(parser):
     @Parser.from_function
     def function(stream, cont):
         def continuation(result):
-            if isinstance(result, Failures):
-                modified_result = evolve(
-                    result,
-                    failures=list(map(
-                        lambda failure: evolve(
-                            failure,
-                            stream=stream,
-                        ),
-                        result.failures,
-                    ))
-                )
+            if result.is_failure():
                 return Call(
                     cont,
-                    modified_result,
+                    result.map_stream(lambda _: stream),
                 )
             else:
                 return Call(

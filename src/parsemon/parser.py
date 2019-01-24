@@ -5,7 +5,7 @@ from typing import List, TypeVar
 
 from .coroutine import do
 from .error import NotEnoughInput, ParsingFailed
-from .internals import (Failures, character, literal, look_ahead, one_of,
+from .internals import (Failure, character, literal, look_ahead, one_of,
                         try_parser, unit)
 from .sourcemap import (display_location, find_line_in_indices,
                         find_linebreak_indices)
@@ -173,10 +173,15 @@ def run_parser(
     if stream_implementation:
         kwargs['stream_implementation'] = stream_implementation
     result = p.run(input_string, **kwargs)
-    if isinstance(result, Failures):
+    if result.is_failure():
+        failures = (
+            [result]
+            if isinstance(result, Failure)
+            else result.failures
+        )
         final_message = ' OR '.join(map(
             render_failure,
-            result.failures
+            failures
         ))
         raise ParsingFailed(final_message)
     else:
