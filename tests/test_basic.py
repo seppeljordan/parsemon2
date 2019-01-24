@@ -1,6 +1,6 @@
 import pytest
 
-from parsemon import ParsingFailed, do, floating_point, integer, run_parser
+from parsemon import ParsingFailed, floating_point, integer, run_parser
 
 
 def test_if_integer_parses_1_digit():

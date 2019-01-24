@@ -1,11 +1,9 @@
-"""Contains the implementation of the parser monad.  This module is not intended
-to be used from outside this library
+"""Contains the implementation of the parser monad.  This module is
+not intended to be used from outside this library.
 """
-from functools import reduce
-
 from attr import attrib, attrs, evolve
 
-from .stream import CharacterStream
+from .stream import StringStream
 from .trampoline import Call, Result, with_trampoline
 
 
@@ -20,6 +18,7 @@ class Success:
             value=mapping(self.value),
         )
 
+
 @attrs
 class Failure:
     message = attrib()
@@ -28,17 +27,24 @@ class Failure:
     def map_value(self, _):
         return self
 
+
 @attrs
 class Failures:
     failures = attrib()
 
     def __add__(self, other):
         return Failures(
-            failures = self.failures + other.failures
+            failures=self.failures + other.failures
         )
 
-    def map_value(self, _):
-        return self
+    def map_value(self, fun):
+        return evolve(
+            self,
+            failures=list(map(
+                lambda failure: failure.map_value(fun),
+                self.failures
+            ))
+        )
 
 
 def failure(message, stream):
@@ -88,7 +94,7 @@ class Parser:
         def function(stream, cont):
             def continuation(first_result):
                 if isinstance(first_result, Failures):
-                    return Call(cont,first_result)
+                    return Call(cont, first_result)
                 other = binding(first_result.value)
                 return Call(
                     other.function,
@@ -127,14 +133,19 @@ class Parser:
             )
         return Parser(parser)
 
-    def run(self, input_string):
+    def run(self, input_string, stream_implementation=StringStream):
         return with_trampoline(self.function)(
-            CharacterStream.from_string(input_string),
+            stream_implementation.from_string(input_string),
             lambda x: Result(x),
         )
 
+    @classmethod
+    def from_function(cls, function):
+        return cls(function)
+
 
 def look_ahead(parser):
+    @Parser.from_function
     def function(stream, cont):
         def continuation(result):
             if isinstance(result, Failures):
@@ -155,10 +166,11 @@ def look_ahead(parser):
             stream,
             continuation
         )
-    return Parser(function)
+    return function
 
 
 def try_parser(parser):
+    @Parser.from_function
     def function(stream, cont):
         def continuation(result):
             if isinstance(result, Failures):
@@ -186,10 +198,11 @@ def try_parser(parser):
             stream,
             continuation,
         )
-    return Parser(function)
+    return function
 
 
 def unit(value):
+    @Parser.from_function
     def parser(stream, cont):
         return Call(
             cont,
@@ -198,11 +211,12 @@ def unit(value):
                 stream=stream
             )
         )
-    return Parser(parser)
+    return parser
 
 
 def fail(msg):
     """This parser always fails with the message passed as ``msg``."""
+    @Parser.from_function
     def parser(stream, cont):
         return Call(
             cont,
@@ -211,14 +225,15 @@ def fail(msg):
                 stream=stream
             )
         )
-    return Parser(parser)
+    return parser
 
 
 def character(n: int = 1):
     """Parse exactly n characters, the default is 1."""
+    @Parser.from_function
     def parser(stream, cont):
         result = []
-        for _ in range(0,n):
+        for _ in range(0, n):
             if not stream:
                 return Call(
                     cont,
@@ -236,10 +251,11 @@ def character(n: int = 1):
                 stream=stream
             )
         )
-    return Parser(parser)
+    return parser
 
 
 def literal(expected):
+    @Parser.from_function
     def parser(stream, cont):
         result = []
         for expected_char in expected:
@@ -261,7 +277,9 @@ def literal(expected):
                 return Call(
                     cont,
                     failure(
-                        message='Expected {expected} but found {actual}.'.format(
+                        message=(
+                            'Expected {expected} but found {actual}.'
+                        ).format(
                             expected=expected,
                             actual=''.join(result) + next_char
                         ),
@@ -275,7 +293,8 @@ def literal(expected):
                 stream=stream
             )
         )
-    return Parser(parser)
+    return parser
+
 
 def none_of(chars: str):
     """Parse any character except the ones in ``chars``
@@ -284,12 +303,16 @@ def none_of(chars: str):
     ``chars``.
 
     """
+    @Parser.from_function
     def parser(stream, cont):
         if not stream:
             return Call(
                 cont,
                 failure(
-                    message='Expected any char except `{forbidden}` but found end of string'.format(
+                    message=' '.join([
+                        'Expected any char except `{forbidden}` but found end'
+                        'of string'
+                    ]).format(
                         forbidden=chars,
                     ),
                     stream=stream,
@@ -308,27 +331,34 @@ def none_of(chars: str):
             return Call(
                 cont,
                 failure(
-                    message='Expected anything except one of `{forbidden}` but found {actual}'.format(
+                    message=' '.join([
+                        'Expected anything except one of `{forbidden}` but'
+                        'found {actual}'
+                    ]).format(
                         forbidden=chars,
                         actual=stream.next()
                     ),
                     stream=stream
                 )
             )
-    return Parser(parser)
+    return parser
 
 
 def one_of(
         expected: str
 ):
     """Parse only characters contained in ``expected``."""
+    @Parser.from_function
     def parser(stream, cont):
         if not stream:
             return Call(
                 cont,
                 failure(
-                    message='Expected on of `{expected}` but found end of string'.format(
-                        expected=expected
+                    message=(
+                        'Expected on of `{expected}` but found end of string'
+                        .format(
+                            expected=expected
+                        )
                     ),
                     stream=stream
                 )
@@ -346,17 +376,20 @@ def one_of(
             return Call(
                 cont,
                 failure(
-                    message='Expected one of `{expected}` but found {actual}'.format(
+                    message=(
+                        'Expected one of `{expected}` but found {actual}'
+                    ).format(
                         expected=expected,
                         actual=stream.next(),
                     ),
                     stream=stream
                 )
             )
-    return Parser(parser)
+    return parser
 
 
 def fmap(mapping, parser):
+    @Parser.from_function
     def mapped_parser(stream, cont):
         def continuation(parsing_result):
             return Call(
@@ -368,4 +401,4 @@ def fmap(mapping, parser):
             stream,
             continuation,
         )
-    return Parser(mapped_parser)
+    return mapped_parser

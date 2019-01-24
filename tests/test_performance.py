@@ -1,7 +1,19 @@
 import pytest
 
-from parsemon import choices, literal, many, many1, run_parser
-from parsemon.deque import Deque, PyrsistentDeque, Stack
+from parsemon import choices, literal, many, run_parser
+from parsemon.stream import CharacterStream, StringStream
+
+
+@pytest.fixture(
+    params=(
+        CharacterStream,
+        StringStream,
+    )
+)
+def runner(request):
+    def fixture(*args, **kwargs):
+        return run_parser(*args, stream_implementation=request.param, **kwargs)
+    return fixture
 
 
 @pytest.mark.parametrize(
@@ -22,6 +34,7 @@ from parsemon.deque import Deque, PyrsistentDeque, Stack
 def test_stack_performance_with_many_choices(
         benchmark,
         input_string,
+        runner,
 ):
     parser = many(choices(
         literal('a'),
@@ -30,7 +43,7 @@ def test_stack_performance_with_many_choices(
         literal('d'),
     ))
     benchmark(
-        run_parser,
+        runner,
         parser,
         input_string,
     )

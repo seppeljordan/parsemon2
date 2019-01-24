@@ -1,24 +1,16 @@
 """This module contains the basic building blocks for implementing parsers"""
 
 from functools import reduce
-from typing import Callable, List, Sized, TypeVar
-
-from attr import evolve
+from typing import List, TypeVar
 
 from .coroutine import do
-from .deque import Deque
 from .error import NotEnoughInput, ParsingFailed
-from .internals import (Failures, Parser, character, literal, look_ahead,
-                        one_of, try_parser, unit)
+from .internals import (Failures, character, literal, look_ahead, one_of,
+                        try_parser, unit)
 from .sourcemap import (display_location, find_line_in_indices,
                         find_linebreak_indices)
-from .trampoline import Call, with_trampoline
 
-S = TypeVar('S')
 T = TypeVar('T')
-U = TypeVar('U')
-ParserInput = TypeVar('ParserInput')
-ParserResult = TypeVar('ParserResult')
 
 
 NO_FURTHER_RESULT = object()
@@ -40,6 +32,7 @@ def bind(
         of old_parser
     '''
     return old_parser.bind(binding)
+
 
 def chain(
         first,
@@ -159,9 +152,11 @@ def enclosed_by(
 def run_parser(
         p,
         input_string: str,
+        stream_implementation=None,
 ) -> T:
     '''Parse string input_string with parser p'''
     total_length = len(input_string)
+
     def render_failure(failure):
         location = total_length - len(failure.stream)
         linebreaks = find_linebreak_indices(input_string)
@@ -172,9 +167,12 @@ def run_parser(
             column = location
         return '{message} @ {location}'.format(
             message=failure.message,
-            location=display_location(line,column)
+            location=display_location(line, column)
         )
-    result = p.run(input_string)
+    kwargs = {}
+    if stream_implementation:
+        kwargs['stream_implementation'] = stream_implementation
+    result = p.run(input_string, **kwargs)
     if isinstance(result, Failures):
         final_message = ' OR '.join(map(
             render_failure,
@@ -230,12 +228,10 @@ standard.  That includes newline characters."""
 
 @do
 def until(delimiter):
-    ending = object()
-
     @do
     def found_end():
         yield literal(delimiter)
-        return ending
+        return NO_FURTHER_RESULT
 
     result = []
     while True:
@@ -243,6 +239,6 @@ def until(delimiter):
             look_ahead(found_end()),
             character(),
         )
-        if parsing_result is ending:
+        if parsing_result is NO_FURTHER_RESULT:
             return ''.join(result)
         result.append(parsing_result)

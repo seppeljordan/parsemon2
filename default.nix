@@ -9,7 +9,7 @@ with (import nixos-stable {});
 let
   f =
     { buildPythonPackage, pytest, mypy, sphinx, lib, pytestcov, attrs
-    , pylint, pytest-benchmark, pyrsistent, hypothesis
+    , pylint, pytest-benchmark, pyrsistent, hypothesis, flake8
     }:
     let
     sourceFilter = name: type:
@@ -32,6 +32,7 @@ let
         pylint
         pytest-benchmark
         hypothesis
+        flake8
       ];
       propagatedBuildInputs = [ attrs pyrsistent ];
       src = lib.cleanSourceWith {

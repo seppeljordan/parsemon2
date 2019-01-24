@@ -31,7 +31,11 @@ class CharacterStream:
             evolve(
                 self,
                 content=self.content.pop(),
-                length=self.length if self.content.empty() else self.length - 1,
+                length=(
+                    self.length
+                    if self.content.empty()
+                    else self.length - 1
+                ),
             )
         )
 
@@ -40,3 +44,43 @@ class CharacterStream:
 
     def to_string(self):
         return ''.join(self.content)
+
+
+@attrs
+class StringStream:
+    content = attrib()
+    position = attrib()
+
+    @classmethod
+    def from_string(cls, content):
+        return cls(
+            content,
+            position=0,
+        )
+
+    def __len__(self):
+        return len(self.content) - self.position
+
+    def to_string(self):
+        return self.content[self.position:]
+
+    def read(self):
+        if self:
+            return (
+                self.content[self.position],
+                evolve(
+                    self,
+                    position=self.position+1
+                )
+            )
+        else:
+            return (
+                None,
+                self
+            )
+
+    def next(self):
+        if self.content:
+            return self.content[self.position]
+        else:
+            return None

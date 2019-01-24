@@ -37,7 +37,7 @@ def test_can_use_do_notation_in_choice():
 def test_do_can_handle_1000_parsers_combined_in_one_do_block():
     @do
     def a_10000_times():
-        for n in range(0,1000):
+        for n in range(0, 1000):
             yield literal('a')
         return True
 
@@ -47,7 +47,7 @@ def test_do_can_handle_1000_parsers_combined_in_one_do_block():
 def test_do_can_handle_parameters_correctly():
     @do
     def a_for_n_times(n):
-        for _ in range(0,n):
+        for _ in range(0, n):
             yield literal('a')
         return True
 
@@ -66,6 +66,9 @@ def test_that_parsers_with_do_notation_can_excecute_twice_with_same_result():
     def trivial():
         yield literal('a')
     parser = trivial()
-    is_success = lambda: run_parser(parser, 'a') is None
+
+    def is_success():
+        return run_parser(parser, 'a') is None
+
     assert is_success()
     assert is_success()

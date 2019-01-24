@@ -1,4 +1,4 @@
-from typing import Callable, Generic, Sized, Tuple, TypeVar
+from typing import Callable, Generic, Tuple, TypeVar
 
 from .internals import fail
 from .parser import bind, unit

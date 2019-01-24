@@ -1,8 +1,4 @@
-from functools import reduce
-
 from attr import attrib, attrs
-
-from parsemon.trampoline import Call, Result, with_trampoline
 
 from .empty import deque_empty
 
@@ -19,7 +15,7 @@ class Stack():
 
     def push(self, elem):
         return Stack(
-           next_elem=self,
+            next_elem=self,
             value=elem
         )
 

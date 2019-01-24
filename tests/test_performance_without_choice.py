@@ -5,7 +5,7 @@ from parsemon import chain, do, literal, run_parser, unit
 
 @pytest.fixture(
     params=[
-        1,2,3,4,5,10,20,
+        1, 2, 3, 4, 5, 10, 20,
     ]
 )
 def document(request):

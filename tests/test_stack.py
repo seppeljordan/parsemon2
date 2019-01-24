@@ -65,12 +65,13 @@ def test_when_we_push_an_elem_and_then_top_we_get_the_same_elem(container):
 def test_when_we_push_and_pop_we_get_the_empty_stack(container):
     assert container().push('a').pop().empty()
 
+
 def test_pop_on_empty_deque_return_deque_empty(container):
     assert container().top() is deque_empty
 
 
 def test_iterating_over_stack_sees_pushed_elems_in_reverse(container):
-    elems = [1,2,3]
+    elems = [1, 2, 3]
     s = container()
     for e in elems:
         s = s.push(e)
@@ -79,7 +80,7 @@ def test_iterating_over_stack_sees_pushed_elems_in_reverse(container):
 
 
 def test_if_we_append_an_item_it_is_the_last_item_popped(container):
-    elems = [1,2,3]
+    elems = [1, 2, 3]
     s = container()
     for e in elems:
         s = s.push(e)
@@ -89,7 +90,7 @@ def test_if_we_append_an_item_it_is_the_last_item_popped(container):
 
 
 def test_reversed_iterates_over_elements_in_order_of_push(container):
-    elems = [1,2,3]
+    elems = [1, 2, 3]
     s = container()
     for e in elems:
         s = s.push(e)
@@ -97,7 +98,7 @@ def test_reversed_iterates_over_elements_in_order_of_push(container):
 
 
 def test_that_flipped_stack_has_reversed_ordering(container):
-    elems = [1,2,3]
+    elems = [1, 2, 3]
     s = container()
     for e in elems:
         s = s.push(e)
@@ -117,6 +118,7 @@ def test_that_len_of_empty_deque_is_zero(deque):
     else:
         assert len(deque)
 
+
 def test_that_push_increases_len_by_1(deque):
     assert len(deque) + 1 == len(deque.push(1))
 
@@ -133,6 +135,7 @@ def test_that_pop_reduces_length_by_one(deque):
         assert True
     else:
         assert len(deque.pop()) + 1 == len(deque)
+
 
 def test_that_push_and_pop_lead_to_deque_having_same_top_again(deque):
     if deque.empty():
@@ -154,7 +157,7 @@ def test_that_last_element_is_that_one_most_recently_appended(deque):
 @pytest.mark.parametrize(
     "items",
     (
-        [1,2,3,4],
+        [1, 2, 3, 4],
         [],
         [None],
     )
@@ -171,7 +174,7 @@ def test_that_appending_elements_and_poping_them_yields_same_order(
 
     deque_without_prefilled_items = reduce(
         lambda d, _: d.pop(),
-        range(0,len(deque)),
+        range(0, len(deque)),
         populated_deque
     )
 

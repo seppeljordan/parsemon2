@@ -63,7 +63,7 @@ def floating_point(delimiter: str = '.'):
         return choices(
             literal('+'),
             literal('-'),
-            unit('+') # default to + when no sign is detected
+            unit('+')  # default to + when no sign is detected
         )
 
     @do
@@ -85,7 +85,7 @@ def floating_point(delimiter: str = '.'):
             unit('0')
         )
 
-    def int_to_signum(n: int) -> Tuple[str,str,str]:
+    def int_to_signum(n: int) -> Tuple[str, str, str]:
         return (
             '+' if n >= 0 else '-',
             str(n),

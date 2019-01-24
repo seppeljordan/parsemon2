@@ -93,11 +93,11 @@ def test_json_list_parses_list_with_one_int_in_it():
 
 
 def test_json_list_parses_a_list_of_2_ints():
-    assert run_parser(json_list(), '[1,2]') == [1,2]
+    assert run_parser(json_list(), '[1,2]') == [1, 2]
 
 
 def test_json_list_parses_list_including_spaces():
-    assert run_parser(json_list(), '[1,  2 ,3]') == [1,2,3]
+    assert run_parser(json_list(), '[1,  2 ,3]') == [1, 2, 3]
 
 
 def test_json_list_parses_list_of_strings_and_ints():

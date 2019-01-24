@@ -9,7 +9,7 @@ def test_trampoline_wraps_simple_functions():
 
 def test_trampoline_wraps_tree_of_two_functions():
     def f(x):
-        return Call(g,x)
+        return Call(g, x)
 
     def g(x):
         return Result(x+1)
