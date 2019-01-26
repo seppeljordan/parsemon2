@@ -9,3 +9,4 @@ PYTHONPATH=src/:$PYTHONPATH pytest \
           --cov-report=term \
           --cov-report=html \
           --benchmark-skip
+isort -rc src/ tests/ -c

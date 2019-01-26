@@ -2,14 +2,13 @@ from functools import reduce
 
 import pytest
 
-from parsemon.deque import Deque, PyrsistentDeque, Stack, deque_empty
+from parsemon.deque import Deque, Stack, deque_empty
 
 
 @pytest.fixture(
     params=(
         Stack,
         Deque,
-        PyrsistentDeque,
     )
 )
 def container(request):

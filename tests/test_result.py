@@ -1,8 +1,8 @@
 from hypothesis import given
 from hypothesis import strategies as st
 
-from parsemon.stream import CharacterStream
 from parsemon import result
+from parsemon.stream import CharacterStream
 
 
 @st.composite
