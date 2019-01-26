@@ -1,114 +1,11 @@
 """Contains the implementation of the parser monad.  This module is
 not intended to be used from outside this library.
 """
-from attr import attrib, attrs, evolve
+from attr import attrib, attrs
 
+from .result import failure, success
 from .stream import StringStream
 from .trampoline import Call, Result, with_trampoline
-
-
-@attrs
-class Success:
-    value = attrib()
-    stream = attrib()
-
-    def map_value(self, mapping):
-        return evolve(
-            self,
-            value=mapping(self.value),
-        )
-
-    def is_failure(_):
-        return False
-
-    def map_stream(self, mapping):
-        return evolve(
-            self,
-            stream=mapping(self.stream)
-        )
-
-
-@attrs
-class Failure:
-    message = attrib()
-    stream = attrib()
-
-    def map_value(self, _):
-        return self
-
-    def __add__(self, other):
-        if isinstance(other, Failures):
-            return evolve(
-                other,
-                failures=[self] + other.failures
-            )
-        return Failures(
-            failures=[
-                self,
-                other
-            ]
-        )
-
-    def last_stream(self):
-        return self.stream
-
-    def is_failure(_):
-        return True
-
-    def map_stream(self, mapping):
-        return evolve(
-            self,
-            stream=mapping(self.stream)
-        )
-
-
-@attrs
-class Failures:
-    failures = attrib()
-
-    def __add__(self, other):
-        other_failures = (
-            other.failures
-            if isinstance(other, Failures)
-            else [other]
-        )
-        return Failures(
-            failures=self.failures + other_failures
-        )
-
-    def map_value(self, fun):
-        return evolve(
-            self,
-            failures=list(map(
-                lambda failure: failure.map_value(fun),
-                self.failures
-            ))
-        )
-
-    def last_stream(self):
-        if self.failures:
-            return self.failures[-1].stream
-        else:
-            return None
-
-    def is_failure(_):
-        return True
-
-    def map_stream(self, mapping):
-        return evolve(
-            self,
-            failures=list(map(
-                lambda f: f.map_stream(mapping),
-                self.failures
-            ))
-        )
-
-
-def failure(message, stream):
-    return Failure(
-        message=message,
-        stream=stream,
-    )
 
 
 @attrs
@@ -253,7 +150,7 @@ def unit(value):
     def parser(stream, cont):
         return Call(
             cont,
-            Success(
+            success(
                 value=value,
                 stream=stream
             )
@@ -293,7 +190,7 @@ def character(n: int = 1):
             result.append(char_found)
         return Call(
             cont,
-            Success(
+            success(
                 value=''.join(result),
                 stream=stream
             )
@@ -335,7 +232,7 @@ def literal(expected):
                 )
         return Call(
             cont,
-            Success(
+            success(
                 value=''.join(result),
                 stream=stream
             )
@@ -369,7 +266,7 @@ def none_of(chars: str):
             result, stream = stream.read()
             return Call(
                 cont,
-                Success(
+                success(
                     value=result,
                     stream=stream
                 )
@@ -414,7 +311,7 @@ def one_of(
             result, stream = stream.read()
             return Call(
                 cont,
-                Success(
+                success(
                     value=result,
                     stream=stream
                 )

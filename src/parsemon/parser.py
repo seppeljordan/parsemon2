@@ -5,8 +5,8 @@ from typing import List, TypeVar
 
 from .coroutine import do
 from .error import NotEnoughInput, ParsingFailed
-from .internals import (Failure, character, literal, look_ahead, one_of,
-                        try_parser, unit)
+from .internals import character, literal, look_ahead, one_of, try_parser, unit
+from .result import Failure
 from .sourcemap import (display_location, find_line_in_indices,
                         find_linebreak_indices)
 
