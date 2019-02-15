@@ -13,6 +13,12 @@ not dependent on pythons recursion limit.
 
 We also have error messages.
 
+documentation
+=============
+
+If you want to learn about the library I recommend checking out our
+`readthedocs page`_.
+
 
 Changes
 =======
@@ -47,3 +53,6 @@ Changes
 - Implement do notation
 - New whitespace parser
 - New parser for integers
+
+
+.. _`readthedocs page`: https://parsemon2.readthedocs.io
