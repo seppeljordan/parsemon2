@@ -346,3 +346,28 @@ def fmap(mapping, parser):
             continuation,
         )
     return mapped_parser
+
+
+def end_of_file():
+    @Parser.from_function
+    def parser(stream, cont):
+        if stream.next() is None:
+            return Call(
+                cont,
+                success(
+                    value=None,
+                    stream=stream,
+                )
+            )
+        else:
+            return Call(
+                cont,
+                failure(
+                    message='Expected end-of-file but found `{char}`'.format(
+                        char=stream.next(),
+                    ),
+                    stream=stream,
+                )
+            )
+
+    return parser
