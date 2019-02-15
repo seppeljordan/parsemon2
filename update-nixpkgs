@@ -1,6 +1,11 @@
 #!/usr/bin/env sh
 
+set -e
+
+echo "Update nixpkgs.json"
 nix-prefetch-github \
     NixOS \
     nixpkgs-channels \
     --rev nixos-18.09 > nixpkgs.json
+echo "Update requirements.txt"
+nix-shell --command 'pip freeze > requirements.txt'
