@@ -13,7 +13,7 @@ def test_even_validates_2():
             many1(character())
         )
     )
-    assert run_parser(p, '2') == 2
+    assert run_parser(p, '2').value == 2
 
 
 def test_even_does_not_validate_5():
@@ -34,7 +34,7 @@ def test_odd_does_validate_5():
             many1(character())
         )
     )
-    assert run_parser(p, '5') == 5
+    assert run_parser(p, '5').value == 5
 
 
 def test_odd_and_even_neither_validate_2_nor_5():
@@ -57,5 +57,5 @@ def test_odd_or_even_validates_2_and_5():
             many1(character())
         )
     )
-    assert run_parser(p, '2') == 2
-    assert run_parser(p, '5') == 5
+    assert run_parser(p, '2').value == 2
+    assert run_parser(p, '5').value == 5

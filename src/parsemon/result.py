@@ -23,6 +23,9 @@ class Success:
             stream=mapping(self.stream)
         )
 
+    def remaining_input(self):
+        return self.stream.to_string()
+
 
 @attrs
 class Failure:

@@ -17,6 +17,17 @@ We also have error messages.
 Changes
 =======
 
+3.0 (in progress)
+-----------------
+
+- Remove pyrsistent deque implementation
+- Improve fmap performance
+- Implement end-of-input parser
+- ``run_parser`` now returns a ``Success`` object instead of the raw
+  value of the supplied parser
+- ``run_parser`` won't fail if the parser did not consume all of the
+  supplied input
+
 2.0
 ---
 

@@ -4,7 +4,7 @@ from functools import reduce
 from typing import List, TypeVar
 
 from .coroutine import do
-from .error import NotEnoughInput, ParsingFailed
+from .error import ParsingFailed
 from .internals import character, literal, look_ahead, one_of, try_parser, unit
 from .result import Failure
 from .sourcemap import (display_location, find_line_in_indices,
@@ -169,6 +169,7 @@ def run_parser(
             message=failure.message,
             location=display_location(line, column)
         )
+
     kwargs = {}
     if stream_implementation:
         kwargs['stream_implementation'] = stream_implementation
@@ -185,15 +186,7 @@ def run_parser(
         ))
         raise ParsingFailed(final_message)
     else:
-        rest = result.stream
-        if rest:
-            raise NotEnoughInput(
-                'Parser did not consume all of the string, rest was `{rest}`'
-                .format(
-                    rest=rest.to_string()
-                )
-            )
-        return result.value
+        return result
 
 
 whitespace_unicode_characters_decimals: List[int] = [

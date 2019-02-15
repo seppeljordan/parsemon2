@@ -26,34 +26,27 @@ def runner(request):
 @given(text=st.text())
 @example(text='')
 def test_literal_parses_a_single_string(runner, text):
-    assert runner(literal(text), text) == text
+    assert runner(literal(text), text).value == text
 
 
-@given(char=st.characters())
-@example(char=None)
-def test_unit_parses_the_empty_string(runner, char):
-    assert runner(unit(char), '') == char
-
-
-def test_unit_parses_only_the_empty_string(runner):
-    with pytest.raises(Exception):
-        runner(unit('a'), 'a')
+@given(char=st.characters(), text=st.text())
+def test_that_unit_returns_char_given_to_unit(runner, char, text):
+    assert runner(unit(char), text).value == char
 
 
 def test_fmap_can_replace_parsing_result(runner):
-    assert runner(
-        fmap(
-            lambda x: 'b',
-            literal('a')),
-        'a'
-    ) == 'b'
+    parser = fmap(
+        lambda x: 'b',
+        literal('a')
+    )
+    assert runner(parser, 'a').value == 'b'
 
 
-def test_fmap_can_map_1000_time(runner):
+def test_fmap_can_map_1000_times(runner):
     parser = literal('a')
     for i in range(0, 1000):
         parser = fmap(lambda x: 'b', parser)
-    assert runner(parser, 'a') == 'b'
+    assert runner(parser, 'a').value == 'b'
 
 
 @given(
@@ -65,7 +58,7 @@ def test_bind_can_chain_two_literal_parsers(runner, a, b):
         literal(a),
         lambda x: literal(b),
     )
-    assert runner(parser, a + b) == b
+    assert runner(parser, a + b).value == b
 
 
 @given(
@@ -83,7 +76,7 @@ def test_bind_can_chain_3_literal_parsers(runner, a, b, c):
         p,
         lambda x: literal(c),
     )
-    assert runner(p, a + b + c) == c
+    assert runner(p, a + b + c).value == c
 
 
 def test_literal_parser_throws_ParsingFailed_when_seeing_non_matching_string(
@@ -107,8 +100,8 @@ def test_literal_choice_can_parse_both_possibilities(runner, a, b):
         try_parser(literal(b)),
         literal(a),
     )
-    assert runner(p, a) == a
-    assert runner(p, b) == b
+    assert runner(p, a).value == a
+    assert runner(p, b).value == b
 
 
 def test_choice_can_be_chained_1000_times(runner):
@@ -122,7 +115,7 @@ def test_choice_can_be_chained_1000_times(runner):
             p,
             lambda x: c,
         )
-    assert runner(p, 'a' * 999 + 'b') == 'b'
+    assert runner(p, 'a' * 999 + 'b').value == 'b'
 
 
 def test_choice_throws_ParsingFailed_when_both_choices_fail(runner):
@@ -136,7 +129,7 @@ def test_choice_throws_ParsingFailed_when_both_choices_fail(runner):
 
 def test_choice_should_not_retry_if_the_parser_after_choice_fails(runner):
     p = choice(
-        literal('a'),
+        literal('a'),  # this should match the incomming input
         literal('aa'),
     )
     p = chain(
@@ -151,21 +144,21 @@ def test_many_parses_empty_strings(runner):
     p = many(
         literal('a')
     )
-    assert runner(p, '') == []
+    assert runner(p, '').value == []
 
 
 def test_many_parses_one_occurence(runner):
     p = many(
         literal('a')
     )
-    assert runner(p, 'a') == ['a']
+    assert runner(p, 'a').value == ['a']
 
 
 def test_many_parses_5_occurences(runner):
     p = many(
         literal('a')
     )
-    assert runner(p, 'aaaaa') == ['a'] * 5
+    assert runner(p, 'aaaaa').value == ['a'] * 5
 
 
 def test_we_can_chain_many_with_something_else(runner):
@@ -176,7 +169,7 @@ def test_we_can_chain_many_with_something_else(runner):
         p,
         lambda _: literal('b'),
     )
-    assert runner(p, 'aaaab') == 'b'
+    assert runner(p, 'aaaab').value == 'b'
 
 
 def test_until_parses_empty_string_when_finding_delimiter_immediately(runner):
@@ -187,7 +180,7 @@ def test_until_parses_empty_string_when_finding_delimiter_immediately(runner):
             unit('')
         )
     )
-    assert runner(p, 'a') == ''
+    assert runner(p, 'a').value == ''
 
 
 def test_until_parses_5_characters_but_not_the_delimiter(runner):
@@ -198,7 +191,7 @@ def test_until_parses_5_characters_but_not_the_delimiter(runner):
             unit(s)
         )
     )
-    assert runner(p, 'abcde,') == 'abcde'
+    assert runner(p, 'abcde,').value == 'abcde'
 
 
 def test_until_chained_with_literal_requires_explicit_delimiter_parsing(
@@ -218,12 +211,13 @@ def test_until_chained_with_literal_requires_explicit_delimiter_parsing(
             )
         ),
     )
-    assert runner(p, 'abcde,end') == ['abcde', 'end']
+    assert runner(p, 'abcde,end').value == ['abcde', 'end']
 
 
-def test_parse_none_of_parses_character_when_passed_empty_string(runner):
+@given(text=st.text(min_size=1, max_size=1))
+def test_parse_none_of_parses_character_when_passed_empty_string(runner, text):
     p = none_of('')
-    assert runner(p, 'a') == 'a'
+    assert runner(p, text).value == text
 
 
 def test_none_of_raises_ParsingFailed_when_encountering_forbidden_char(runner):
@@ -244,9 +238,10 @@ def test_fail_throws_ParsingFailed_error(runner):
         runner(p, '')
 
 
-def test_character_parses_a_single_A_character(runner):
+@given(text=st.text(min_size=1, max_size=1))
+def test_character_parses_a_single_character(runner, text):
     p = character()
-    assert runner(p, 'A') == 'A'
+    assert runner(p, text).value == text
 
 
 def test_character_raises_ParsingFailed_on_empty_string(runner):
@@ -257,7 +252,7 @@ def test_character_raises_ParsingFailed_on_empty_string(runner):
 
 def test_character_can_parse_5_characters(runner):
     p = character(n=5)
-    assert runner(p, '12345') == '12345'
+    assert runner(p, '12345').value == '12345'
 
 
 def test_character_raises_ParsingFailed_when_too_few_characters_in_stream(
@@ -273,7 +268,7 @@ def test_chain_executes_two_parsers_and_returns_result_of_second_one(runner):
         literal('a'),
         literal('b')
     )
-    assert runner(p, 'ab') == 'b'
+    assert runner(p, 'ab').value == 'b'
 
 
 def test_chain_can_take_3_parsers_as_args(runner):
@@ -282,7 +277,7 @@ def test_chain_can_take_3_parsers_as_args(runner):
         literal('b'),
         literal('c')
     )
-    assert runner(p, 'abc') == 'c'
+    assert runner(p, 'abc').value == 'c'
 
 
 def test_if_a_choice_failes_in_the_middle_of_chain_it_retries_other_option(
@@ -298,7 +293,7 @@ def test_if_a_choice_failes_in_the_middle_of_chain_it_retries_other_option(
             literal('b'),
         )
     )
-    assert runner(p, 'ab') == 'b'
+    assert runner(p, 'ab').value == 'b'
 
 
 def test_many1_fails_for_empty_strings(runner):
@@ -309,7 +304,7 @@ def test_many1_fails_for_empty_strings(runner):
 
 def test_many1_behaves_like_many_for_1_occurence(runner):
     p = literal('a')
-    assert runner(many1(p), 'a') == runner(many(p), 'a')
+    assert runner(many1(p), 'a').value == runner(many(p), 'a').value
 
 
 def test_failure_of_literal_contains_expected_string():
@@ -369,7 +364,6 @@ def test_that_error_message_order_is_preserved_with_3_choices():
     with pytest.raises(ParsingFailed) as err:
         run_parser(p, 'xxxxxxxxxxxxxx')
     error_message = str(err.value)
-    print(error_message)
     assert 'second' in error_message.split('first')[1]
     assert 'third' in error_message.split('first')[1]
     assert 'first' in error_message.split('second')[0]
@@ -399,7 +393,7 @@ def test_one_of_fails_if_trying_to_parse_something_not_in_set(runner):
 
 
 def test_onf_of_succeeds_if_trying_to_parse_something_in_the_set(runner):
-    assert runner(one_of('123'), '1') == '1'
+    assert runner(one_of('123'), '1').value == '1'
 
 
 def test_seperated_by_empty(runner):
@@ -409,7 +403,7 @@ def test_seperated_by_empty(runner):
             literal(',')
         ),
         ''
-    ) == []
+    ).value == []
 
 
 def test_seperated_by_one_element(runner):
@@ -419,7 +413,7 @@ def test_seperated_by_one_element(runner):
             literal(',')
         ),
         'a'
-    ) == ['a']
+    ).value == ['a']
 
 
 def test_seperated_by_five_elemts(runner):
@@ -429,7 +423,7 @@ def test_seperated_by_five_elemts(runner):
             literal(',')
         ),
         'a,a,a,a,a'
-    ) == ['a', 'a', 'a', 'a', 'a']
+    ).value == ['a', 'a', 'a', 'a', 'a']
 
 
 def test_seperated_by_1000_elements(runner):
@@ -439,7 +433,7 @@ def test_seperated_by_1000_elements(runner):
             literal(',')
         ),
         'a' + ',a' * 999
-    ) == ['a'] * 1000
+    ).value == ['a'] * 1000
 
 
 def test_enclosed_by(runner):
@@ -449,7 +443,7 @@ def test_enclosed_by(runner):
             literal('"')
         ),
         '"a"'
-    ) == 'a'
+    ).value == 'a'
 
 
 def test_choices(runner):
@@ -460,24 +454,24 @@ def test_choices(runner):
             literal('c')
         ),
         'b'
-    ) == 'b'
+    ).value == 'b'
 
 
 def test_whitespace_parses_regular_space_character(runner):
-    assert runner(whitespace, "\u0020") == "\u0020"
+    assert runner(whitespace, "\u0020").value == "\u0020"
 
 
 def test_whitespace_parses_tab_char(runner):
-    assert runner(whitespace, '\t') == '\t'
+    assert runner(whitespace, '\t').value == '\t'
 
 
 def test_whitespace_parses_newline_char(runner):
-    assert runner(whitespace, '\n') == '\n'
+    assert runner(whitespace, '\n').value == '\n'
 
 
 def test_that_or_operator_works_as_expected(runner):
-    assert runner(whitespace | literal('a'), ' ') == ' '
-    assert runner(whitespace | literal('a'), 'a') == 'a'
+    assert runner(whitespace | literal('a'), ' ').value == ' '
+    assert runner(whitespace | literal('a'), 'a').value == 'a'
 
 
 def test_that_fmap_does_not_change_error_messages(runner):
@@ -490,3 +484,12 @@ def test_that_fmap_does_not_change_error_messages(runner):
         str(error_message_without_fmap.value) ==
         str(error_message_with_fmap.value)
     )
+
+
+@given(text=st.text())
+def test_that_unit_parser_returns_complete_input_string_as_not_consumed(
+        text,
+        runner,
+):
+    parser = unit(True)
+    assert runner(parser, text).remaining_input() == text

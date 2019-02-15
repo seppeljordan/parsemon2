@@ -1,7 +1,8 @@
 """This module parses json to python"""
 
 from .coroutine import do
-from .internals import fmap, literal, none_of, try_parser, unit
+from .internals import (fail, fmap, literal, look_ahead, none_of, try_parser,
+                        unit)
 from .parser import (chain, choice, choices, enclosed_by, many, many1, one_of,
                      seperated_by, whitespace)
 
@@ -80,7 +81,17 @@ ONENINE = one_of('123456789')
 
 @do
 def json_number():
-    just_one_digit = DIGIT
+    @do
+    def just_one_digit():
+        digit = yield DIGIT
+        if digit == '0':
+            is_next_char_digit = yield choice(
+                chain(look_ahead(DIGIT), unit(True)),
+                unit(False),
+            )
+            if is_next_char_digit:
+                yield fail('Found leading zero in json number')
+        return digit
 
     @do
     def multiple_digits():
@@ -89,16 +100,16 @@ def json_number():
         return ''.join([first] + rest)
 
     @do
-    def maybe_leading_zero(parser):
+    def maybe_sign(parser):
         sign = yield choice(
             literal('-'),
             unit(''),
         )
         return sign + (yield parser)
 
-    integer_part = yield maybe_leading_zero(choice(
+    integer_part = yield maybe_sign(choice(
         try_parser(multiple_digits()),
-        just_one_digit,
+        just_one_digit(),
     ))
 
     @do
