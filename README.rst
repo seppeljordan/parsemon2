@@ -16,7 +16,7 @@ We also have error messages.
 documentation
 =============
 
-If you want to learn about the library I recommend checking out our
+If you want to learn about the library we recommend checking out our
 `readthedocs page`_.
 
 

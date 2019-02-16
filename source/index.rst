@@ -16,6 +16,7 @@ parsemon
 .. automodule:: parsemon
    :members:
    :imported-members:
+   :undoc-members:
 
 parsemon.basic
 --------------

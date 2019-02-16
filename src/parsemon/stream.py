@@ -50,16 +50,18 @@ class CharacterStream:
 class StringStream:
     content = attrib()
     position = attrib()
+    length = attrib()
 
     @classmethod
     def from_string(cls, content):
         return cls(
             content,
             position=0,
+            length=len(content),
         )
 
     def __len__(self):
-        return len(self.content) - self.position
+        return self.length - self.position
 
     def to_string(self):
         return self.content[self.position:]
@@ -70,7 +72,7 @@ class StringStream:
                 self.content[self.position],
                 evolve(
                     self,
-                    position=self.position+1
+                    position=self.position+1,
                 )
             )
         else:

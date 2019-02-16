@@ -4,12 +4,12 @@ let
     fromJSON (readFile ./nixpkgs.json)
   );
 in
-with (import nixos-stable {});
 
 let
+  nixpkgs = import nixos-stable {};
   f =
     { buildPythonPackage, pytest, mypy, sphinx, lib, pytestcov, attrs
-    , pylint, pytest-benchmark, hypothesis, flake8
+    , pylint, pytest-benchmark, hypothesis, flake8, pytest-profiling, graphviz
     }:
     let
     sourceFilter = name: type:
@@ -33,6 +33,8 @@ let
         pytest-benchmark
         hypothesis
         flake8
+        pytest-profiling
+        graphviz
       ];
       propagatedBuildInputs = [ attrs ];
       src = lib.cleanSourceWith {
@@ -54,6 +56,12 @@ let
         cp build/man/parsemon2.3 $out/share/man/man3/parsemon2.3
       '';
     };
-  drv = python36.pkgs.callPackage f {};
+  python = let
+    packageOverrides = self: super: {
+      gprof2dot = super.callPackage nix/gprof2dot.nix {};
+      pytest-profiling = super.callPackage nix/pytest-profiling.nix {};
+    };
+    in nixpkgs.python36.override {inherit packageOverrides;};
+  drv = python.pkgs.callPackage f {};
 in
 drv

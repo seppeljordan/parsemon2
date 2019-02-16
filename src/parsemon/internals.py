@@ -45,7 +45,8 @@ class Parser:
     function = attrib()
 
     def bind(self, binding):
-        def function(stream, cont):
+        @self.from_function
+        def parser(stream, cont):
             def continuation(first_result):
                 if first_result.is_failure():
                     return Call(cont, first_result)
@@ -60,33 +61,46 @@ class Parser:
                 stream,
                 continuation,
             )
-        return Parser(function)
+        return parser
+
+    @classmethod
+    def choice_continuation(
+            cls,
+            original_stream_length,
+            original_continuation,
+            other
+    ):
+        def _cont(result_of_self):
+            if result_of_self.is_failure():
+                if (
+                        len(result_of_self.last_stream()) ==
+                        original_stream_length
+                ):
+                    return Call(
+                        other.function,
+                        result_of_self.last_stream(),
+                        lambda result_of_other: (
+                            Call(
+                                original_continuation,
+                                result_of_self + result_of_other
+                            )
+                            if result_of_other.is_failure()
+                            else Call(
+                                    original_continuation,
+                                    result_of_other
+                            )
+                        )
+                    )
+            return Call(original_continuation, result_of_self)
+        return _cont
 
     def __or__(self, other):
         def parser(stream, cont):
-            def continuation(result_of_self):
-                if result_of_self.is_failure():
-                    if len(result_of_self.last_stream()) == len(stream):
-                        return Call(
-                            other.function,
-                            stream,
-                            lambda result_of_other: (
-                                Call(
-                                    cont,
-                                    result_of_self + result_of_other
-                                )
-                                if result_of_other.is_failure()
-                                else Call(
-                                        cont,
-                                        result_of_other
-                                )
-                            )
-                        )
-                return Call(cont, result_of_self)
+            original_input_length = len(stream)
             return Call(
                 self.function,
                 stream,
-                continuation
+                self.choice_continuation(original_input_length, cont, other)
             )
         return Parser(parser)
 
@@ -199,6 +213,11 @@ def character(n: int = 1):
 
 
 def literal(expected):
+    """Parses exactly the string given and nothing else.
+
+    If the parser already fails on the first element, no input will be
+    consumed.
+    """
     @Parser.from_function
     def parser(stream, cont):
         result = []
@@ -333,6 +352,7 @@ def one_of(
 
 
 def fmap(mapping, parser):
+    """Applies a function to the result of a given parser"""
     @Parser.from_function
     def mapped_parser(stream, cont):
         def continuation(parsing_result):
@@ -349,6 +369,8 @@ def fmap(mapping, parser):
 
 
 def end_of_file():
+    """Returns a parser that only succeeds with a value of None if there
+    would be no further input to consume"""
     @Parser.from_function
     def parser(stream, cont):
         if stream.next() is None:
