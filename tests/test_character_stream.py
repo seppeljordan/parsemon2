@@ -102,3 +102,14 @@ def test_that_from_string_and_to_string_yields_identity(
         stream_implementation
 ):
     assert stream_implementation.from_string(text).to_string() == text
+
+
+@given(text=st.text())
+def test_that_next_on_stream_that_was_emptied_gives_none(
+        text,
+        stream_implementation,
+):
+    stream = stream_implementation.from_string(text)
+    for _ in range(0, len(stream)):
+        stream = stream.read()[1]
+    assert stream.next() is None

@@ -82,7 +82,7 @@ class StringStream:
             )
 
     def next(self):
-        if self.content:
+        if self.position < self.length:
             return self.content[self.position]
         else:
             return None
