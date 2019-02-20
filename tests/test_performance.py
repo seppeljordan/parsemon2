@@ -1,13 +1,14 @@
 import pytest
 
 from parsemon import choices, literal, many, run_parser
-from parsemon.stream import CharacterStream, StringStream
+from parsemon.stream import CharacterStream, StringStream, IOStream
 
 
 @pytest.fixture(
     params=(
         CharacterStream,
         StringStream,
+        IOStream,
     )
 )
 def runner(request):

@@ -4,34 +4,18 @@ import hypothesis.strategies as st
 import pytest
 from hypothesis import given
 
-from parsemon.stream import CharacterStream, StringStream
-
-
-@st.composite
-def streams(draw):
-    implementations = (
-        CharacterStream,
-        StringStream,
-    )
-    implementation_index = draw(
-        st.integers(
-            min_value=0,
-            max_value=len(implementations) - 1,
-        )
-    )
-    constructor = implementations[implementation_index].from_string
-    content = draw(st.text())
-    return constructor(content)
+from parsemon.stream import CharacterStream, IOStream, StringStream
 
 
 @pytest.fixture(
     params=(
         CharacterStream,
         StringStream,
+        IOStream,
     )
 )
 def stream_implementation(request):
-    return request.param
+    yield request.param
 
 
 def test_empty_character_stream_yields_no_next(stream_implementation):
@@ -132,10 +116,12 @@ def test_that_next_on_stream_that_was_emptied_gives_none(
     assert stream.next() is None
 
 
-@given(stream=streams())
+@given(text=st.text())
 def test_that_reading_stream_advances_its_position_by_one_unless_it_is_empty(
-        stream,
+        text,
+        stream_implementation,
 ):
+    stream = stream_implementation.from_string(text)
     if stream:
         assert stream.position() == stream.read()[1].position() - 1
     else:

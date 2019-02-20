@@ -1,3 +1,4 @@
+import io
 from functools import reduce
 
 from attr import attrib, attrs, evolve
@@ -99,3 +100,46 @@ class StringStream:
 
     def position(self):
         return self._position
+
+
+@attrs
+class IOStream:
+    _stream = attrib()
+    _position = attrib()
+    _length = attrib()
+
+    def next(self):
+        self._stream.seek(self._position)
+        character_read = self._stream.read(1)
+        return character_read or None
+
+    @classmethod
+    def from_string(cls, message):
+        return cls(
+            stream=io.StringIO(message),
+            position=0,
+            length=len(message),
+        )
+
+    def read(self):
+        self._stream.seek(self._position)
+        character_read = self._stream.read(1)
+        if character_read:
+            return (
+                character_read,
+                evolve(
+                    self,
+                    position=self._stream.tell(),
+                )
+            )
+        else:
+            return None, self
+
+    def position(self):
+        return self._position
+
+    def __len__(self):
+        return self._length - self._position
+
+    def to_string(self):
+        return self._stream.read()
