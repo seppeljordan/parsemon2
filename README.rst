@@ -29,10 +29,11 @@ Changes
 - Remove pyrsistent deque implementation
 - Improve fmap performance
 - Implement end-of-input parser
-- ``run_parser`` now returns a ``Success`` object instead of the raw
+- ``run_parser`` now returns a ``ParsingResult`` object instead of the raw
   value of the supplied parser
 - ``run_parser`` won't fail if the parser did not consume all of the
   supplied input
+- Got rid of ``NotEnouhInput`` exception.
 
 2.0
 ---
