@@ -377,14 +377,19 @@ def test_a_simple_failing_parser_prints_column_0_as_error():
     assert display_location(line=1, column=0) in str(err.value)
 
 
-def test_simple_failing_parser_after_2_newlines_has_linenumber_3_in_error():
+# Large values for n create test run times to large
+@given(n=st.integers(min_value=0, max_value=100))
+def test_simple_failing_parser_after_n_newlines_has_linenumber_n1_in_error(
+        n,
+        runner,
+):
     p = chain(
-        literal('\n\n'),
+        literal('\n' * n),
         fail('error')
     )
     with pytest.raises(ParsingFailed) as err:
-        run_parser(p, '\n\nx')
-    assert display_location(line=3, column=0) in str(err.value)
+        runner(p, ('\n' * n) + 'x')
+    assert display_location(line=n + 1, column=0) in str(err.value)
 
 
 def test_one_of_fails_if_trying_to_parse_something_not_in_set(runner):
@@ -492,4 +497,4 @@ def test_that_unit_parser_returns_complete_input_string_as_not_consumed(
         runner,
 ):
     parser = unit(True)
-    assert runner(parser, text).remaining_input() == text
+    assert runner(parser, text).remaining_input == text

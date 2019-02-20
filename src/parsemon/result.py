@@ -6,7 +6,6 @@ from attr import attrib, attrs, evolve
 @attrs
 class Success:
     value = attrib()
-    stream = attrib()
 
     def map_value(self, mapping):
         return evolve(
@@ -17,20 +16,11 @@ class Success:
     def is_failure(_):
         return False
 
-    def map_stream(self, mapping):
-        return evolve(
-            self,
-            stream=mapping(self.stream)
-        )
-
-    def remaining_input(self):
-        return self.stream.to_string()
-
 
 @attrs
 class Failure:
     message = attrib()
-    stream = attrib()
+    position = attrib()
 
     def map_value(self, _):
         return self
@@ -48,17 +38,8 @@ class Failure:
             ]
         )
 
-    def last_stream(self):
-        return self.stream
-
     def is_failure(_):
         return True
-
-    def map_stream(self, mapping):
-        return evolve(
-            self,
-            stream=mapping(self.stream)
-        )
 
 
 @attrs
@@ -84,31 +65,26 @@ class Failures:
             ))
         )
 
-    def last_stream(self):
-        if self.failures:
-            return self.failures[-1].stream
-        else:
-            return None
-
     def is_failure(_):
         return True
 
-    def map_stream(self, mapping):
-        return evolve(
-            self,
-            failures=list(map(
-                lambda f: f.map_stream(mapping),
-                self.failures
-            ))
-        )
 
-
-def failure(message, stream):
+def failure(message, position):
     return Failure(
         message=message,
-        stream=stream,
+        position=position,
     )
 
 
-def success(value, stream):
-    return Success(value, stream)
+def success(value):
+    return Success(value)
+
+
+@attrs
+class ParsingResult():
+    value = attrib()
+    remaining_input = attrib()
+
+
+def parsing_result(value, remaining_input):
+    return ParsingResult(value, remaining_input)

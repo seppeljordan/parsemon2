@@ -9,6 +9,7 @@ from .deque import Stack, deque_empty
 class CharacterStream:
     content = attrib()
     length = attrib()
+    _position = attrib()
 
     @classmethod
     def from_string(cls, content):
@@ -19,6 +20,7 @@ class CharacterStream:
                 Stack()
             ),
             length=len(content),
+            position=0,
         )
 
     def next(self):
@@ -36,6 +38,11 @@ class CharacterStream:
                     if self.content.empty()
                     else self.length - 1
                 ),
+                position=(
+                    self._position
+                    if self.content.empty()
+                    else self._position + 1
+                )
             )
         )
 
@@ -45,11 +52,14 @@ class CharacterStream:
     def to_string(self):
         return ''.join(self.content)
 
+    def position(self):
+        return self._position
+
 
 @attrs
 class StringStream:
     content = attrib()
-    position = attrib()
+    _position = attrib()
     length = attrib()
 
     @classmethod
@@ -61,18 +71,18 @@ class StringStream:
         )
 
     def __len__(self):
-        return self.length - self.position
+        return self.length - self._position
 
     def to_string(self):
-        return self.content[self.position:]
+        return self.content[self._position:]
 
     def read(self):
         if self:
             return (
-                self.content[self.position],
+                self.content[self._position],
                 evolve(
                     self,
-                    position=self.position+1,
+                    position=self._position+1,
                 )
             )
         else:
@@ -82,7 +92,10 @@ class StringStream:
             )
 
     def next(self):
-        if self.position < self.length:
-            return self.content[self.position]
+        if self._position < self.length:
+            return self.content[self._position]
         else:
             return None
+
+    def position(self):
+        return self._position

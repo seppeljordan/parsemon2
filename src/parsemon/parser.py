@@ -6,9 +6,9 @@ from typing import List, TypeVar
 from .coroutine import do
 from .error import ParsingFailed
 from .internals import character, literal, look_ahead, one_of, try_parser, unit
-from .result import Failure
-from .sourcemap import (display_location, find_line_in_indices,
-                        find_linebreak_indices)
+from .result import Failure, parsing_result
+from .sourcemap import (display_location, find_linebreak_indices,
+                        find_location_in_indices)
 
 T = TypeVar('T')
 
@@ -155,16 +155,9 @@ def run_parser(
         stream_implementation=None,
 ) -> T:
     '''Parse string input_string with parser p'''
-    total_length = len(input_string)
-
     def render_failure(failure):
-        location = total_length - len(failure.stream)
         linebreaks = find_linebreak_indices(input_string)
-        line = find_line_in_indices(location, linebreaks)
-        if linebreaks:
-            column = location - linebreaks[line - 2] - 1
-        else:
-            column = location
+        line, column = find_location_in_indices(failure.position, linebreaks)
         return '{message} @ {location}'.format(
             message=failure.message,
             location=display_location(line, column)
@@ -173,7 +166,7 @@ def run_parser(
     kwargs = {}
     if stream_implementation:
         kwargs['stream_implementation'] = stream_implementation
-    result = p.run(input_string, **kwargs)
+    stream, result = p.run(input_string, **kwargs)
     if result.is_failure():
         failures = (
             [result]
@@ -186,7 +179,10 @@ def run_parser(
         ))
         raise ParsingFailed(final_message)
     else:
-        return result
+        return parsing_result(
+            value=result.value,
+            remaining_input=stream.to_string()
+        )
 
 
 whitespace_unicode_characters_decimals: List[int] = [

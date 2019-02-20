@@ -51,22 +51,27 @@ class Parser:
             cls,
             original_continuation,
             binding,
+            stream,
             previous_parsing_result
     ):
         if previous_parsing_result.is_failure():
-            return Call(original_continuation, previous_parsing_result)
+            return Call(original_continuation, stream, previous_parsing_result)
         next_parser = binding(previous_parsing_result.value)
         return Call(
             next_parser.function,
-            previous_parsing_result.stream,
+            stream,
             original_continuation,
         )
 
     def bind(self, binding):
-        return self.change_continuation(
-            lambda _, cont, parsing_result:
-            self.bind_continuation(cont, binding, parsing_result)
-        )
+        @self.from_function
+        def parser(stream, continuation):
+            return Call(
+                self.function,
+                stream,
+                partial(self.bind_continuation, continuation, binding)
+            )
+        return parser
 
     @classmethod
     def choice_continuation(
@@ -74,37 +79,41 @@ class Parser:
             original_stream_length,
             original_continuation,
             other,
+            stream,
             result_of_self,
     ):
         if result_of_self.is_failure():
             if (
-                    len(result_of_self.last_stream()) ==
+                    len(stream) ==
                     original_stream_length
             ):
                 return Call(
                     other.function,
-                    result_of_self.last_stream(),
-                    lambda result_of_other: (
+                    stream,
+                    lambda stream, result_of_other: (
                         Call(
                             original_continuation,
+                            stream,
                             result_of_self + result_of_other
                         )
                         if result_of_other.is_failure()
                         else Call(
                                 original_continuation,
+                                stream,
                                 result_of_other
                         )
                     )
                 )
-        return Call(original_continuation, result_of_self)
+        return Call(original_continuation, stream, result_of_self)
 
     def __or__(self, other):
         return self.change_continuation(
-            lambda stream, continuation, parsing_result:
+            lambda old_stream, continuation, new_stream, parsing_result:
             self.choice_continuation(
-                len(stream),
+                len(old_stream),
                 continuation,
                 other,
+                new_stream,
                 parsing_result
             )
         )
@@ -112,7 +121,10 @@ class Parser:
     def run(self, input_string, stream_implementation=StringStream):
         return with_trampoline(self.function)(
             stream_implementation.from_string(input_string),
-            lambda x: Result(x),
+            lambda stream, x: Result((
+                stream,
+                x,
+            )),
         )
 
     @classmethod
@@ -133,23 +145,22 @@ class Parser:
 
 def look_ahead(parser):
     return parser.change_continuation(
-        lambda stream, old_continuation, parsing_result:
+        lambda old_stream, old_continuation, new_stream, parsing_result:
         Call(
             old_continuation,
-            parsing_result if parsing_result.is_failure()
-            else parsing_result.map_stream(lambda _: stream)
+            new_stream if parsing_result.is_failure() else old_stream,
+            parsing_result,
         )
     )
 
 
 def try_parser(parser):
     return parser.change_continuation(
-        lambda stream, old_continuation, parsing_result:
+        lambda old_stream, old_continuation, new_stream, parsing_result:
         Call(
             old_continuation,
-            parsing_result.map_stream(lambda _: stream)
-            if parsing_result.is_failure()
-            else parsing_result
+            old_stream if parsing_result.is_failure() else new_stream,
+            parsing_result,
         )
     )
 
@@ -159,9 +170,9 @@ def unit(value):
     def parser(stream, cont):
         return Call(
             cont,
+            stream,
             success(
                 value=value,
-                stream=stream
             )
         )
     return parser
@@ -173,9 +184,10 @@ def fail(msg):
     def parser(stream, cont):
         return Call(
             cont,
+            stream,
             failure(
                 message=msg,
-                stream=stream
+                position=stream.position()
             )
         )
     return parser
@@ -190,18 +202,19 @@ def character(n: int = 1):
             if not stream:
                 return Call(
                     cont,
+                    stream,
                     failure(
                         message='Expected character but found end of string',
-                        stream=stream,
+                        position=stream.position(),
                     )
                 )
             char_found, stream = stream.read()
             result.append(char_found)
         return Call(
             cont,
+            stream,
             success(
                 value=''.join(result),
-                stream=stream
             )
         )
     return parser
@@ -220,11 +233,12 @@ def literal(expected):
             if character_read is None:
                 return Call(
                     cont,
+                    stream,
                     failure(
                         'Expected `{expected}` but found end of string'.format(
                             expected=expected,
                         ),
-                        stream,
+                        position=stream.position(),
                     )
                 )
             if expected_char == character_read:
@@ -232,6 +246,7 @@ def literal(expected):
             else:
                 return Call(
                     cont,
+                    stream,
                     failure(
                         message=(
                             'Expected `{expected}` but found `{actual}`.'
@@ -239,14 +254,14 @@ def literal(expected):
                             expected=expected,
                             actual=character_read
                         ),
-                        stream=stream
+                        position=stream.position()
                     )
                 )
         return Call(
             cont,
+            stream,
             success(
                 value=expected,
-                stream=stream
             )
         )
     return parser
@@ -264,6 +279,7 @@ def none_of(chars: str):
         if not stream:
             return Call(
                 cont,
+                stream,
                 failure(
                     message=' '.join([
                         'Expected any char except `{forbidden}` but found end'
@@ -271,21 +287,22 @@ def none_of(chars: str):
                     ]).format(
                         forbidden=chars,
                     ),
-                    stream=stream,
+                    position=stream.position(),
                 )
             )
         if stream.next() not in chars:
             result, stream = stream.read()
             return Call(
                 cont,
+                stream,
                 success(
                     value=result,
-                    stream=stream
                 )
             )
         else:
             return Call(
                 cont,
+                stream,
                 failure(
                     message=' '.join([
                         'Expected anything except one of `{forbidden}` but'
@@ -294,7 +311,7 @@ def none_of(chars: str):
                         forbidden=chars,
                         actual=stream.next()
                     ),
-                    stream=stream
+                    position=stream.position(),
                 )
             )
     return parser
@@ -309,6 +326,7 @@ def one_of(
         if not stream:
             return Call(
                 cont,
+                stream,
                 failure(
                     message=(
                         'Expected on of `{expected}` but found end of string'
@@ -316,21 +334,22 @@ def one_of(
                             expected=expected
                         )
                     ),
-                    stream=stream
+                    position=stream.position()
                 )
             )
         if stream.next() in expected:
             result, stream = stream.read()
             return Call(
                 cont,
+                stream,
                 success(
                     value=result,
-                    stream=stream
                 )
             )
         else:
             return Call(
                 cont,
+                stream,
                 failure(
                     message=(
                         'Expected one of `{expected}` but found {actual}'
@@ -338,7 +357,7 @@ def one_of(
                         expected=expected,
                         actual=stream.next(),
                     ),
-                    stream=stream
+                    position=stream.position(),
                 )
             )
     return parser
@@ -346,13 +365,7 @@ def one_of(
 
 def fmap(mapping, parser):
     """Applies a function to the result of a given parser"""
-    return parser.change_continuation(
-        lambda _, old_continuation, parsing_result:
-        Call(
-            old_continuation,
-            parsing_result.map_value(mapping)
-        )
-    )
+    return parser.bind(lambda x: unit(mapping(x)))
 
 
 def end_of_file():
@@ -363,19 +376,20 @@ def end_of_file():
         if stream.next() is None:
             return Call(
                 cont,
+                stream,
                 success(
                     value=None,
-                    stream=stream,
                 )
             )
         else:
             return Call(
                 cont,
+                stream,
                 failure(
                     message='Expected end-of-file but found `{char}`'.format(
                         char=stream.next(),
                     ),
-                    stream=stream,
+                    position=stream.position(),
                 )
             )
 

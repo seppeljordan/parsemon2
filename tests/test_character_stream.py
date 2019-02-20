@@ -7,6 +7,23 @@ from hypothesis import given
 from parsemon.stream import CharacterStream, StringStream
 
 
+@st.composite
+def streams(draw):
+    implementations = (
+        CharacterStream,
+        StringStream,
+    )
+    implementation_index = draw(
+        st.integers(
+            min_value=0,
+            max_value=len(implementations) - 1,
+        )
+    )
+    constructor = implementations[implementation_index].from_string
+    content = draw(st.text())
+    return constructor(content)
+
+
 @pytest.fixture(
     params=(
         CharacterStream,
@@ -113,3 +130,13 @@ def test_that_next_on_stream_that_was_emptied_gives_none(
     for _ in range(0, len(stream)):
         stream = stream.read()[1]
     assert stream.next() is None
+
+
+@given(stream=streams())
+def test_that_reading_stream_advances_its_position_by_one_unless_it_is_empty(
+        stream,
+):
+    if stream:
+        assert stream.position() == stream.read()[1].position() - 1
+    else:
+        assert stream.position() == stream.read()[1].position()
