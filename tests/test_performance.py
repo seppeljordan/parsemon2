@@ -1,7 +1,7 @@
 import pytest
 
 from parsemon import choices, literal, many, run_parser
-from parsemon.stream import CharacterStream, StringStream, IOStream
+from parsemon.stream import CharacterStream, IOStream, StringStream
 
 
 @pytest.fixture(
