@@ -6,7 +6,7 @@ let
 in
 
 let
-  nixpkgs = import nixos-stable {};
+  nixpkgs = import nixos-stable { overlays = []; };
   f =
     { buildPythonPackage, pytest, mypy, sphinx, lib, pytestcov, attrs
     , pylint, pytest-benchmark, hypothesis, flake8, pytest-profiling, graphviz
@@ -59,9 +59,10 @@ let
   python = let
     packageOverrides = self: super: {
       gprof2dot = super.callPackage nix/gprof2dot.nix {};
+      pytest = self.pytest_3;
       pytest-profiling = super.callPackage nix/pytest-profiling.nix {};
     };
-    in nixpkgs.python36.override {inherit packageOverrides;};
+    in nixpkgs.python3.override {inherit packageOverrides;};
   drv = python.pkgs.callPackage f {};
 in
 drv
