@@ -1,29 +1,3 @@
-from distutils.core import setup
+from setuptools import setup
 
-with open('VERSION') as f:
-    version_string = f.readlines()[0]
-
-with open('README.rst') as f:
-    long_description = f.read()
-
-setup(
-    name='parsemon2',
-    version=version_string,
-    author='Sebastian Jordan',
-    author_email='sebastian.jordan.mail@googlemail.com',
-    long_description=long_description,
-    description=u"A monadic parser combinator written purely in python",
-    package_dir={
-        'parsemon': 'src/parsemon',
-        'parsemon.deque': 'src/parsemon/deque',
-    },
-    packages=['parsemon', 'parsemon.deque'],
-    install_requires=[
-        'attrs',
-    ],
-    classifiers=[
-        'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.6',
-    ],
-)
+setup()
