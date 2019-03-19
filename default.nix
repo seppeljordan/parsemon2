@@ -1,3 +1,5 @@
+{ pythonVersion ? "3" }:
+
 let
   nixpkgs-host = import <nixpkgs> {};
   nixos-stable = with builtins; nixpkgs-host.fetchFromGitHub (
@@ -62,7 +64,7 @@ let
       pytest = self.pytest_3;
       pytest-profiling = super.callPackage nix/pytest-profiling.nix {};
     };
-    in nixpkgs.python3.override {inherit packageOverrides;};
+    in nixpkgs."python${pythonVersion}".override {inherit packageOverrides;};
   drv = python.pkgs.callPackage f {};
 in
 drv
