@@ -18,7 +18,7 @@ hypothesis==4.7.3
 idna==2.8
 imagesize==1.1.0
 isort==4.3.4
-Jinja2==2.10
+Jinja2==2.10.1
 lazy-object-proxy==1.3.1
 lxml==4.3.1
 MarkupSafe==1.1.0

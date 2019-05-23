@@ -10,33 +10,48 @@ in
 let
   nixpkgs = import nixos-stable { overlays = []; };
   f =
-    { buildPythonPackage, pytest, mypy, sphinx, lib, pytestcov, attrs
-    , pylint, pytest-benchmark, hypothesis, flake8, pytest-profiling, graphviz
+    { buildPythonPackage
+    , lib
+    , graphviz
+
+    , attrs
+    , flake8
+    , hypothesis
+    , mypy
+    , pylint
+    , pytest
+    , pytest-benchmark
+    , pytest-profiling
+    , pytestcov
+    , sphinx
     }:
     let
     sourceFilter = name: type:
-      let baseName = with builtins; baseNameOf (toString name); in
+      let
+        baseName = with builtins; baseNameOf (toString name);
+        ignoreDirectoryBy = operation: lib.foldl
+          (accu: element: accu || (type == "directory" && operation element))
+          false;
+        ignoreDirectoryNames = ignoreDirectoryBy (x: x == baseName);
+        ignoreDirectoryByPrefix = ignoreDirectoryBy (x: lib.hasSuffix x baseName);
+      in
       lib.cleanSourceFilter name type &&
-      !(
-        (type == "directory" && lib.hasSuffix ".egg-info" baseName)||
-        (type == "directory" && baseName == "tmp")||
-        (type == "directory" && baseName == "__pycache__")||
-        (type == "directory" && baseName == ".pytest_cache")
-      );
+      ignoreDirectoryNames [ "tmp" "__pycache__" ".pytest_cache" ] &&
+      ignoreDirectoryByPrefix [ ".egg-info" ] ;
     in
     buildPythonPackage {
       name = "parsemon2";
       checkInputs = [
-        pytest
-        mypy
-        sphinx
-        pytestcov
-        pylint
-        pytest-benchmark
-        hypothesis
         flake8
-        pytest-profiling
         graphviz
+        hypothesis
+        mypy
+        pylint
+        pytest
+        pytest-benchmark
+        pytest-profiling
+        pytestcov
+        sphinx
       ];
       propagatedBuildInputs = [ attrs ];
       src = lib.cleanSourceWith {
