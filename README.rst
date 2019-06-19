@@ -34,6 +34,7 @@ Changes
 - ``run_parser`` won't fail if the parser did not consume all of the
   supplied input
 - Got rid of ``NotEnouhInput`` exception.
+- Drop official support for Python 3.6
 
 2.0
 ---
