@@ -29,15 +29,25 @@ let
     sourceFilter = name: type:
       let
         baseName = with builtins; baseNameOf (toString name);
-        ignoreDirectoryBy = operation: lib.foldl
+        ignoreDirectoryBy = operation: elements: ! lib.foldl
           (accu: element: accu || (type == "directory" && operation element))
-          false;
+          false
+          elements;
         ignoreDirectoryNames = ignoreDirectoryBy (x: x == baseName);
-        ignoreDirectoryByPrefix = ignoreDirectoryBy (x: lib.hasSuffix x baseName);
+        ignoreDirectoryBySuffix = ignoreDirectoryBy (x: lib.hasSuffix x baseName);
       in
       lib.cleanSourceFilter name type &&
-      ignoreDirectoryNames [ "tmp" "__pycache__" ".pytest_cache" ] &&
-      ignoreDirectoryByPrefix [ ".egg-info" ] ;
+      ignoreDirectoryNames [
+        "tmp"
+        "__pycache__"
+        ".pytest_cache"
+        "testenv"
+        "htmlcov"
+        "build"
+        "prof"
+        "dist"
+      ] &&
+      ignoreDirectoryBySuffix [ ".egg-info" ] ;
     in
     buildPythonPackage {
       name = "parsemon2";
