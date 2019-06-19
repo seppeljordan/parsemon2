@@ -36,7 +36,7 @@ def test_until_consumes_the_delimiter(runner):
     assert not parsing_result.remaining_input
 
 
-@given(n=st.integers(min_value=0, max_value=1000))
+@given(n=st.integers(min_value=0, max_value=100))
 def test_until_returns_n_elements_when_n_elements_are_found(runner, n):
     test_string = 'a' * n + 'b'
     parsing_result = runner(until(main_parser, delimiter), test_string)
@@ -48,3 +48,9 @@ def test_until_returns_tuple(runner, n):
     test_string = 'a' * n + 'b'
     parsing_result = runner(until(main_parser, delimiter), test_string)
     assert isinstance(parsing_result.value, tuple)
+
+
+def test_result_list_contains_results_of_supplied_parser(runner):
+    test_string = 'ab'
+    parsing_result = runner(until(main_parser, delimiter), test_string)
+    assert parsing_result.value == ('a',)

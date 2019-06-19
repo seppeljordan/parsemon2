@@ -232,5 +232,5 @@ def until(x, y):
         if result is delimiter_token:
             break
         else:
-            found_elements.append(None)
+            found_elements.append(result)
     return tuple(found_elements)
