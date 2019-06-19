@@ -35,6 +35,7 @@ Changes
   supplied input
 - Got rid of ``NotEnouhInput`` exception.
 - Drop official support for Python 3.6
+- Change semantics of ``until`` parser.
 
 2.0
 ---
