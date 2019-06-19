@@ -5,7 +5,7 @@ from typing import List, TypeVar
 
 from .coroutine import do
 from .error import ParsingFailed
-from .internals import character, literal, look_ahead, one_of, try_parser, unit
+from .internals import one_of, try_parser, unit
 from .result import Failure, parsing_result
 from .sourcemap import (display_location, find_linebreak_indices,
                         find_location_in_indices)
@@ -221,18 +221,16 @@ standard.  That includes newline characters."""
 
 
 @do
-def until(delimiter):
-    @do
-    def found_end():
-        yield literal(delimiter)
-        return NO_FURTHER_RESULT
-
-    result = []
+def until(x, y):
+    delimiter_token = object()
+    found_elements = []
     while True:
-        parsing_result = yield choice(
-            look_ahead(found_end()),
-            character(),
+        result = yield choice(
+            chain(y, unit(delimiter_token)),
+            x
         )
-        if parsing_result is NO_FURTHER_RESULT:
-            return ''.join(result)
-        result.append(parsing_result)
+        if result is delimiter_token:
+            break
+        else:
+            found_elements.append(None)
+    return tuple(found_elements)
