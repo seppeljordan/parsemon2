@@ -76,7 +76,6 @@ let
   python = let
     packageOverrides = self: super: {
       gprof2dot = super.callPackage nix/gprof2dot.nix {};
-      pytest = self.pytest_3;
       pytest-profiling = super.callPackage nix/pytest-profiling.nix {};
     };
     in nixpkgs."python${pythonVersion}".override {inherit packageOverrides;};

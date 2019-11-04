@@ -6,6 +6,6 @@ echo "Update nixpkgs.json"
 nix-prefetch-github \
     NixOS \
     nixpkgs-channels \
-    --rev nixos-19.03 > nixpkgs.json
+    --rev nixos-19.09 > nixpkgs.json
 echo "Update requirements.txt"
 nix-shell --command 'python -m pip freeze > requirements.txt'
