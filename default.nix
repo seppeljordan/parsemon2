@@ -26,18 +26,15 @@ let
     , sphinx
     }:
     let
-    sourceFilter = name: type:
+    sourceFilter = path: type: with lib;
       let
-        baseName = with builtins; baseNameOf (toString name);
-        ignoreDirectoryBy = operation: lib.foldl
-          (accu: element: accu || (type == "directory" && operation element))
-          false;
-        ignoreDirectoryNames = ignoreDirectoryBy (x: x == baseName);
-        ignoreDirectoryByPrefix = ignoreDirectoryBy (x: lib.hasSuffix x baseName);
+        baseName = with builtins; baseNameOf (toString path);
+        ignoreDirectories = all (directory: baseName != directory);
+        ignoreEggInfo = ! (hasSuffix ".egg-info" baseName);
       in
-      lib.cleanSourceFilter name type &&
-      ignoreDirectoryNames [ "tmp" "__pycache__" ".pytest_cache" ] &&
-      ignoreDirectoryByPrefix [ ".egg-info" ] ;
+      cleanSourceFilter path type &&
+      ignoreDirectories [ "tmp" "__pycache__" ".pytest_cache" ] &&
+      ignoreEggInfo;
     in
     buildPythonPackage {
       name = "parsemon2";
