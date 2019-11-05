@@ -26,18 +26,14 @@ let
     , sphinx
     }:
     let
-    sourceFilter = name: type:
+    sourceFilter = path: type: with lib;
       let
-        baseName = with builtins; baseNameOf (toString name);
-        ignoreDirectoryBy = operation: elements: ! lib.foldl
-          (accu: element: accu || (type == "directory" && operation element))
-          false
-          elements;
-        ignoreDirectoryNames = ignoreDirectoryBy (x: x == baseName);
-        ignoreDirectoryBySuffix = ignoreDirectoryBy (x: lib.hasSuffix x baseName);
+        baseName = with builtins; baseNameOf (toString path);
+        ignoreDirectories = all (directory: baseName != directory);
+        ignoreEggInfo = ! (hasSuffix ".egg-info" baseName);
       in
-      lib.cleanSourceFilter name type &&
-      ignoreDirectoryNames [
+      cleanSourceFilter path type &&
+      ignoreDirectories [
         "tmp"
         "__pycache__"
         ".pytest_cache"
@@ -47,7 +43,7 @@ let
         "prof"
         "dist"
       ] &&
-      ignoreDirectoryBySuffix [ ".egg-info" ] ;
+      ignoreEggInfo;
     in
     buildPythonPackage {
       name = "parsemon2";
@@ -86,7 +82,6 @@ let
   python = let
     packageOverrides = self: super: {
       gprof2dot = super.callPackage nix/gprof2dot.nix {};
-      pytest = self.pytest_3;
       pytest-profiling = super.callPackage nix/pytest-profiling.nix {};
     };
     in nixpkgs."python${pythonVersion}".override {inherit packageOverrides;};

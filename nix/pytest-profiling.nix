@@ -8,7 +8,7 @@
 }:
 buildPythonPackage rec {
   pname = "pytest-profiling";
-  version = "1.6.0";
+  version = "1.7.0";
   propagatedBuildInputs = [
     gprof2dot six pytest
   ];
@@ -18,6 +18,6 @@ buildPythonPackage rec {
   doCheck = false;
   src = fetchPypi {
     inherit pname version;
-    sha256 = "07zc6n8w6skwgp2nljywfn0w4zhxx5h4zrmwk5d1p3m6zzfqqkz4";
+    sha256 = "0abz9gi26jpcfdzgsvwad91555lpgdc8kbymicmms8k2fqa8z4wk";
   };
 }
