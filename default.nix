@@ -33,7 +33,16 @@ let
         ignoreEggInfo = ! (hasSuffix ".egg-info" baseName);
       in
       cleanSourceFilter path type &&
-      ignoreDirectories [ "tmp" "__pycache__" ".pytest_cache" ] &&
+      ignoreDirectories [
+        "tmp"
+        "__pycache__"
+        ".pytest_cache"
+        "testenv"
+        "htmlcov"
+        "build"
+        "prof"
+        "dist"
+      ] &&
       ignoreEggInfo;
     in
     buildPythonPackage {
