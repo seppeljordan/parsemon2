@@ -56,14 +56,8 @@ class Failures:
             failures=self.failures + other_failures
         )
 
-    def map_value(self, fun):
-        return evolve(
-            self,
-            failures=list(map(
-                lambda failure: failure.map_value(fun),
-                self.failures
-            ))
-        )
+    def map_value(self, _):
+        return self
 
     def is_failure(_):
         return True
