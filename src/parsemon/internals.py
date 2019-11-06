@@ -365,7 +365,18 @@ def one_of(
 
 def fmap(mapping, parser):
     """Applies a function to the result of a given parser"""
-    return parser.bind(lambda x: unit(mapping(x)))
+    @Parser.from_function
+    def new_parser(stream, continuation):
+        return Call(
+            parser.function,
+            stream,
+            lambda resulting_stream, result: Call(
+                continuation,
+                resulting_stream,
+                result.map_value(mapping)
+            )
+        )
+    return new_parser
 
 
 def end_of_file():
