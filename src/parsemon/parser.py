@@ -13,11 +13,15 @@ from .sourcemap import (display_location, find_linebreak_indices,
 T = TypeVar('T')
 
 
-NO_FURTHER_RESULT = object()
-"""This is only intended for internal use.  We use NO_FURTHER_RESULT
+_NO_FURTHER_RESULT = object()
+"""This is only intended for internal use.  We use _NO_FURTHER_RESULT
 to signal that a parser was not able to yield a result.  We could use
 None here but then we would not be able to work with parsers that
 would actually return None as a positive parsing result.
+"""
+_DELIMITER_TOKEN = object()
+"""This is only intended for internal use.  Its primary use is for
+cases where we want to parse, until we find some form of delimiter.
 """
 
 
@@ -89,9 +93,9 @@ def many(original_parser):
     while True:
         current_result = yield choice(
             try_parser(original_parser),
-            unit(NO_FURTHER_RESULT)
+            unit(_NO_FURTHER_RESULT)
         )
-        if current_result is NO_FURTHER_RESULT:
+        if current_result is _NO_FURTHER_RESULT:
             break
         else:
             results.append(current_result)
@@ -124,8 +128,8 @@ def seperated_by(parser, seperator):
     ``['1','2','3','4']``.
     """
     results = []
-    first_elem = yield (try_parser(parser) | unit(NO_FURTHER_RESULT))
-    if first_elem is NO_FURTHER_RESULT:
+    first_elem = yield (try_parser(parser) | unit(_NO_FURTHER_RESULT))
+    if first_elem is _NO_FURTHER_RESULT:
         return results
     rest_elems = yield many(chain(seperator, parser))
     return [first_elem] + rest_elems
@@ -221,15 +225,31 @@ standard.  That includes newline characters."""
 
 
 @do
-def until(x, y):
-    delimiter_token = object()
+def until(repeating_parser, delimiter_parser):
+    """Parse `repeating_parser` until `delimiter_parser` is found.
+
+    `delimiter_parser` is has always precedence over
+    `repeating_parser`.  You can think about it this way: First we
+    check if `delimiter_parser` matches the input succesfully, if this
+    is not the case, we try `repeating_parser`.  If `repeating_parser`
+    fails to match, then `until(repeating_parser, delimiter_parser)`
+    as a whole fails.  If `repeating_parser` matches, then we start
+    over again.  When `delimiter_parser` matches eventually, we return
+    all results of `repeating_parser` in a list.
+
+    Note that both, `delimiter_parser` and `repeating_parser` consume
+    input.  This is especially important if both parser have overlap
+    on the characters they consume, e.g. `until(character(),
+    literal('end'))`.  Make use of `try_parser` and `look_ahead` as
+    you see fit for your usecase.
+    """
     found_elements = []
     while True:
         result = yield choice(
-            chain(y, unit(delimiter_token)),
-            x
+            chain(delimiter_parser, unit(_DELIMITER_TOKEN)),
+            repeating_parser
         )
-        if result is delimiter_token:
+        if result is _DELIMITER_TOKEN:
             break
         else:
             found_elements.append(result)
