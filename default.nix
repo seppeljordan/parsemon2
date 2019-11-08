@@ -68,6 +68,7 @@ let
         sh run-tests.sh
       '';
       shellHook = ''
+        export SOURCE_DATE_EPOCH=315532800
         export PYTHONPATH=$PWD/src:$PYTHONPATH
       '';
       postPhases = [ "buildDocsPhase" "installDocsPhase" ];
