@@ -23,8 +23,13 @@ If you want to learn about the library we recommend checking out our
 Changes
 =======
 
-3.0 (in progress)
------------------
+3.0.1
+-----
+
+- Update README
+
+3.0
+---
 
 - Remove pyrsistent deque implementation
 - Improve fmap performance

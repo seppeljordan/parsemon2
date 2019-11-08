@@ -11,6 +11,9 @@ VERSION="$(python setup.py --version)"
 
 rm -rf parsemon2.egg-info
 
-python setup.py sdist bdist_wheel
+python setup.py sdist
+python setup.py bdist_wheel
 
-twine upload dist/parsemon2-${VERSION}-*
+for file in $(ls dist/parsemon2-${VERSION}-*); do
+    twine upload $file
+done
