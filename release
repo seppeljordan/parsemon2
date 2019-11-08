@@ -1,0 +1,16 @@
+#!/usr/bin/env nix-shell
+#! nix-shell -p python3 python3Packages.twine python3Packages.wheel -i bash
+
+set -e
+
+test -n "$1" || (echo "Missing argument: Release version" && false)
+
+export SOURCE_DATE_EPOCH=315532800
+git tag "v$1"
+VERSION="$(python setup.py --version)"
+
+rm -rf parsemon2.egg-info
+
+python setup.py sdist bdist_wheel
+
+twine upload dist/parsemon2-${VERSION}-*
