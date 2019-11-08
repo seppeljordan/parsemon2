@@ -24,6 +24,7 @@ let
     , pytest-profiling
     , pytestcov
     , sphinx
+    , setuptools_scm
     }:
     let
     sourceFilter = path: type: with lib;
@@ -59,6 +60,7 @@ let
         pytestcov
         sphinx
       ];
+      buildInputs = [ setuptools_scm ];
       propagatedBuildInputs = [ attrs ];
       src = lib.cleanSourceWith {
         filter = sourceFilter;
