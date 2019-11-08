@@ -14,6 +14,8 @@ rm -rf parsemon2.egg-info
 python setup.py sdist
 python setup.py bdist_wheel
 
-for file in $(ls dist/parsemon2-${VERSION}-*); do
+for file in dist/parsemon2-${VERSION}.tar.gz $(ls dist/parsemon2-${VERSION}-*.whl); do
     twine upload $file
 done
+
+git push --tags
