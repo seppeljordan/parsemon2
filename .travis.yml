@@ -3,5 +3,11 @@ env:
   matrix:
     - PYTHON_VERSION=3
     - PYTHON_VERSION=37
-script:
-  - nix-build --argstr pythonVersion ${PYTHON_VERSION}
+jobs:
+  include:
+    - script: nix-build --argstr pythonVersion ${PYTHON_VERSION}
+    - stage: build
+      name: Build source distribution
+      script: nix-shell --command 'python setup.py sdist'
+    - name: Build wheel
+      script: nix-shell --command 'python setup.py bdist_wheel'
