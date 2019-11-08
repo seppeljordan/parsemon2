@@ -13,6 +13,7 @@ let
     { buildPythonPackage
     , lib
     , graphviz
+    , git
 
     , attrs
     , flake8
@@ -33,7 +34,6 @@ let
         ignoreDirectories = all (directory: baseName != directory);
         ignoreEggInfo = ! (hasSuffix ".egg-info" baseName);
       in
-      cleanSourceFilter path type &&
       ignoreDirectories [
         "tmp"
         "__pycache__"
@@ -61,6 +61,7 @@ let
         sphinx
       ];
       buildInputs = [ setuptools_scm ];
+      nativeBuildInputs = [ git ];
       propagatedBuildInputs = [ attrs ];
       src = lib.cleanSourceWith {
         filter = sourceFilter;

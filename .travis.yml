@@ -4,7 +4,8 @@ env:
     - PYTHON_VERSION=3
     - PYTHON_VERSION=37
 
-script: nix-build --argstr pythonVersion ${PYTHON_VERSION}
+script:
+  - nix-build --argstr pythonVersion ${PYTHON_VERSION}
 
 jobs:
   include:
