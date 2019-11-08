@@ -30,7 +30,7 @@ function do_import_check() {
 }
 
 function remove_parsemon() {
-    pip uninstall parsemon2 -y
+    python -m pip uninstall parsemon2 -y
 }
 
 function install_check() {
@@ -42,16 +42,16 @@ function install_check() {
     source testenv/bin/activate
 
     # install dependencies from regular pypi
-    pip install -e .
+    python -m pip install -e .
     remove_parsemon
 
     # install parsemon2 from generated dist file
-    pip install "${TARBALL}"
+    python -m pip install "${TARBALL}"
     do_import_check "Installation from tarball failed"
     remove_parsemon
 
     # install parsemon2 from pypi test
-    pip install \
+    python -m pip install \
 		    --no-cache-dir \
 		    --index-url https://test.pypi.org/simple/ \
 		    parsemon2==${VERSION}
