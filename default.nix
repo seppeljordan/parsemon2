@@ -1,4 +1,6 @@
-{ pythonVersion ? "3" }:
+{ pythonVersion ? "3"
+, useSystemNix ? false
+}:
 
 let
   nixpkgs-host = import <nixpkgs> {};
@@ -8,7 +10,10 @@ let
 in
 
 let
-  nixpkgs = import nixos-stable { overlays = []; };
+  nixpkgs =
+    if useSystemNix
+    then nixpkgs-host
+    else import nixos-stable { overlays = []; };
   f =
     { buildPythonPackage
     , lib
@@ -25,7 +30,6 @@ let
     , pytest-profiling
     , pytestcov
     , sphinx
-    , setuptools_scm
     }:
     let
     sourceFilter = path: type: with lib;
@@ -60,7 +64,6 @@ let
         pytestcov
         sphinx
       ];
-      buildInputs = [ setuptools_scm ];
       nativeBuildInputs = [ git ];
       propagatedBuildInputs = [ attrs ];
       src = lib.cleanSourceWith {
