@@ -1,5 +1,5 @@
 { pythonVersion ? "3"
-, useSystemNix ? false
+, useSystemNixpkgs ? true
 }:
 
 let
@@ -11,7 +11,7 @@ in
 
 let
   nixpkgs =
-    if useSystemNix
+    if useSystemNixpkgs
     then nixpkgs-host
     else import nixos-stable { overlays = []; };
   f =

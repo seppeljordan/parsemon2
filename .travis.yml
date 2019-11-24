@@ -5,12 +5,12 @@ env:
     - PYTHON_VERSION=37
 
 script:
-  - nix-build --argstr pythonVersion ${PYTHON_VERSION}
+  - nix-build --argstr pythonVersion ${PYTHON_VERSION} --arg useSystemNixpks false
 
 jobs:
   include:
     - stage: build
       name: Build source distribution
-      script: nix-shell --command 'python setup.py sdist'
+      script: nix-shell --arg useSystemNixpkgs false --command 'python setup.py sdist'
     - name: Build wheel
-      script: nix-shell --command 'python setup.py bdist_wheel'
+      script: nix-shell --arg useSystemNixpkgs false --command 'python setup.py bdist_wheel'
