@@ -1,4 +1,6 @@
-{ pythonVersion ? "3" }:
+{ pythonVersion ? "3"
+, useSystemNixpkgs ? true
+}:
 
 let
   nixpkgs-host = import <nixpkgs> {};
@@ -8,7 +10,10 @@ let
 in
 
 let
-  nixpkgs = import nixos-stable { overlays = []; };
+  nixpkgs =
+    if useSystemNixpkgs
+    then nixpkgs-host
+    else import nixos-stable { overlays = []; };
   f =
     { buildPythonPackage
     , lib
@@ -16,6 +21,7 @@ let
     , git
 
     , attrs
+    , bumpv
     , flake8
     , hypothesis
     , mypy
@@ -25,7 +31,6 @@ let
     , pytest-profiling
     , pytestcov
     , sphinx
-    , setuptools_scm
     }:
     let
     sourceFilter = path: type: with lib;
@@ -59,8 +64,8 @@ let
         pytest-profiling
         pytestcov
         sphinx
+        bumpv
       ];
-      buildInputs = [ setuptools_scm ];
       nativeBuildInputs = [ git ];
       propagatedBuildInputs = [ attrs ];
       src = lib.cleanSourceWith {
@@ -87,6 +92,7 @@ let
     packageOverrides = self: super: {
       gprof2dot = super.callPackage nix/gprof2dot.nix {};
       pytest-profiling = super.callPackage nix/pytest-profiling.nix {};
+      bumpv = super.callPackage nix/bumpv.nix {};
     };
     in nixpkgs."python${pythonVersion}".override {inherit packageOverrides;};
   drv = python.pkgs.callPackage f {};
