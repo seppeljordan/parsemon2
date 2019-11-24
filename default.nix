@@ -21,6 +21,7 @@ let
     , git
 
     , attrs
+    , bumpv
     , flake8
     , hypothesis
     , mypy
@@ -63,6 +64,7 @@ let
         pytest-profiling
         pytestcov
         sphinx
+        bumpv
       ];
       nativeBuildInputs = [ git ];
       propagatedBuildInputs = [ attrs ];
@@ -90,6 +92,7 @@ let
     packageOverrides = self: super: {
       gprof2dot = super.callPackage nix/gprof2dot.nix {};
       pytest-profiling = super.callPackage nix/pytest-profiling.nix {};
+      bumpv = super.callPackage nix/bumpv.nix {};
     };
     in nixpkgs."python${pythonVersion}".override {inherit packageOverrides;};
   drv = python.pkgs.callPackage f {};
