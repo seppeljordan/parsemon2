@@ -1,6 +1,6 @@
 { buildPythonPackage, lib, graphviz, git, attrs, bumpv, flake8, hypothesis, mypy
 , pylint, pytest, pytest-benchmark, pytest-profiling, pytestcov, sphinx, black
-}:
+, twine, wheel }:
 let
   sourceFilter = path: type:
     with lib;
@@ -33,6 +33,8 @@ in buildPythonPackage {
     pytestcov
     sphinx
     bumpv
+    twine
+    wheel
   ];
   nativeBuildInputs = [ git ];
   propagatedBuildInputs = [ attrs ];
