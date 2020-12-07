@@ -6,7 +6,7 @@ stack_bottom = object()
 
 
 @attrs
-class Stack():
+class Stack:
     value = attrib(default=stack_bottom)
     next_elem = attrib(default=None)
 
@@ -14,10 +14,7 @@ class Stack():
         return self.value is stack_bottom
 
     def push(self, elem):
-        return Stack(
-            next_elem=self,
-            value=elem
-        )
+        return Stack(next_elem=self, value=elem)
 
     def top(self):
         if self.value == stack_bottom:

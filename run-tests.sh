@@ -2,11 +2,11 @@
 
 set -e
 
-mypy src/ --ignore-missing-imports
-flake8 src/ tests/
-PYTHONPATH=src/:$PYTHONPATH pytest \
-          --cov=src \
-          --cov-report=term \
-          --cov-report=html \
-          --benchmark-skip
-isort -rc src/ tests/ -c
+mypy parsemon --ignore-missing-imports
+flake8
+pytest \
+    --cov=parsemon/ \
+    --cov-report=term \
+    --cov-report=html \
+    --benchmark-skip
+isort parsemon/ tests/ -c

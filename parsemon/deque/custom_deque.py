@@ -14,27 +14,16 @@ class Deque:
             return deque_empty
         if self.front_stack.empty():
             return evolve(
-                self,
-                back_stack=Stack(),
-                front_stack=self.back_stack.flipped().pop()
+                self, back_stack=Stack(), front_stack=self.back_stack.flipped().pop()
             )
         else:
-            return evolve(
-                self,
-                front_stack=self.front_stack.pop()
-            )
+            return evolve(self, front_stack=self.front_stack.pop())
 
     def push(self, value):
-        return evolve(
-            self,
-            front_stack=self.front_stack.push(value)
-        )
+        return evolve(self, front_stack=self.front_stack.push(value))
 
     def append(self, value):
-        return evolve(
-            self,
-            back_stack=self.back_stack.push(value)
-        )
+        return evolve(self, back_stack=self.back_stack.push(value))
 
     def top(self):
         if self.front_stack.empty():

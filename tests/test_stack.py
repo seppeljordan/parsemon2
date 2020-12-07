@@ -40,11 +40,7 @@ def deque(request, container):
     return reduce(
         lambda accu, item: accu.push(item),
         reversed(front),
-        reduce(
-            lambda accu, item: accu.append(item),
-            back,
-            container()
-        )
+        reduce(lambda accu, item: accu.append(item), back, container()),
     )
 
 
@@ -53,16 +49,16 @@ def test_new_stack_is_empty(container):
 
 
 def test_when_we_add_elem_to_stack_it_is_not_empty(container):
-    assert not container().push('a').empty()
+    assert not container().push("a").empty()
 
 
 def test_when_we_push_an_elem_and_then_top_we_get_the_same_elem(container):
-    value = 'a'
-    assert container().push('a').top() == value
+    value = "a"
+    assert container().push("a").top() == value
 
 
 def test_when_we_push_and_pop_we_get_the_empty_stack(container):
-    assert container().push('a').pop().empty()
+    assert container().push("a").pop().empty()
 
 
 def test_pop_on_empty_deque_return_deque_empty(container):
@@ -150,6 +146,7 @@ def test_that_append_increases_length_by_1(deque):
 def test_that_last_element_is_that_one_most_recently_appended(deque):
     class TestValue:
         pass
+
     assert deque.append(TestValue).last() is TestValue
 
 
@@ -159,22 +156,13 @@ def test_that_last_element_is_that_one_most_recently_appended(deque):
         [1, 2, 3, 4],
         [],
         [None],
-    )
+    ),
 )
-def test_that_appending_elements_and_poping_them_yields_same_order(
-        deque,
-        items
-):
-    populated_deque = reduce(
-        lambda d, item: d.append(item),
-        items,
-        deque
-    )
+def test_that_appending_elements_and_poping_them_yields_same_order(deque, items):
+    populated_deque = reduce(lambda d, item: d.append(item), items, deque)
 
     deque_without_prefilled_items = reduce(
-        lambda d, _: d.pop(),
-        range(0, len(deque)),
-        populated_deque
+        lambda d, _: d.pop(), range(0, len(deque)), populated_deque
     )
 
     for item in items:

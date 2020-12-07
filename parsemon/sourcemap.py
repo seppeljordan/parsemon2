@@ -2,19 +2,18 @@ from typing import List, Sized
 
 
 def display_location(line, column) -> str:
-    return 'L: {line}, C: {column}'.format(
+    return "L: {line}, C: {column}".format(
         line=line,
         column=column,
     )
 
 
-def find_linebreak_indices(
-        document: Sized
-) -> List[int]:
+def find_linebreak_indices(document: Sized) -> List[int]:
     def iterate():
         for (character, index) in zip(document, range(0, len(document))):
-            if character == '\n':
+            if character == "\n":
                 yield index
+
     return list(iterate())
 
 

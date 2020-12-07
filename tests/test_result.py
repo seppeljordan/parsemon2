@@ -14,13 +14,17 @@ def success(draw):
 def failure(draw):
     return result.failure(
         message=draw(st.text()),
-        position=draw(st.integers(min_value=0,))
+        position=draw(
+            st.integers(
+                min_value=0,
+            )
+        ),
     )
 
 
 @given(success())
 def test_that_map_value_works_on_success_objects_as_expected(success):
-    assert success.value * 2 == success.map_value(lambda x: x*2).value
+    assert success.value * 2 == success.map_value(lambda x: x * 2).value
 
 
 @given(success())

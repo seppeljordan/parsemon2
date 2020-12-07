@@ -1,7 +1,7 @@
 from functools import wraps
 from typing import Callable, Generic, TypeVar, Union
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class Result(Generic[T]):
@@ -16,12 +16,7 @@ class Result(Generic[T]):
 
 
 class Call(Generic[T]):
-    def __init__(
-            self,
-            f: Callable[..., T],
-            *args,
-            **kwargs
-    ) -> None:
+    def __init__(self, f: Callable[..., T], *args, **kwargs) -> None:
         self.fun = f
         self.args = args
         self.kwargs = kwargs
@@ -45,4 +40,5 @@ def with_trampoline(f: Callable[..., Trampoline[T]]) -> Callable[..., T]:
                 return iteration_result()
             else:
                 iteration_result = iteration_result()
+
     return g

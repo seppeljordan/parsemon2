@@ -1,20 +1,11 @@
-{buildPythonPackage
-, fetchPypi
+{ buildPythonPackage, fetchPypi
 
-, gprof2dot
-, six
-, pytest
-, setuptools-git
-}:
+, gprof2dot, six, pytest, setuptools-git }:
 buildPythonPackage rec {
   pname = "pytest-profiling";
   version = "1.7.0";
-  propagatedBuildInputs = [
-    gprof2dot six pytest
-  ];
-  buildInputs = [
-    setuptools-git
-  ];
+  propagatedBuildInputs = [ gprof2dot six pytest ];
+  buildInputs = [ setuptools-git ];
   doCheck = false;
   src = fetchPypi {
     inherit pname version;

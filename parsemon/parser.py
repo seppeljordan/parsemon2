@@ -7,10 +7,13 @@ from .coroutine import do
 from .error import ParsingFailed
 from .internals import one_of, try_parser, unit
 from .result import Failure, parsing_result
-from .sourcemap import (display_location, find_linebreak_indices,
-                        find_location_in_indices)
+from .sourcemap import (
+    display_location,
+    find_linebreak_indices,
+    find_location_in_indices,
+)
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 _NO_FURTHER_RESULT = object()
@@ -26,60 +29,52 @@ cases where we want to parse, until we find some form of delimiter.
 
 
 def bind(
-        old_parser,
-        binding,
+    old_parser,
+    binding,
 ):
-    '''Combine the result of a parser with second parser
+    """Combine the result of a parser with second parser
 
     :param old_parser: First parser to apply
     :param binding: A function that returns a parser based on the result
         of old_parser
-    '''
+    """
     return old_parser.bind(binding)
 
 
-def chain(
-        first,
-        second,
-        *rest
-):
-    '''Combine to parsers and only use the result of the second parser
+def chain(first, second, *rest):
+    """Combine to parsers and only use the result of the second parser
 
     :param first: a parser that consumes input, the result will be discarded
     :param second: a parser that is applied after first, the result of this
         parser will be returned by the resulting parser
-    '''
+    """
+
     def _chain(p1, p2):
-        return bind(
-            p1,
-            lambda _: p2
-        )
+        return bind(p1, lambda _: p2)
+
     first_and_second_parser_combined = _chain(first, second)
     return reduce(_chain, rest, first_and_second_parser_combined)
 
 
 def choice(
-        first_parser,
-        second_parser,
+    first_parser,
+    second_parser,
 ):
-    '''Try one parser and try a second one if the first one fails
+    """Try one parser and try a second one if the first one fails
 
     This behaves the same way as ``first_parser | second_parser`` would.
-    '''
+    """
     return first_parser | second_parser
 
 
 def choices(parser, *parsers):
-    '''Try the given parsers one at a time until one succeeds'''
-    return reduce(
-        choice,
-        [parser] + list(parsers)
-    )
+    """Try the given parsers one at a time until one succeeds"""
+    return reduce(choice, [parser] + list(parsers))
 
 
 @do
 def many(original_parser):
-    '''Apply a parser 0 or more times
+    """Apply a parser 0 or more times
 
     The resulting parser is greedy, which means that it will be
     applied as often as possible, which also includes 0 times.  Think
@@ -88,12 +83,11 @@ def many(original_parser):
     :param original_parser: this parser will be applied as often as
         possible by the resulting new parser
 
-    '''
+    """
     results = []
     while True:
         current_result = yield choice(
-            try_parser(original_parser),
-            unit(_NO_FURTHER_RESULT)
+            try_parser(original_parser), unit(_NO_FURTHER_RESULT)
         )
         if current_result is _NO_FURTHER_RESULT:
             break
@@ -104,7 +98,7 @@ def many(original_parser):
 
 @do
 def many1(original_parser):
-    '''Apply a parser 1 or more times
+    """Apply a parser 1 or more times
 
     The resulting parser is greedy, which means that it will be
     applied as often as possible.  Think of this as an equivalent to
@@ -113,7 +107,7 @@ def many1(original_parser):
     original_parser -- this parser will be applied 1 or more times by the
         resulting parser
 
-    '''
+    """
     return [(yield original_parser)] + (yield many(original_parser))
 
 
@@ -137,16 +131,16 @@ def seperated_by(parser, seperator):
 
 @do
 def enclosed_by(
-        parser,
-        prefix_parser,
-        suffix_parser=None,
+    parser,
+    prefix_parser,
+    suffix_parser=None,
 ):
-    '''Parse a string enclosed by delimeters
+    """Parse a string enclosed by delimeters
 
     The parser ``enclosed_by(many(none_of('"')),literal('"'))`` will
     consume the string ``"example"`` and return the python string
     ``'example'``.
-    '''
+    """
     yield prefix_parser
     result = yield parser
     yield suffix_parser or prefix_parser
@@ -154,39 +148,29 @@ def enclosed_by(
 
 
 def run_parser(
-        p,
-        input_string: str,
-        stream_implementation=None,
+    p,
+    input_string: str,
+    stream_implementation=None,
 ) -> T:
-    '''Parse string input_string with parser p'''
+    """Parse string input_string with parser p"""
+
     def render_failure(failure):
         linebreaks = find_linebreak_indices(input_string)
         line, column = find_location_in_indices(failure.position, linebreaks)
-        return '{message} @ {location}'.format(
-            message=failure.message,
-            location=display_location(line, column)
+        return "{message} @ {location}".format(
+            message=failure.message, location=display_location(line, column)
         )
 
     kwargs = {}
     if stream_implementation:
-        kwargs['stream_implementation'] = stream_implementation
+        kwargs["stream_implementation"] = stream_implementation
     stream, result = p.run(input_string, **kwargs)
     if result.is_failure():
-        failures = (
-            [result]
-            if isinstance(result, Failure)
-            else result.failures
-        )
-        final_message = ' OR '.join(map(
-            render_failure,
-            failures
-        ))
+        failures = [result] if isinstance(result, Failure) else result.failures
+        final_message = " OR ".join(map(render_failure, failures))
         raise ParsingFailed(final_message)
     else:
-        return parsing_result(
-            value=result.value,
-            remaining_input=stream.to_string()
-        )
+        return parsing_result(value=result.value, remaining_input=stream.to_string())
 
 
 whitespace_unicode_characters_decimals: List[int] = [
@@ -214,12 +198,10 @@ whitespace_unicode_characters_decimals: List[int] = [
     8233,
     8239,
     8287,
-    12288
+    12288,
 ]
 
-whitespace = one_of(
-    ''.join(map(chr, whitespace_unicode_characters_decimals))
-)
+whitespace = one_of("".join(map(chr, whitespace_unicode_characters_decimals)))
 """Parse any character that is classified as a whitespace character by unicode
 standard.  That includes newline characters."""
 
@@ -246,8 +228,7 @@ def until(repeating_parser, delimiter_parser):
     found_elements = []
     while True:
         result = yield choice(
-            chain(delimiter_parser, unit(_DELIMITER_TOKEN)),
-            repeating_parser
+            chain(delimiter_parser, unit(_DELIMITER_TOKEN)), repeating_parser
         )
         if result is _DELIMITER_TOKEN:
             break

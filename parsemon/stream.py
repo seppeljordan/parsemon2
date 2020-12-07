@@ -18,7 +18,7 @@ class CharacterStream:
             content=reduce(
                 lambda stack, character: stack.push(character),
                 reversed(content),
-                Stack()
+                Stack(),
             ),
             length=len(content),
             position=0,
@@ -34,24 +34,18 @@ class CharacterStream:
             evolve(
                 self,
                 content=self.content.pop(),
-                length=(
-                    self.length
-                    if self.content.empty()
-                    else self.length - 1
-                ),
+                length=(self.length if self.content.empty() else self.length - 1),
                 position=(
-                    self._position
-                    if self.content.empty()
-                    else self._position + 1
-                )
-            )
+                    self._position if self.content.empty() else self._position + 1
+                ),
+            ),
         )
 
     def __len__(self):
         return self.length
 
     def to_string(self):
-        return ''.join(self.content)
+        return "".join(self.content)
 
     def position(self):
         return self._position
@@ -75,7 +69,7 @@ class StringStream:
         return self.length - self._position
 
     def to_string(self):
-        return self.content[self._position:]
+        return self.content[self._position :]
 
     def read(self):
         if self:
@@ -83,14 +77,11 @@ class StringStream:
                 self.content[self._position],
                 evolve(
                     self,
-                    position=self._position+1,
-                )
+                    position=self._position + 1,
+                ),
             )
         else:
-            return (
-                None,
-                self
-            )
+            return (None, self)
 
     def next(self):
         if self._position < self.length:
@@ -130,7 +121,7 @@ class IOStream:
                 evolve(
                     self,
                     position=self._stream.tell(),
-                )
+                ),
             )
         else:
             return None, self

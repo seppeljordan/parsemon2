@@ -27,16 +27,8 @@ class Failure:
 
     def __add__(self, other):
         if isinstance(other, Failures):
-            return evolve(
-                other,
-                failures=[self] + other.failures
-            )
-        return Failures(
-            failures=[
-                self,
-                other
-            ]
-        )
+            return evolve(other, failures=[self] + other.failures)
+        return Failures(failures=[self, other])
 
     def is_failure(_):
         return True
@@ -47,14 +39,8 @@ class Failures:
     failures = attrib()
 
     def __add__(self, other):
-        other_failures = (
-            other.failures
-            if isinstance(other, Failures)
-            else [other]
-        )
-        return Failures(
-            failures=self.failures + other_failures
-        )
+        other_failures = other.failures if isinstance(other, Failures) else [other]
+        return Failures(failures=self.failures + other_failures)
 
     def map_value(self, _):
         return self
@@ -75,7 +61,7 @@ def success(value):
 
 
 @attrs
-class ParsingResult():
+class ParsingResult:
     value = attrib()
     remaining_input = attrib()
 

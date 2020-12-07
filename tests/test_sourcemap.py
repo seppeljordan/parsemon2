@@ -1,8 +1,12 @@
 from hypothesis import given
 from hypothesis import strategies as st
 
-from parsemon.sourcemap import (display_location, find_column_in_indices,
-                                find_line_in_indices, find_linebreak_indices)
+from parsemon.sourcemap import (
+    display_location,
+    find_column_in_indices,
+    find_line_in_indices,
+    find_linebreak_indices,
+)
 
 
 def test_display_location_contains_the_actual_line_number():
@@ -21,12 +25,12 @@ def test_find_linebreak_indices_returns_empty_list_for_online_string():
 
 
 def test_find_linebreak_indices_on_string_with_only_linebreaks():
-    msg = '\n\n\n\n'
+    msg = "\n\n\n\n"
     assert len(find_linebreak_indices(msg)) == len(msg)
 
 
 def test_find_line_breaks_of_empty_string_returns_empty_list():
-    assert find_linebreak_indices('') == []
+    assert find_linebreak_indices("") == []
 
 
 def test_find_line_in_indices_returns_1_for_index_0():
@@ -49,14 +53,10 @@ def test_find_line_in_indices_returns_1_for_index_0_with_linbreak_at_index_0():
 
 
 @given(n=st.integers(min_value=0))
-def test_find_column_in_indices_resturns_n_for_empty_indices(
-        n
-):
+def test_find_column_in_indices_resturns_n_for_empty_indices(n):
     assert find_column_in_indices(n, []) == n
 
 
 @given(n=st.integers(min_value=0))
-def test_find_column_in_indices_returns_n_minus_1_if_index_is_n_after_newline(
-        n
-):
+def test_find_column_in_indices_returns_n_minus_1_if_index_is_n_after_newline(n):
     assert find_column_in_indices(5 + n, [5]) == n - 1

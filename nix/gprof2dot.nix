@@ -1,4 +1,4 @@
-{ buildPythonPackage, fetchPypi}:
+{ buildPythonPackage, fetchPypi }:
 buildPythonPackage rec {
   pname = "gprof2dot";
   version = "2017.9.19";

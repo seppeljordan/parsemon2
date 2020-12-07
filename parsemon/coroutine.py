@@ -21,6 +21,7 @@ def do(f):
             return first + second + third
 
     """
+
     @wraps(f)
     def decorator(*args, **kwargs):
         def inner(value, generator=None):
@@ -29,13 +30,9 @@ def do(f):
             try:
                 next_parser = generator.send(value)
             except StopIteration as stop:
-                return unit(
-                    getattr(stop, 'value', None)
-                )
+                return unit(getattr(stop, "value", None))
             else:
-                return next_parser.bind(
-                    lambda next_value: inner(next_value, generator)
-                )
+                return next_parser.bind(lambda next_value: inner(next_value, generator))
 
         return unit(None).bind(inner)
 

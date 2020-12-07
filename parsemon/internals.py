@@ -44,15 +44,12 @@ class Parser:
     object.  Use `parseon.trampoline.Value` to return a plain value
     without doing a tail call.
     """
+
     function = attrib()
 
     @classmethod
     def bind_continuation(
-            cls,
-            original_continuation,
-            binding,
-            stream,
-            previous_parsing_result
+        cls, original_continuation, binding, stream, previous_parsing_result
     ):
         if previous_parsing_result.is_failure():
             return Call(original_continuation, stream, previous_parsing_result)
@@ -69,24 +66,22 @@ class Parser:
             return Call(
                 self.function,
                 stream,
-                partial(self.bind_continuation, continuation, binding)
+                partial(self.bind_continuation, continuation, binding),
             )
+
         return parser
 
     @classmethod
     def choice_continuation(
-            cls,
-            original_stream_length,
-            original_continuation,
-            other,
-            stream,
-            result_of_self,
+        cls,
+        original_stream_length,
+        original_continuation,
+        other,
+        stream,
+        result_of_self,
     ):
         if result_of_self.is_failure():
-            if (
-                    len(stream) ==
-                    original_stream_length
-            ):
+            if len(stream) == original_stream_length:
                 return Call(
                     other.function,
                     stream,
@@ -94,37 +89,30 @@ class Parser:
                         Call(
                             original_continuation,
                             stream,
-                            result_of_self + result_of_other
+                            result_of_self + result_of_other,
                         )
                         if result_of_other.is_failure()
-                        else Call(
-                                original_continuation,
-                                stream,
-                                result_of_other
-                        )
-                    )
+                        else Call(original_continuation, stream, result_of_other)
+                    ),
                 )
         return Call(original_continuation, stream, result_of_self)
 
     def __or__(self, other):
         return self.change_continuation(
-            lambda old_stream, continuation, new_stream, parsing_result:
-            self.choice_continuation(
-                len(old_stream),
-                continuation,
-                other,
-                new_stream,
-                parsing_result
+            lambda old_stream, continuation, new_stream, parsing_result: self.choice_continuation(
+                len(old_stream), continuation, other, new_stream, parsing_result
             )
         )
 
     def run(self, input_string, stream_implementation=StringStream):
         return with_trampoline(self.function)(
             stream_implementation.from_string(input_string),
-            lambda stream, x: Result((
-                stream,
-                x,
-            )),
+            lambda stream, x: Result(
+                (
+                    stream,
+                    x,
+                )
+            ),
         )
 
     @classmethod
@@ -134,19 +122,14 @@ class Parser:
     def change_continuation(self, mapping):
         @self.from_function
         def parser(stream, continuation):
-            return Call(
-                self.function,
-                stream,
-                partial(mapping, stream, continuation)
-            )
+            return Call(self.function, stream, partial(mapping, stream, continuation))
 
         return parser
 
 
 def look_ahead(parser):
     return parser.change_continuation(
-        lambda old_stream, old_continuation, new_stream, parsing_result:
-        Call(
+        lambda old_stream, old_continuation, new_stream, parsing_result: Call(
             old_continuation,
             new_stream if parsing_result.is_failure() else old_stream,
             parsing_result,
@@ -156,8 +139,7 @@ def look_ahead(parser):
 
 def try_parser(parser):
     return parser.change_continuation(
-        lambda old_stream, old_continuation, new_stream, parsing_result:
-        Call(
+        lambda old_stream, old_continuation, new_stream, parsing_result: Call(
             old_continuation,
             old_stream if parsing_result.is_failure() else new_stream,
             parsing_result,
@@ -173,28 +155,25 @@ def unit(value):
             stream,
             success(
                 value=value,
-            )
+            ),
         )
+
     return parser
 
 
 def fail(msg):
     """This parser always fails with the message passed as ``msg``."""
+
     @Parser.from_function
     def parser(stream, cont):
-        return Call(
-            cont,
-            stream,
-            failure(
-                message=msg,
-                position=stream.position()
-            )
-        )
+        return Call(cont, stream, failure(message=msg, position=stream.position()))
+
     return parser
 
 
 def character(n: int = 1):
     """Parse exactly n characters, the default is 1."""
+
     @Parser.from_function
     def parser(stream, cont):
         result = []
@@ -204,9 +183,9 @@ def character(n: int = 1):
                     cont,
                     stream,
                     failure(
-                        message='Expected character but found end of string',
+                        message="Expected character but found end of string",
                         position=stream.position(),
-                    )
+                    ),
                 )
             char_found, stream = stream.read()
             result.append(char_found)
@@ -214,9 +193,10 @@ def character(n: int = 1):
             cont,
             stream,
             success(
-                value=''.join(result),
-            )
+                value="".join(result),
+            ),
         )
+
     return parser
 
 
@@ -226,6 +206,7 @@ def literal(expected):
     If the parser already fails on the first element, no input will be
     consumed.
     """
+
     @Parser.from_function
     def parser(stream, cont):
         for expected_char in expected:
@@ -235,11 +216,11 @@ def literal(expected):
                     cont,
                     stream,
                     failure(
-                        'Expected `{expected}` but found end of string'.format(
+                        "Expected `{expected}` but found end of string".format(
                             expected=expected,
                         ),
                         position=stream.position(),
-                    )
+                    ),
                 )
             if expected_char == character_read:
                 stream = stream.read()[1]
@@ -248,22 +229,20 @@ def literal(expected):
                     cont,
                     stream,
                     failure(
-                        message=(
-                            'Expected `{expected}` but found `{actual}`.'
-                        ).format(
-                            expected=expected,
-                            actual=character_read
+                        message=("Expected `{expected}` but found `{actual}`.").format(
+                            expected=expected, actual=character_read
                         ),
-                        position=stream.position()
-                    )
+                        position=stream.position(),
+                    ),
                 )
         return Call(
             cont,
             stream,
             success(
                 value=expected,
-            )
+            ),
         )
+
     return parser
 
 
@@ -274,6 +253,7 @@ def none_of(chars: str):
     ``chars``.
 
     """
+
     @Parser.from_function
     def parser(stream, cont):
         if not stream:
@@ -281,14 +261,16 @@ def none_of(chars: str):
                 cont,
                 stream,
                 failure(
-                    message=' '.join([
-                        'Expected any char except `{forbidden}` but found end'
-                        'of string'
-                    ]).format(
+                    message=" ".join(
+                        [
+                            "Expected any char except `{forbidden}` but found end"
+                            "of string"
+                        ]
+                    ).format(
                         forbidden=chars,
                     ),
                     position=stream.position(),
-                )
+                ),
             )
         if stream.next() not in chars:
             result, stream = stream.read()
@@ -297,30 +279,29 @@ def none_of(chars: str):
                 stream,
                 success(
                     value=result,
-                )
+                ),
             )
         else:
             return Call(
                 cont,
                 stream,
                 failure(
-                    message=' '.join([
-                        'Expected anything except one of `{forbidden}` but'
-                        'found {actual}'
-                    ]).format(
-                        forbidden=chars,
-                        actual=stream.next()
-                    ),
+                    message=" ".join(
+                        [
+                            "Expected anything except one of `{forbidden}` but"
+                            "found {actual}"
+                        ]
+                    ).format(forbidden=chars, actual=stream.next()),
                     position=stream.position(),
-                )
+                ),
             )
+
     return parser
 
 
-def one_of(
-        expected: str
-):
+def one_of(expected: str):
     """Parse only characters contained in ``expected``."""
+
     @Parser.from_function
     def parser(stream, cont):
         if not stream:
@@ -329,13 +310,12 @@ def one_of(
                 stream,
                 failure(
                     message=(
-                        'Expected on of `{expected}` but found end of string'
-                        .format(
+                        "Expected on of `{expected}` but found end of string".format(
                             expected=expected
                         )
                     ),
-                    position=stream.position()
-                )
+                    position=stream.position(),
+                ),
             )
         if stream.next() in expected:
             result, stream = stream.read()
@@ -344,44 +324,44 @@ def one_of(
                 stream,
                 success(
                     value=result,
-                )
+                ),
             )
         else:
             return Call(
                 cont,
                 stream,
                 failure(
-                    message=(
-                        'Expected one of `{expected}` but found {actual}'
-                    ).format(
+                    message=("Expected one of `{expected}` but found {actual}").format(
                         expected=expected,
                         actual=stream.next(),
                     ),
                     position=stream.position(),
-                )
+                ),
             )
+
     return parser
 
 
 def fmap(mapping, parser):
     """Applies a function to the result of a given parser"""
+
     @Parser.from_function
     def new_parser(stream, continuation):
         return Call(
             parser.function,
             stream,
             lambda resulting_stream, result: Call(
-                continuation,
-                resulting_stream,
-                result.map_value(mapping)
-            )
+                continuation, resulting_stream, result.map_value(mapping)
+            ),
         )
+
     return new_parser
 
 
 def end_of_file():
     """Returns a parser that only succeeds with a value of None if there
     would be no further input to consume"""
+
     @Parser.from_function
     def parser(stream, cont):
         if stream.next() is None:
@@ -390,18 +370,18 @@ def end_of_file():
                 stream,
                 success(
                     value=None,
-                )
+                ),
             )
         else:
             return Call(
                 cont,
                 stream,
                 failure(
-                    message='Expected end-of-file but found `{char}`'.format(
+                    message="Expected end-of-file but found `{char}`".format(
                         char=stream.next(),
                     ),
                     position=stream.position(),
-                )
+                ),
             )
 
     return parser
