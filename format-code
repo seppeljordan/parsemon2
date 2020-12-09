@@ -1,0 +1,7 @@
+#!/usr/bin/env sh
+
+set -e
+
+isort .
+black .
+nixfmt $(find . -name '*.nix' -type f)

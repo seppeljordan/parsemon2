@@ -15,16 +15,21 @@
       packageOverrides = import nix/package-overrides.nix;
       overlay = final: prev: {
         python3 = prev.python3.override { inherit packageOverrides; };
+        python3Packages = final.python3.pkgs;
         python36 = prev.python36.override { inherit packageOverrides; };
+        python36Packages = final.python36.pkgs;
         python37 = prev.python37.override { inherit packageOverrides; };
+        python37Packages = final.python37.pkgs;
         python38 = prev.python38.override { inherit packageOverrides; };
+        python38Packages = final.python38.pkgs;
         python39 = prev.python39.override { inherit packageOverrides; };
+        python39Packages = final.python39.pkgs;
       };
       systemDependent = flake-utils.lib.eachDefaultSystem (system:
         let
           pkgs = import nixpkgs {
+            inherit system;
             overlays = [ overlay ];
-            system = system;
           };
           python = pkgs.python3;
         in {
@@ -48,6 +53,7 @@
                 ]))
               pkgs.git
               pkgs.graphviz
+              pkgs.nix-linter
             ];
           };
           defaultPackage = python.pkgs.parsemon2;
@@ -85,6 +91,11 @@
             flake8-check = pkgs.runCommand "flake8-parsemon2" { } ''
               cd ${self}
               ${python.pkgs.flake8}/bin/flake8
+              mkdir $out
+            '';
+            nix-linter-check = pkgs.runCommand "nix-linter-parsemon2" { } ''
+              cd ${self}
+              ${pkgs.nix-linter}/bin/nix-linter -r .
               mkdir $out
             '';
           };

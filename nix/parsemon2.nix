@@ -1,32 +1,12 @@
-{ buildPythonPackage, lib, attrs, hypothesis, pytest, pytest-benchmark
+{ buildPythonPackage, attrs, hypothesis, pytest, pytest-benchmark
 , pytest-profiling, pytestcov, sphinx }:
-let
-  sourceFilter = path: type:
-    with lib;
-    let
-      baseName = with builtins; baseNameOf (toString path);
-      ignoreDirectories = all (directory: baseName != directory);
-      ignoreEggInfo = !(hasSuffix ".egg-info" baseName);
-    in ignoreDirectories [
-      "tmp"
-      "__pycache__"
-      ".pytest_cache"
-      "testenv"
-      "htmlcov"
-      "build"
-      "prof"
-      "dist"
-    ] && ignoreEggInfo;
-in buildPythonPackage {
+buildPythonPackage {
   name = "parsemon2";
   checkInputs =
     [ hypothesis pytest pytest-benchmark pytest-profiling pytestcov ];
   nativeBuildInputs = [ sphinx ];
   propagatedBuildInputs = [ attrs ];
-  src = lib.cleanSourceWith {
-    filter = sourceFilter;
-    src = ./..;
-  };
+  src = ../.;
   checkPhase = ''
     pytest --benchmark-skip
   '';
