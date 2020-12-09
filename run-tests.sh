@@ -2,11 +2,12 @@
 
 set -e
 
-mypy parsemon --ignore-missing-imports
+isort parsemon/ tests/ -c
+black --check .
 flake8
+mypy parsemon --ignore-missing-imports
 pytest \
     --cov=parsemon/ \
     --cov-report=term \
     --cov-report=html \
     --benchmark-skip
-isort parsemon/ tests/ -c

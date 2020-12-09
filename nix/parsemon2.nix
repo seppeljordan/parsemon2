@@ -1,6 +1,5 @@
-{ buildPythonPackage, lib, graphviz, git, attrs, bumpv, flake8, hypothesis, mypy
-, pylint, pytest, pytest-benchmark, pytest-profiling, pytestcov, sphinx, black
-, twine, wheel }:
+{ buildPythonPackage, lib, attrs, hypothesis, pytest, pytest-benchmark
+, pytest-profiling, pytestcov, sphinx }:
 let
   sourceFilter = path: type:
     with lib;
@@ -20,30 +19,16 @@ let
     ] && ignoreEggInfo;
 in buildPythonPackage {
   name = "parsemon2";
-  checkInputs = [
-    black
-    flake8
-    graphviz
-    hypothesis
-    mypy
-    pylint
-    pytest
-    pytest-benchmark
-    pytest-profiling
-    pytestcov
-    sphinx
-    bumpv
-    twine
-    wheel
-  ];
-  nativeBuildInputs = [ git ];
+  checkInputs =
+    [ hypothesis pytest pytest-benchmark pytest-profiling pytestcov ];
+  nativeBuildInputs = [ sphinx ];
   propagatedBuildInputs = [ attrs ];
   src = lib.cleanSourceWith {
     filter = sourceFilter;
     src = ./..;
   };
   checkPhase = ''
-    sh run-tests.sh
+    pytest --benchmark-skip
   '';
   postPhases = [ "buildDocsPhase" "installDocsPhase" ];
   buildDocsPhase = ''
