@@ -3,10 +3,11 @@
 from functools import reduce
 from typing import List, TypeVar
 
+from attr import attrib, attrs
+
 from .coroutine import do
 from .error import ParsingFailed
 from .internals import one_of, try_parser, unit
-from .result import Failure, parsing_result
 from .sourcemap import (
     display_location,
     find_linebreak_indices,
@@ -14,6 +15,16 @@ from .sourcemap import (
 )
 
 T = TypeVar("T")
+
+
+@attrs
+class ParsingResult:
+    value = attrib()
+    remaining_input = attrib()
+
+
+def parsing_result(value, remaining_input):
+    return ParsingResult(value, remaining_input)
 
 
 _NO_FURTHER_RESULT = object()
@@ -166,7 +177,7 @@ def run_parser(
         kwargs["stream_implementation"] = stream_implementation
     stream, result = p.run(input_string, **kwargs)
     if result.is_failure():
-        failures = [result] if isinstance(result, Failure) else result.failures
+        failures = result.get_failures()
         final_message = " OR ".join(map(render_failure, failures))
         raise ParsingFailed(final_message)
     else:

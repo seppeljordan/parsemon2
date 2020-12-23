@@ -39,7 +39,10 @@
                   twine
                   wheel
                   isort
+                  setuptools-rust
                 ]))
+              pkgs.rustc
+              pkgs.cargo
               pkgs.git
               pkgs.graphviz
               pkgs.nix-linter
@@ -60,7 +63,7 @@
               ${python.pkgs.black}/bin/black --check .
             '';
             mypy-check = runCodeAnalysis "mypy" ''
-              ${python.pkgs.mypy}/bin/mypy parsemon
+              ${python.pkgs.mypy}/bin/mypy src/parsemon
             '';
             isort-check = runCodeAnalysis "isort" ''
               ${python.pkgs.isort}/bin/isort \
@@ -79,12 +82,11 @@
           };
         });
       systemIndependent = {
-        lib = {
-          packageOverrides = import nix/package-overrides.nix;
-          package = import nix/parsemon2.nix;
-        };
+        lib = { package = import nix/parsemon2.nix; };
         overlay = final: prev:
-          with self.lib; {
+          let
+            packageOverrides = final.callPackage nix/package-overrides.nix { };
+          in {
             python3 = prev.python3.override { inherit packageOverrides; };
             python3Packages = final.python3.pkgs;
             python36 = prev.python36.override { inherit packageOverrides; };

@@ -15,6 +15,7 @@ from .internals import (
     try_parser,
 )
 from .parser import (
+    ParsingResult,
     bind,
     chain,
     choice,
@@ -28,5 +29,4 @@ from .parser import (
     until,
     whitespace,
 )
-from .result import ParsingResult
 from .trampoline import with_trampoline

@@ -12,3 +12,8 @@
 /.coverage
 /.hypothesis
 /prof/
+*.egg-info
+
+# Added by cargo
+
+/target

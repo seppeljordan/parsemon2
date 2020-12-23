@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+
+export PYTHONPATH=result/lib/python3.8/site-packages
+python <<< "import sys; print(sys.path)"
+pytest
