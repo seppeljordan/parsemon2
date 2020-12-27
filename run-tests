@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
 
+nix build .
 export PYTHONPATH=result/lib/python3.8/site-packages
-python <<< "import sys; print(sys.path)"
-pytest
+pytest --benchmark-skip
