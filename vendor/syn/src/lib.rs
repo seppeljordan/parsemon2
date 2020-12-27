@@ -250,7 +250,7 @@
 //!   dynamic library libproc_macro from rustc toolchain.
 
 // Syn types in rustdoc of other crates get linked to here.
-#![doc(html_root_url = "https://docs.rs/syn/1.0.55")]
+#![doc(html_root_url = "https://docs.rs/syn/1.0.56")]
 #![cfg_attr(doc_cfg, feature(doc_cfg))]
 #![deny(clippy::all, clippy::pedantic)]
 // Ignored clippy lints.
@@ -286,6 +286,7 @@
     clippy::module_name_repetitions,
     clippy::must_use_candidate,
     clippy::option_if_let_else,
+    clippy::redundant_else,
     clippy::shadow_unrelated,
     clippy::similar_names,
     clippy::single_match_else,

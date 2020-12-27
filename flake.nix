@@ -76,9 +76,6 @@
             flake8-check = runCodeAnalysis "flake8" ''
               ${python.pkgs.flake8}/bin/flake8
             '';
-            nix-linter-check = runCodeAnalysis "nix-linter" ''
-              ${pkgs.nix-linter}/bin/nix-linter -r .
-            '';
           };
         });
       systemIndependent = {
