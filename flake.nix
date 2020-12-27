@@ -57,7 +57,7 @@
             python39 = pkgs.python39.pkgs.parsemon2;
             nixfmt-check = runCodeAnalysis "nixfmt" ''
               ${pkgs.nixfmt}/bin/nixfmt --check \
-                  $(find ${self} -type f -name '*.nix')
+                  $(find . -type f -name '*.nix')
             '';
             black-check = runCodeAnalysis "black" ''
               ${python.pkgs.black}/bin/black --check .
