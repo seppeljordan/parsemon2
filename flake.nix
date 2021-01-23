@@ -45,7 +45,9 @@
               pkgs.cargo
               pkgs.git
               pkgs.graphviz
-              pkgs.nix-linter
+
+              # nix linter is broken in the current version of nixpkgs
+              # pkgs.nix-linter
             ];
           };
           defaultPackage = python.pkgs.parsemon2;
