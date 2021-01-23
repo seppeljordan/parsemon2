@@ -13,7 +13,7 @@
 [package]
 edition = "2018"
 name = "pyo3"
-version = "0.13.0"
+version = "0.13.1"
 authors = ["PyO3 Project and Contributors <https://github.com/PyO3>"]
 build = "build.rs"
 exclude = ["/.gitignore", ".cargo/config"]
@@ -63,7 +63,7 @@ version = "1.0.3"
 optional = true
 
 [dependencies.pyo3-macros]
-version = "=0.13.0"
+version = "=0.13.1"
 optional = true
 
 [dependencies.unindent]
@@ -89,7 +89,8 @@ abi3-py36 = ["abi3-py37"]
 abi3-py37 = ["abi3-py38"]
 abi3-py38 = ["abi3-py39"]
 abi3-py39 = ["abi3"]
-default = ["macros"]
+auto-initialize = []
+default = ["macros", "auto-initialize"]
 extension-module = []
-macros = ["ctor", "indoc", "inventory", "paste", "pyo3-macros", "unindent"]
+macros = ["pyo3-macros", "ctor", "indoc", "inventory", "paste", "unindent"]
 nightly = []

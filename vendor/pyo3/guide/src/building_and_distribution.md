@@ -42,7 +42,7 @@ There are two ways to distribute your module as a Python package: The old, [setu
 
 By default, Python extension modules can only be used with the same Python version they were compiled against -- if you build an extension module with Python 3.5, you can't import it using Python 3.8. [PEP 384](https://www.python.org/dev/peps/pep-0384/) introduced the idea of the limited Python API, which would have a stable ABI enabling extension modules built with it to be used against multiple Python versions. This is also known as `abi3`.
 
-Note that [maturin] >= 0.9.0 or [setuptools-rust] >= 0.12.0 is going to support `abi3` wheels.
+Note that [maturin] >= 0.9.0 or [setuptools-rust] >= 0.11.4 support `abi3` wheels.
 See the [corresponding](https://github.com/PyO3/maturin/pull/353) [PRs](https://github.com/PyO3/setuptools-rust/pull/82) for more.
 
 There are three steps involved in making use of `abi3` when building Python packages as wheels:
@@ -65,8 +65,7 @@ For example, if you set the `abi3-py36` feature, your extension wheel can be use
 If you set more that one of these api version feature flags the highest version always wins. For example, with both `abi3-py36` and `abi3-py38` set, PyO3 would build a wheel which supports Python 3.8 and up.
 PyO3 is only able to link your extension module to api3 version up to and including your host Python version. E.g., if you set `abi3-py38` and try to compile the crate with a host of Python 3.6, the build will fail.
 
-As an advanced feature, you can build PyO3 wheel without calling Python interpreter with
-the environment variable `PYO3_NO_PYTHON` set, but this only works on \*NIX.
+As an advanced feature, you can build PyO3 wheel without calling Python interpreter with the environment variable `PYO3_NO_PYTHON` set. On unix systems this works unconditionally; on Windows you must also set the `RUSTFLAGS` evironment variable to contain `-L native=/path/to/python/libs` so that the linker can find `python3.lib`.
 
 ### Missing features
 
@@ -74,7 +73,7 @@ Due to limitations in the Python API, there are a few `pyo3` features that do
 not work when compiling for `abi3`. These are:
 
 - `#[text_signature]` does not work on classes until Python 3.10 or greater.
-- The `dict` and `weakref` options on classes are not supported.
+- The `dict` and `weakref` options on classes are not supported until Python 3.9 or greater.
 - The buffer API is not supported.
 
 ## Cross Compiling
@@ -91,9 +90,11 @@ See https://github.com/japaric/rust-cross for a primer on cross compiling Rust i
 
 After you've obtained the above, you can build a cross compiled PyO3 module by setting a few extra environment variables:
 
-* `PYO3_CROSS_INCLUDE_DIR`: This variable must be set to the directory containing the headers for the target's Python interpreter. **It is only necessary if targeting Windows platforms**
 * `PYO3_CROSS_LIB_DIR`: This variable must be set to the directory containing the target's libpython DSO and the associated `_sysconfigdata*.py` file.
-* `PYO3_CROSS_PYTHON_VERSION`: This variable must be set if there are multiple versions of python compiled for a unix machine.
+* `PYO3_CROSS_PYTHON_VERSION`: Major and minor version (e.g. 3.9) of the target Python installation. This variable is only needed if pyo3 cannot determine the version to target by other means:
+  - From `PYO3_CROSS_INCLUDE_DIR` or abi3-py3* features when targeting Windows, or
+  - if there are multiple versions of python present in `PYO3_CROSS_LIB_DIR` when targeting unix.
+* `PYO3_CROSS_INCLUDE_DIR`: This variable can optionally be set to the directory containing the headers for the target's Python interpreter when targeting Windows.
 
 An example might look like the following (assuming your target's sysroot is at `/home/pyo3/cross/sysroot` and that your target is `armv7`):
 

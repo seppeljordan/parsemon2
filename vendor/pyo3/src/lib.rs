@@ -1,6 +1,5 @@
 #![cfg_attr(feature = "nightly", feature(specialization))]
 #![allow(clippy::missing_safety_doc)] // FIXME (#698)
-#![deny(warnings)]
 
 //! Rust bindings to the Python interpreter.
 //!
@@ -50,10 +49,15 @@
 //!
 //! [lib]
 //! name = "string_sum"
+//! # "cdylib" is necessary to produce a shared library for Python to import from.
+//! #
+//! # Downstream Rust code (including code in `bin/`, `examples/`, and `tests/`) will not be able
+//! # to `use string_sum;` unless the "rlib" or "lib" crate type is also included, e.g.:
+//! # crate-type = ["cdylib", "rlib"]
 //! crate-type = ["cdylib"]
 //!
 //! [dependencies.pyo3]
-//! version = "0.13.0"
+//! version = "0.13.1"
 //! features = ["extension-module"]
 //! ```
 //!
@@ -115,8 +119,9 @@
 //! Add `pyo3` to your `Cargo.toml`:
 //!
 //! ```toml
-//! [dependencies]
-//! pyo3 = "0.13.0"
+//! [dependencies.pyo3]
+//! version = "0.13.1"
+//! features = ["auto-initialize"]
 //! ```
 //!
 //! Example program displaying the value of `sys.version`:
@@ -146,12 +151,14 @@ pub use crate::conversion::{
     ToBorrowedObject, ToPyObject,
 };
 pub use crate::err::{PyDowncastError, PyErr, PyErrArguments, PyResult};
+#[cfg(all(Py_SHARED, not(PyPy)))]
+pub use crate::gil::prepare_freethreaded_python;
 pub use crate::gil::{GILGuard, GILPool};
 pub use crate::instance::{Py, PyNativeType, PyObject};
 pub use crate::pycell::{PyCell, PyRef, PyRefMut};
 pub use crate::pyclass::PyClass;
 pub use crate::pyclass_init::PyClassInitializer;
-pub use crate::python::{prepare_freethreaded_python, Python, PythonVersionInfo};
+pub use crate::python::{Python, PythonVersionInfo};
 pub use crate::type_object::{type_flags, PyTypeInfo};
 // Since PyAny is as important as PyObject, we expose it to the top level.
 pub use crate::types::PyAny;
@@ -165,10 +172,6 @@ pub use {
     paste,     // Re-exported for wrap_function
     unindent,  // Re-exported for py_run
 };
-
-// Re-exported for the `__wrap` functions
-#[doc(hidden)]
-pub use libc;
 
 // The CPython stable ABI does not include PyBuffer.
 #[cfg(not(Py_LIMITED_API))]

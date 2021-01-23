@@ -1,11 +1,9 @@
 //! `PyClass` and related traits.
 use crate::class::methods::{PyClassAttributeDef, PyMethodDefType, PyMethods};
 use crate::class::proto_methods::PyProtoMethods;
-use crate::conversion::{AsPyPointer, FromPyPointer};
 use crate::derive_utils::PyBaseTypeUtils;
 use crate::pyclass_slots::{PyClassDict, PyClassWeakRef};
 use crate::type_object::{type_flags, PyLayout};
-use crate::types::PyAny;
 use crate::{ffi, PyCell, PyErr, PyNativeType, PyResult, PyTypeInfo, Python};
 use std::convert::TryInto;
 use std::ffi::CString;
@@ -21,6 +19,26 @@ unsafe fn get_type_alloc(tp: *mut ffi::PyTypeObject) -> Option<ffi::allocfunc> {
 #[inline]
 pub(crate) unsafe fn get_type_free(tp: *mut ffi::PyTypeObject) -> Option<ffi::freefunc> {
     mem::transmute(ffi::PyType_GetSlot(tp, ffi::Py_tp_free))
+}
+
+/// Workaround for Python issue 35810; no longer necessary in Python 3.8
+#[inline]
+#[cfg(not(Py_3_8))]
+pub(crate) unsafe fn bpo_35810_workaround(_py: Python, ty: *mut ffi::PyTypeObject) {
+    #[cfg(Py_LIMITED_API)]
+    {
+        // Must check version at runtime for abi3 wheels - they could run against a higher version
+        // than the build config suggests.
+        use crate::once_cell::GILOnceCell;
+        static IS_PYTHON_3_8: GILOnceCell<bool> = GILOnceCell::new();
+
+        if *IS_PYTHON_3_8.get_or_init(_py, || _py.version_info() >= (3, 8)) {
+            // No fix needed - the wheel is running on a sufficiently new interpreter.
+            return;
+        }
+    }
+
+    ffi::Py_INCREF(ty as *mut ffi::PyObject);
 }
 
 #[inline]
@@ -44,8 +62,13 @@ pub(crate) unsafe fn default_new<T: PyTypeInfo>(
             unreachable!("Subclassing native types isn't support in limited API mode");
         }
     }
+
     let alloc = get_type_alloc(subtype).unwrap_or(ffi::PyType_GenericAlloc);
-    alloc(subtype, 0) as _
+
+    #[cfg(not(Py_3_8))]
+    bpo_35810_workaround(py, subtype);
+
+    alloc(subtype, 0)
 }
 
 /// This trait enables custom `tp_new`/`tp_dealloc` implementations for `T: PyClass`.
@@ -64,15 +87,15 @@ pub trait PyClassAlloc: PyTypeInfo + Sized {
     /// `self_` must be a valid pointer to the Python heap.
     unsafe fn dealloc(py: Python, self_: *mut Self::Layout) {
         (*self_).py_drop(py);
-        let obj = PyAny::from_borrowed_ptr_or_panic(py, self_ as _);
+        let obj = self_ as *mut ffi::PyObject;
 
-        match get_type_free(ffi::Py_TYPE(obj.as_ptr())) {
-            Some(free) => {
-                let ty = ffi::Py_TYPE(obj.as_ptr());
-                free(obj.as_ptr() as *mut c_void);
-                ffi::Py_DECREF(ty as *mut ffi::PyObject);
-            }
-            None => tp_free_fallback(obj.as_ptr()),
+        let ty = ffi::Py_TYPE(obj);
+        let free = get_type_free(ty).unwrap_or_else(|| tp_free_fallback(ty));
+        free(obj as *mut c_void);
+
+        #[cfg(Py_3_8)]
+        if ffi::PyType_HasFeature(ty, ffi::Py_TPFLAGS_HEAPTYPE) != 0 {
+            ffi::Py_DECREF(ty as *mut ffi::PyObject);
         }
     }
 }
@@ -89,18 +112,11 @@ fn tp_dealloc<T: PyClassAlloc>() -> Option<ffi::destructor> {
     Some(dealloc::<T>)
 }
 
-pub(crate) unsafe fn tp_free_fallback(obj: *mut ffi::PyObject) {
-    let ty = ffi::Py_TYPE(obj);
+pub(crate) unsafe fn tp_free_fallback(ty: *mut ffi::PyTypeObject) -> ffi::freefunc {
     if ffi::PyType_IS_GC(ty) != 0 {
-        ffi::PyObject_GC_Del(obj as *mut c_void);
+        ffi::PyObject_GC_Del
     } else {
-        ffi::PyObject_Free(obj as *mut c_void);
-    }
-
-    // For heap types, PyType_GenericAlloc calls INCREF on the type objects,
-    // so we need to call DECREF here:
-    if ffi::PyType_HasFeature(ty, ffi::Py_TPFLAGS_HEAPTYPE) != 0 {
-        ffi::Py_DECREF(ty as *mut ffi::PyObject);
+        ffi::PyObject_Free
     }
 }
 
@@ -153,7 +169,7 @@ fn tp_doc<T: PyClass>() -> PyResult<Option<*mut c_void>> {
 fn get_type_name<T: PyTypeInfo>(module_name: Option<&str>) -> PyResult<*mut c_char> {
     Ok(match module_name {
         Some(module_name) => CString::new(format!("{}.{}", module_name, T::NAME))?.into_raw(),
-        None => CString::new(T::NAME)?.into_raw(),
+        None => CString::new(format!("builtins.{}", T::NAME))?.into_raw(),
     })
 }
 
@@ -177,6 +193,14 @@ where
     let (new, call, methods) = py_class_method_defs::<T>();
     slots.maybe_push(ffi::Py_tp_new, new.map(|v| v as _));
     slots.maybe_push(ffi::Py_tp_call, call.map(|v| v as _));
+
+    #[cfg(Py_3_9)]
+    {
+        let members = py_class_members::<T>();
+        if !members.is_empty() {
+            slots.push(ffi::Py_tp_members, into_raw(members))
+        }
+    }
 
     // normal methods
     if !methods.is_empty() {
@@ -203,7 +227,7 @@ where
         basicsize: std::mem::size_of::<T::Layout>() as c_int,
         itemsize: 0,
         flags: py_class_flags::<T>(has_gc_methods),
-        slots: slots.0.as_mut_slice().as_mut_ptr(),
+        slots: slots.0.as_mut_ptr(),
     };
 
     let type_object = unsafe { ffi::PyType_FromSpec(&mut spec) };
@@ -215,7 +239,8 @@ where
     }
 }
 
-#[cfg(not(Py_LIMITED_API))]
+/// Additional type initializations necessary before Python 3.10
+#[cfg(all(not(Py_LIMITED_API), not(Py_3_10)))]
 fn tp_init_additional<T: PyClass>(type_object: *mut ffi::PyTypeObject) {
     // Just patch the type objects for the things there's no
     // PyType_FromSpec API for... there's no reason this should work,
@@ -247,21 +272,27 @@ fn tp_init_additional<T: PyClass>(type_object: *mut ffi::PyTypeObject) {
             (*(*type_object).tp_as_buffer).bf_releasebuffer = buffer.bf_releasebuffer;
         }
     }
-    // __dict__ support
-    if let Some(dict_offset) = PyCell::<T>::dict_offset() {
-        unsafe {
-            (*type_object).tp_dictoffset = dict_offset as ffi::Py_ssize_t;
+
+    // Setting tp_dictoffset and tp_weaklistoffset via slots doesn't work until Python 3.9, so on
+    // older versions again we must fixup the type object.
+    #[cfg(not(Py_3_9))]
+    {
+        // __dict__ support
+        if let Some(dict_offset) = PyCell::<T>::dict_offset() {
+            unsafe {
+                (*type_object).tp_dictoffset = dict_offset as ffi::Py_ssize_t;
+            }
         }
-    }
-    // weakref support
-    if let Some(weakref_offset) = PyCell::<T>::weakref_offset() {
-        unsafe {
-            (*type_object).tp_weaklistoffset = weakref_offset as ffi::Py_ssize_t;
+        // weakref support
+        if let Some(weakref_offset) = PyCell::<T>::weakref_offset() {
+            unsafe {
+                (*type_object).tp_weaklistoffset = weakref_offset as ffi::Py_ssize_t;
+            }
         }
     }
 }
 
-#[cfg(Py_LIMITED_API)]
+#[cfg(any(Py_LIMITED_API, Py_3_10))]
 fn tp_init_additional<T: PyClass>(_type_object: *mut ffi::PyTypeObject) {}
 
 fn py_class_flags<T: PyClass + PyTypeInfo>(has_gc_methods: bool) -> c_uint {
@@ -333,6 +364,42 @@ fn py_class_method_defs<T: PyMethods>() -> (
     (new, call, defs)
 }
 
+/// Generates the __dictoffset__ and __weaklistoffset__ members, to set tp_dictoffset and
+/// tp_weaklistoffset.
+///
+/// Only works on Python 3.9 and up.
+#[cfg(Py_3_9)]
+fn py_class_members<T: PyClass>() -> Vec<ffi::structmember::PyMemberDef> {
+    #[inline(always)]
+    fn offset_def(name: &'static str, offset: usize) -> ffi::structmember::PyMemberDef {
+        ffi::structmember::PyMemberDef {
+            name: name.as_ptr() as _,
+            type_code: ffi::structmember::T_PYSSIZET,
+            offset: offset as _,
+            flags: ffi::structmember::READONLY,
+            doc: std::ptr::null_mut(),
+        }
+    }
+
+    let mut members = Vec::new();
+
+    // __dict__ support
+    if let Some(dict_offset) = PyCell::<T>::dict_offset() {
+        members.push(offset_def("__dictoffset__\0", dict_offset));
+    }
+
+    // weakref support
+    if let Some(weakref_offset) = PyCell::<T>::weakref_offset() {
+        members.push(offset_def("__weaklistoffset__\0", weakref_offset));
+    }
+
+    if !members.is_empty() {
+        members.push(unsafe { std::mem::zeroed() });
+    }
+
+    members
+}
+
 fn py_class_properties<T: PyClass>() -> Vec<ffi::PyGetSetDef> {
     let mut defs = std::collections::HashMap::new();
 
@@ -340,6 +407,7 @@ fn py_class_properties<T: PyClass>() -> Vec<ffi::PyGetSetDef> {
         match def {
             PyMethodDefType::Getter(getter) => {
                 if !defs.contains_key(getter.name) {
+                    #[allow(deprecated)]
                     let _ = defs.insert(getter.name.to_owned(), ffi::PyGetSetDef_INIT);
                 }
                 let def = defs.get_mut(getter.name).expect("Failed to call get_mut");
@@ -347,6 +415,7 @@ fn py_class_properties<T: PyClass>() -> Vec<ffi::PyGetSetDef> {
             }
             PyMethodDefType::Setter(setter) => {
                 if !defs.contains_key(setter.name) {
+                    #[allow(deprecated)]
                     let _ = defs.insert(setter.name.to_owned(), ffi::PyGetSetDef_INIT);
                 }
                 let def = defs.get_mut(setter.name).expect("Failed to call get_mut");
@@ -357,11 +426,21 @@ fn py_class_properties<T: PyClass>() -> Vec<ffi::PyGetSetDef> {
     }
 
     let mut props: Vec<_> = defs.values().cloned().collect();
+
+    // PyPy doesn't automatically adds __dict__ getter / setter.
+    // PyObject_GenericGetDict not in the limited API until Python 3.10.
+    #[cfg(not(any(PyPy, all(Py_LIMITED_API, not(Py_3_10)))))]
     if !T::Dict::IS_DUMMY {
-        props.push(ffi::PyGetSetDef_DICT);
+        props.push(ffi::PyGetSetDef {
+            name: "__dict__\0".as_ptr() as *mut c_char,
+            get: Some(ffi::PyObject_GenericGetDict),
+            set: Some(ffi::PyObject_GenericSetDict),
+            doc: ptr::null_mut(),
+            closure: ptr::null_mut(),
+        });
     }
     if !props.is_empty() {
-        props.push(ffi::PyGetSetDef_INIT);
+        props.push(unsafe { std::mem::zeroed() });
     }
     props
 }

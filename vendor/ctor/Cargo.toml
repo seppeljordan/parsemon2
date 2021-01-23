@@ -13,7 +13,7 @@
 [package]
 edition = "2018"
 name = "ctor"
-version = "0.1.16"
+version = "0.1.18"
 authors = ["Matt Mastracci <matthew@mastracci.com>"]
 description = "__attribute__((constructor)) for Rust"
 readme = "../README.md"
@@ -28,14 +28,14 @@ proc-macro = true
 name = "example"
 path = "src/example.rs"
 [dependencies.quote]
-version = "1"
+version = "1.0.8"
 
 [dependencies.syn]
-version = "1"
+version = "1.0.58"
 features = ["full", "parsing", "printing", "proc-macro"]
 default-features = false
 [dev-dependencies.libc-print]
-version = "0.1.7"
+version = "0.1.15"
 [badges.travis-ci]
 branch = "master"
 repository = "mmastrac/rust-ctor"

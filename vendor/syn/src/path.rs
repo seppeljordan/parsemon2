@@ -241,15 +241,28 @@ pub mod parsing {
                 if input.peek(Ident) && input.peek2(Token![:]) && !input.peek2(Token![::]) {
                     return Ok(GenericArgument::Constraint(input.parse()?));
                 }
+            }
 
-                if input.peek(Lit) {
-                    let lit = input.parse()?;
-                    return Ok(GenericArgument::Const(Expr::Lit(lit)));
-                }
+            if input.peek(Lit) {
+                let lit = input.parse()?;
+                return Ok(GenericArgument::Const(Expr::Lit(lit)));
+            }
 
-                if input.peek(token::Brace) {
+            if input.peek(token::Brace) {
+                #[cfg(feature = "full")]
+                {
                     let block = input.call(expr::parsing::expr_block)?;
                     return Ok(GenericArgument::Const(Expr::Block(block)));
+                }
+
+                #[cfg(not(feature = "full"))]
+                {
+                    let begin = input.fork();
+                    let content;
+                    braced!(content in input);
+                    content.parse::<Expr>()?;
+                    let verbatim = verbatim::between(begin, input);
+                    return Ok(GenericArgument::Const(Expr::Verbatim(verbatim)));
                 }
             }
 
