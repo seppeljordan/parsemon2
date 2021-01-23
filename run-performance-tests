@@ -1,5 +1,7 @@
 #!/usr/bin/env sh
 
+nix build .
+export PYTHONPATH=result/lib/python3.8/site-packages
 pytest \
     tests/test_performance.py \
     tests/test_performance_without_choice.py \
