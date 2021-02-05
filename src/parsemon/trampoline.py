@@ -8,24 +8,12 @@ class Result(Generic[T]):
     def __init__(self, value: T) -> None:
         self.value = value
 
-    def is_result(self):
-        return True
-
-    def __call__(self):
-        return self.value
-
 
 class Call(Generic[T]):
     def __init__(self, f: Callable[..., T], *args, **kwargs) -> None:
         self.fun = f
         self.args = args
         self.kwargs = kwargs
-
-    def is_result(self) -> bool:
-        return False
-
-    def __call__(self):
-        return self.fun(*(self.args), **(self.kwargs))
 
 
 Trampoline = Union[Result[T], Call[T]]
@@ -36,9 +24,11 @@ def with_trampoline(f: Callable[..., Trampoline[T]]) -> Callable[..., T]:
     def g(*args, **kwargs):
         iteration_result = f(*args, **kwargs)
         while True:
-            if iteration_result.is_result():
-                return iteration_result()
+            if isinstance(iteration_result, Result):
+                return iteration_result.value
             else:
-                iteration_result = iteration_result()
+                iteration_result = iteration_result.fun(
+                    *iteration_result.args, **iteration_result.kwargs
+                )
 
     return g
