@@ -126,7 +126,7 @@ def json_number():
     @do
     def exponent():
         yield one_of("eE")
-        sign = yield one_of("+-")
+        sign = yield choice(one_of("+-"), unit(""))
         digits = yield fmap("".join, many1(DIGIT))
         return "e" + sign + digits
 
