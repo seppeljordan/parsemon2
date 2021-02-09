@@ -1,29 +1,49 @@
 from parsemon.result import failure, success
 from parsemon.trampoline import Call
 
-from .parser import change_continuation
-
 
 def look_ahead(parser):
-    return change_continuation(
-        parser,
-        lambda old_stream, old_continuation, new_stream, parsing_result: Call(
-            old_continuation,
-            new_stream if parsing_result.is_failure() else old_stream,
-            parsing_result,
-        ),
-    )
+    def _wrapped_parser(original_stream, continuation):
+        def _reset_stream(progressed_stream, parsing_result):
+            if parsing_result.is_failure():
+                future_stream = progressed_stream
+            else:
+                future_stream = original_stream
+            return Call(
+                continuation,
+                future_stream,
+                parsing_result,
+            )
+
+        return Call(
+            parser,
+            original_stream,
+            _reset_stream,
+        )
+
+    return _wrapped_parser
 
 
 def try_parser(parser):
-    return change_continuation(
-        parser,
-        lambda old_stream, old_continuation, new_stream, parsing_result: Call(
-            old_continuation,
-            old_stream if parsing_result.is_failure() else new_stream,
-            parsing_result,
-        ),
-    )
+    def _wrapped_parser(original_stream, continuation):
+        def _reset_stream(progressed_stream, parsing_result):
+            if parsing_result.is_failure():
+                future_stream = original_stream
+            else:
+                future_stream = progressed_stream
+            return Call(
+                continuation,
+                future_stream,
+                parsing_result,
+            )
+
+        return Call(
+            parser,
+            original_stream,
+            _reset_stream,
+        )
+
+    return _wrapped_parser
 
 
 def unit(value):

@@ -1,8 +1,6 @@
 """Contains the implementation of the parser monad.  This module is
 not intended to be used from outside this library.
 """
-from functools import partial
-
 from parsemon.stream import StringStream
 from parsemon.trampoline import Call, Result, with_trampoline
 
@@ -28,43 +26,38 @@ def bind(parser, binding):
     return _combined_parser
 
 
-def choice_continuation(
-    original_stream_length,
-    original_continuation,
-    other,
-    stream,
-    result_of_self,
-):
-    if result_of_self.is_failure():
-        if len(stream) == original_stream_length:
-            return Call(
-                other,
-                stream,
-                lambda stream, result_of_other: (
-                    Call(
-                        original_continuation,
-                        stream,
-                        result_of_self + result_of_other,
-                    )
-                    if result_of_other.is_failure()
-                    else Call(original_continuation, stream, result_of_other)
-                ),
-            )
-    return Call(original_continuation, stream, result_of_self)
-
-
 def choose_parser(parser, other):
-    return change_continuation(
-        parser,
-        lambda old_stream, continuation, new_stream, parsing_result: choice_continuation(
-            len(old_stream), continuation, other, new_stream, parsing_result
-        ),
-    )
-
-
-def change_continuation(parser, mapping):
     def _choice_parser(stream, continuation):
-        return Call(parser, stream, partial(mapping, stream, continuation))
+        def _choice_continuation(progressed_stream, parser_result):
+            def _error_message_continuation(final_stream, other_result):
+                if other_result.is_failure():
+                    final_result = parser_result + other_result
+                else:
+                    final_result = other_result
+                return Call(
+                    continuation,
+                    final_stream,
+                    final_result,
+                )
+
+            if parser_result.is_failure():
+                return Call(
+                    other,
+                    progressed_stream,
+                    _error_message_continuation,
+                )
+            else:
+                return Call(
+                    continuation,
+                    progressed_stream,
+                    parser_result,
+                )
+
+        return Call(
+            parser,
+            stream,
+            _choice_continuation,
+        )
 
     return _choice_parser
 

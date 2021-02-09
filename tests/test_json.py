@@ -51,9 +51,9 @@ def test_json_number_can_handle_floats():
     run_parser(json_number(), "1.1").value == 1.1
 
 
-def test_json_number_raises_when_period_without_fraction():
-    with pytest.raises(ParsingFailed):
-        run_parser(json_number(), "1.")
+def test_json_number_does_not_parse_digit_followed_by_dot_successfully():
+    parsing_result = run_parser(json_number(), "1.")
+    assert parsing_result.remaining_input
 
 
 def test_json_number_can_handle_exponents():

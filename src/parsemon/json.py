@@ -121,7 +121,7 @@ def json_number():
         fraction_digits = fmap("".join, many1(DIGIT))
         return (yield literal(".")) + (yield fraction_digits)
 
-    float_part = yield choice(fraction(), unit(""))
+    float_part = yield choice(try_parser(fraction()), unit(""))
 
     @do
     def exponent():

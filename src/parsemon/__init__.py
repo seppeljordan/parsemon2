@@ -29,4 +29,3 @@ from .parser import (
     until,
     whitespace,
 )
-from .trampoline import with_trampoline

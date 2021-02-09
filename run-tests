@@ -4,4 +4,4 @@ set -e
 
 nix build
 export PYTHONPATH=result/lib/python3.8/site-packages
-pytest --benchmark-skip "$*"
+pytest --benchmark-skip $*
