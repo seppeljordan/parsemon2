@@ -8,10 +8,12 @@ from parsemon import ParsingFailed, chain, end_of_file, run_parser, unit
 
 
 def test_that_end_of_file_parser_accepts_empty_input():
-    assert run_parser(
-        chain(end_of_file(), unit(True)),
+    result = run_parser(
+        end_of_file(),
         "",
     )
+    assert result.remaining_input == ""
+    assert result.value is None
 
 
 @given(data=st.text())

@@ -40,6 +40,7 @@
                   wheel
                   isort
                   setuptools-rust
+                  virtualenv
                 ]))
               pkgs.rustc
               pkgs.cargo

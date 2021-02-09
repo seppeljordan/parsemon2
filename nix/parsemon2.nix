@@ -9,7 +9,7 @@ buildPythonPackage {
   # building
   nativeBuildInputs = [ sphinx rustc cargo ];
   propagatedBuildInputs = [ attrs cargo rustc ];
-  buildInputs = [ setuptools-rust pytestCheckHook ];
+  buildInputs = [ setuptools-rust ];
   preBuildPhases = [ "configureCargoPhase" ];
   preInstallPhases = [ "buildDocsPhase" ];
   configureCargoPhase = ''

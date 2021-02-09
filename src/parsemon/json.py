@@ -142,8 +142,10 @@ def json_number():
 def json_bool():
     return (
         yield (
-            fmap(lambda _: True, literal("true"))
-            | fmap(lambda _: False, literal("false"))
+            choice(
+                fmap(lambda _: True, literal("true")),
+                fmap(lambda _: False, literal("false")),
+            )
         )
     )
 

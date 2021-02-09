@@ -2,6 +2,6 @@
 
 set -e
 
-isort .
-black .
+isort . src/
+black . src/
 nixfmt $(find . -name '*.nix' -type f)

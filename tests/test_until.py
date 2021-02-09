@@ -10,7 +10,8 @@ from parsemon.stream import CharacterStream, StringStream
     params=(
         CharacterStream,
         StringStream,
-    )
+    ),
+    scope="module",
 )
 def runner(request):
     def fixture(*args, **kwargs):

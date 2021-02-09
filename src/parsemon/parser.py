@@ -7,7 +7,7 @@ from attr import attrib, attrs
 
 from .coroutine import do
 from .error import ParsingFailed
-from .internals import one_of, try_parser, unit
+from .internals import bind, choose_parser, one_of, run, try_parser, unit
 from .sourcemap import (
     display_location,
     find_linebreak_indices,
@@ -39,19 +39,6 @@ cases where we want to parse, until we find some form of delimiter.
 """
 
 
-def bind(
-    old_parser,
-    binding,
-):
-    """Combine the result of a parser with second parser
-
-    :param old_parser: First parser to apply
-    :param binding: A function that returns a parser based on the result
-        of old_parser
-    """
-    return old_parser.bind(binding)
-
-
 def chain(first, second, *rest):
     """Combine to parsers and only use the result of the second parser
 
@@ -71,11 +58,8 @@ def choice(
     first_parser,
     second_parser,
 ):
-    """Try one parser and try a second one if the first one fails
-
-    This behaves the same way as ``first_parser | second_parser`` would.
-    """
-    return first_parser | second_parser
+    """Try one parser and try a second one if the first one fails"""
+    return choose_parser(first_parser, second_parser)
 
 
 def choices(parser, *parsers):
@@ -133,7 +117,7 @@ def seperated_by(parser, seperator):
     ``['1','2','3','4']``.
     """
     results = []
-    first_elem = yield (try_parser(parser) | unit(_NO_FURTHER_RESULT))
+    first_elem = yield choice(try_parser(parser), unit(_NO_FURTHER_RESULT))
     if first_elem is _NO_FURTHER_RESULT:
         return results
     rest_elems = yield many(chain(seperator, parser))
@@ -162,7 +146,7 @@ def run_parser(
     p,
     input_string: str,
     stream_implementation=None,
-) -> T:
+):
     """Parse string input_string with parser p"""
 
     def render_failure(failure):
@@ -175,7 +159,7 @@ def run_parser(
     kwargs = {}
     if stream_implementation:
         kwargs["stream_implementation"] = stream_implementation
-    stream, result = p.run(input_string, **kwargs)
+    stream, result = run(p, input_string, **kwargs)
     if result.is_failure():
         failures = result.get_failures()
         final_message = " OR ".join(map(render_failure, failures))

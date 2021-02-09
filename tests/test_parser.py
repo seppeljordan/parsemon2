@@ -387,11 +387,6 @@ def test_whitespace_parses_newline_char(runner):
     assert runner(whitespace, "\n").value == "\n"
 
 
-def test_that_or_operator_works_as_expected(runner):
-    assert runner(whitespace | literal("a"), " ").value == " "
-    assert runner(whitespace | literal("a"), "a").value == "a"
-
-
 def test_that_fmap_does_not_change_error_messages(runner):
     parser = literal("a")
     with pytest.raises(ParsingFailed) as error_message_without_fmap:

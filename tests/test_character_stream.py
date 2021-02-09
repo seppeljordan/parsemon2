@@ -12,7 +12,8 @@ from parsemon.stream import CharacterStream, IOStream, StringStream
         CharacterStream,
         StringStream,
         IOStream,
-    )
+    ),
+    scope="session",
 )
 def stream_implementation(request):
     yield request.param

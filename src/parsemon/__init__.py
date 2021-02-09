@@ -4,8 +4,9 @@ from .basic import floating_point, integer
 from .coroutine import do
 from .error import ParsingFailed
 from .internals import (
-    Parser,
+    bind,
     character,
+    choose_parser,
     end_of_file,
     fail,
     fmap,
@@ -16,7 +17,6 @@ from .internals import (
 )
 from .parser import (
     ParsingResult,
-    bind,
     chain,
     choice,
     choices,

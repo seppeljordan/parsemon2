@@ -1,4 +1,5 @@
 import io
+from abc import ABC, abstractmethod
 from functools import reduce
 
 from attr import attrib, attrs, evolve
@@ -6,8 +7,31 @@ from attr import attrib, attrs, evolve
 from .deque import Stack, deque_empty
 
 
+class Stream(ABC):
+    @classmethod
+    @abstractmethod
+    def from_string(the_class, content):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def __len__(self) -> int:
+        raise NotImplementedError()
+
+    @abstractmethod
+    def next(self) -> str:
+        raise NotImplementedError()
+
+    @abstractmethod
+    def to_string(self) -> str:
+        raise NotImplementedError()
+
+    @abstractmethod
+    def position(self) -> int:
+        raise NotImplementedError()
+
+
 @attrs
-class CharacterStream:
+class CharacterStream(Stream):
     content = attrib()
     length = attrib()
     _position = attrib()
@@ -52,7 +76,7 @@ class CharacterStream:
 
 
 @attrs
-class StringStream:
+class StringStream(Stream):
     content = attrib()
     _position = attrib()
     length = attrib()
@@ -94,7 +118,7 @@ class StringStream:
 
 
 @attrs
-class IOStream:
+class IOStream(Stream):
     _stream = attrib()
     _position = attrib()
     _length = attrib()

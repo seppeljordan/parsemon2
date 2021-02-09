@@ -26,7 +26,6 @@ def find_column_in_indices(index, indices):
 
 
 def find_location_in_indices(index, indices):
-    print(index)
     if not indices:
         line = 1
         column = index

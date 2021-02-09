@@ -1,6 +1,7 @@
 from functools import wraps
 
-from .internals import unit
+from .result import success
+from .trampoline import Call
 
 
 def do(f):
@@ -24,16 +25,37 @@ def do(f):
 
     @wraps(f)
     def decorator(*args, **kwargs):
-        def inner(value, generator=None):
-            if generator is None:
-                generator = f(*args, **kwargs)
-            try:
-                next_parser = generator.send(value)
-            except StopIteration as stop:
-                return unit(getattr(stop, "value", None))
-            else:
-                return next_parser.bind(lambda next_value: inner(next_value, generator))
+        def _do_parser(stream, original_continuation):
+            generator = f(*args, **kwargs)
 
-        return unit(None).bind(inner)
+            def do_continuation(progressed_stream, previous_parsing_result):
+                if previous_parsing_result.is_failure():
+                    return Call(
+                        original_continuation,
+                        progressed_stream,
+                        previous_parsing_result,
+                    )
+                try:
+                    next_parser = generator.send(previous_parsing_result.value)
+                    return Call(
+                        next_parser,
+                        progressed_stream,
+                        do_continuation,
+                    )
+                except StopIteration as stop:
+                    return Call(
+                        original_continuation,
+                        progressed_stream,
+                        success(getattr(stop, "value", None)),
+                    )
+
+            initial_parser = generator.send(None)
+            return Call(
+                initial_parser,
+                stream,
+                do_continuation,
+            )
+
+        return _do_parser
 
     return decorator
