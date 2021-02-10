@@ -2,18 +2,13 @@
 
 set -e
 
-test -n "$1" || (echo "Missing argument: Release version" && false)
-
-git tag "v$1"
 VERSION="$(python setup.py --version)"
 
 rm -rf parsemon2.egg-info
+rm -rf dist/
 
 python setup.py sdist
-python setup.py bdist_wheel
+build-wheels
 
-for file in dist/parsemon2-${VERSION}.tar.gz $(ls dist/parsemon2-${VERSION}-*.whl); do
-    twine upload $file
-done
-
-git push --tags
+twine upload parsemon2-${VERSION}.tar.gz
+twine upload parsemon2-${VERSION}-*-manylinux*.whl
