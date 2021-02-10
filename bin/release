@@ -4,7 +4,6 @@ set -e
 
 VERSION="$(python setup.py --version)"
 
-rm -rf parsemon2.egg-info
 rm -rf dist/
 
 python setup.py sdist
