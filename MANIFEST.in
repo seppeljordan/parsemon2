@@ -1,2 +1,9 @@
 include VERSION
 include README.rst
+include src/*.rs
+include Cargo.toml
+include Cargo.lock
+include nix/*.nix
+include flake.nix
+include flake.lock
+include LICENSE
