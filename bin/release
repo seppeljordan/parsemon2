@@ -2,6 +2,8 @@
 
 set -e
 
+nix flake check
+
 VERSION="$(python setup.py --version)"
 
 rm -rf dist/

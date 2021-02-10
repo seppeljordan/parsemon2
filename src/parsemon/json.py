@@ -10,9 +10,15 @@ from .parser import (
     many,
     many1,
     one_of,
+    repeat,
     seperated_by,
     whitespace,
 )
+
+
+def concat(parser):
+    return fmap("".join, parser)
+
 
 whitespaces = many(whitespace)
 
@@ -28,18 +34,9 @@ escape_pairs = (
 
 
 @do
-def repeat(parser, n):
-    result = []
-    while n > 0:
-        result.append((yield parser))
-        n -= 1
-    return result
-
-
-@do
 def unicode_char():
     yield literal("u")
-    digits = yield fmap("".join, repeat(one_of("0123456789abcdefABCDEF"), n=4))
+    digits = yield concat(repeat(one_of("0123456789abcdefABCDEF"), 4))
     return chr(int(digits, 16))
 
 
@@ -56,29 +53,12 @@ escaped_char = chain(literal("\\"), escaped_char)
 
 
 def json_string():
-    @do
-    def json_string_inner():
-        accumulated = []
-        done = False
-        while not done:
-            character, done = yield choice(
-                fmap(
-                    lambda parsed: (parsed, False),
-                    choice(
-                        escaped_char,
-                        none_of('"'),
-                    ),
-                ),
-                unit(("", True)),
-            )
-            accumulated += character
-        return "".join(accumulated)
-
-    return enclosed_by(json_string_inner(), literal('"'))
+    json_string_inner = concat(many(choice(escaped_char, none_of('"\\'))))
+    return enclosed_by(json_string_inner, literal('"'))
 
 
 DIGIT = one_of("0123456789")
-ONENINE = one_of("123456789")
+ONE_TO_NINE = one_of("123456789")
 
 
 @do
@@ -97,7 +77,7 @@ def json_number():
 
     @do
     def multiple_digits():
-        first = yield ONENINE
+        first = yield ONE_TO_NINE
         rest = yield many1(DIGIT)
         return "".join([first] + rest)
 
@@ -118,7 +98,7 @@ def json_number():
 
     @do
     def fraction():
-        fraction_digits = fmap("".join, many1(DIGIT))
+        fraction_digits = concat(many1(DIGIT))
         return (yield literal(".")) + (yield fraction_digits)
 
     float_part = yield choice(try_parser(fraction()), unit(""))
@@ -127,7 +107,7 @@ def json_number():
     def exponent():
         yield one_of("eE")
         sign = yield choice(one_of("+-"), unit(""))
-        digits = yield fmap("".join, many1(DIGIT))
+        digits = yield concat(many1(DIGIT))
         return "e" + sign + digits
 
     exponent_part = yield choice(exponent(), unit(""))

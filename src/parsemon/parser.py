@@ -77,9 +77,9 @@ def many(original_parser):
 
     :param original_parser: this parser will be applied as often as
         possible by the resulting new parser
-
     """
     results = []
+
     while True:
         current_result = yield choice(
             try_parser(original_parser), unit(_NO_FURTHER_RESULT)
@@ -230,3 +230,11 @@ def until(repeating_parser, delimiter_parser):
         else:
             found_elements.append(result)
     return tuple(found_elements)
+
+
+@do
+def repeat(parser, count):
+    results = []
+    for _ in range(count):
+        results.append((yield parser))
+    return results

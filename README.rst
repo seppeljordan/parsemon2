@@ -13,6 +13,20 @@ not dependent on pythons recursion limit.
 
 We also have error messages.
 
+There is a (tested!) example implementation of a json parser included
+in the package.  See ``src/parsemon/json.py`` for more information.
+
+installation
+============
+
+This package should be available as a ``manylinux_2_24_x86_64`` wheel
+on pypi.  On a update to date linux machine ``pip`` should do the job
+just fine::
+
+  pip install parsemon2
+
+Currently MS Windows and macOS are not supported.
+
 building the package
 ====================
 
