@@ -23,6 +23,12 @@ If you want to learn about the library we recommend checking out our
 Changes
 =======
 
+3.1.0
+-----
+
+- Serious peformance improvements were made
+- Minor bug fix in json example parser
+
 3.0.1
 -----
 
