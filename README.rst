@@ -13,6 +13,44 @@ not dependent on pythons recursion limit.
 
 We also have error messages.
 
+building the package
+====================
+
+Building the package from source can be done in multiple ways.
+
+building from sdist
+-------------------
+
+You need to have the rust toolchain installed.  Check out your
+GNU/Linux distribution to learn how to install it.  Another handy
+resource to consider is `https://www.rust-lang.org/tools/install`.
+
+Now you can build the package from source via ``pip``::
+
+  pip install setuptools_rust wheel
+  pip wheel parsemon2 --no-binary :all:
+
+Now you should have a wheel for your platform in your working
+directory.
+
+build from the repository
+-------------------------
+
+The easiest way to build wheels from the git repository is to use
+``docker`` since there is a handy build script included in the repo.
+Make sure the your user has access to docker.  Consult the
+documentation of your system for more information on how to install
+docker.
+
+With ``docker`` installed run the following in the root folder of the
+source code repository::
+
+  bin/build-wheels
+
+After the program finishes you should find wheels for various python
+versions in the ``dist/`` directory.
+
+
 documentation
 =============
 
