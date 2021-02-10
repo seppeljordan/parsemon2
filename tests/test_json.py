@@ -148,4 +148,4 @@ def test_json_document_trims_whitespaces():
 
 
 def test_json_document_accepts_floats_without_signed_exponent():
-    assert run_parser(json_document(), "1.2e10").value == float('1.2e10')
+    assert run_parser(json_document(), "1.2e10").value == float("1.2e10")

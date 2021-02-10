@@ -1,0 +1,49 @@
+#!/usr/bin/env python
+
+import pathlib
+import subprocess
+
+REPOSITORY_ROOT = pathlib.Path(__file__).parent.parent.resolve()
+CONTAINER_NAME = "parsemon-wheels"
+
+
+def build_docker_image():
+    subprocess.run(
+        [
+            "docker",
+            "build",
+            REPOSITORY_ROOT / "docker",
+            "-t",
+            CONTAINER_NAME,
+            "--file",
+            REPOSITORY_ROOT / "docker" / "manylinux.Dockerfile",
+        ],
+        check=True,
+        cwd=REPOSITORY_ROOT,
+    )
+
+
+def build_wheels():
+    command_to_be_run = ["sh", "/io/bin/build-wheel.sh"]
+    subprocess.run(
+        [
+            "docker",
+            "run",
+            "--rm",
+            "-v",
+            f"{REPOSITORY_ROOT}:/io",
+            CONTAINER_NAME,
+        ]
+        + command_to_be_run,
+        cwd=REPOSITORY_ROOT,
+        check=True,
+    )
+
+
+def main():
+    build_docker_image()
+    build_wheels()
+
+
+if __name__ == "__main__":
+    main()
