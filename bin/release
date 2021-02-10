@@ -10,5 +10,5 @@ rm -rf dist/
 python setup.py sdist
 build-wheels
 
-twine upload parsemon2-${VERSION}.tar.gz
-twine upload parsemon2-${VERSION}-*-manylinux*.whl
+twine upload dist/parsemon2-${VERSION}.tar.gz
+twine upload dist/parsemon2-${VERSION}-*-manylinux*.whl
