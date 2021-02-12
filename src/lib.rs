@@ -45,7 +45,7 @@ impl Result {
 	}
     }
 
-    pub fn get_failures(&self, py: Python) -> PyResult<Vec<Failure>> {
+    pub fn get_failures(&self, _py: Python) -> PyResult<Vec<Failure>> {
 	Ok(self.failures.iter().cloned().collect())
     }
 }
@@ -72,12 +72,12 @@ impl<'e> PyNumberProtocol<'e> for Result {
 }
 
 #[pyfunction]
-fn success<'p>(python: Python<'p>, value: PyObject) -> Result {
+fn success<'p>(_python: Python<'p>, value: PyObject) -> Result {
     Result {value: Some(value), failures: vec!()}
 }
 
 #[pyfunction]
-fn failure<'p>(python: Python<'p>, message: String, position: usize) -> Result {
+fn failure<'p>(_python: Python<'p>, message: String, position: usize) -> Result {
     Result {value: None, failures: vec!(Failure { message, position })}
 }
 
