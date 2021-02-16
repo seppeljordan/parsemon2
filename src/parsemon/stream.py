@@ -56,14 +56,12 @@ class StringStreamResetPoint(ResetPoint):
 class StringStream(Stream):
     content = attrib()
     _position = attrib()
-    length = attrib()
 
     @classmethod
     def from_string(cls, content):
         return cls(
             content,
             position=0,
-            length=len(content),
         )
 
     def to_string(self):
@@ -76,9 +74,9 @@ class StringStream(Stream):
         return read_char
 
     def next(self):
-        if self._position < self.length:
+        try:
             return self.content[self._position]
-        else:
+        except IndexError:
             return None
 
     def position(self):
@@ -99,42 +97,37 @@ class IOStreamResetPoint(ResetPoint):
         pass
 
 
-@attrs
 class IOStream(Stream):
-    _stream = attrib()
-    _position = attrib()
-    _length = attrib()
+    def __init__(self, stream):
+        self._peeked_char = None
+        self._stream = stream
 
     def next(self):
-        self._stream.seek(self._position)
-        character_read = self._stream.read(1)
-        return character_read or None
+        self._peeked_char = self.read()
+        return self._peeked_char
 
     @classmethod
     def from_string(cls, message):
         return cls(
             stream=io.StringIO(message),
-            position=0,
-            length=len(message),
         )
 
     def read(self):
-        self._stream.seek(self._position)
-        character_read = self._stream.read(1)
-        if character_read:
-            self._position = self._stream.tell()
-            return character_read
+        if self._peeked_char:
+            result = self._peeked_char
+            self._peeked_char = None
+            return result
         else:
-            return None
+            return self._stream.read(1) or None
 
     def position(self):
-        return self._position
+        return self._stream.tell() + (-1 if self._peeked_char else 0)
 
     def to_string(self):
         return self._stream.read()
 
     def get_reset_point(self) -> IOStreamResetPoint:
-        return IOStreamResetPoint(self._position)
+        return IOStreamResetPoint(self.position())
 
     def reset_stream(self, reset_point) -> None:
-        self._position = reset_point.position
+        self._stream.seek(reset_point.position)
