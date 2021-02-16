@@ -1,5 +1,5 @@
 """Contains the implementation of the parser monad.  This module is
-not intended to be used from outside this library.
+not intended to be used from outside of this library.
 """
 from parsemon.stream import StringStream
 from parsemon.trampoline import Call, Result, with_trampoline
