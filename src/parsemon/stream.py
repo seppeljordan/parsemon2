@@ -14,10 +14,6 @@ class Stream(ABC):
         raise NotImplementedError()
 
     @abstractmethod
-    def __len__(self) -> int:
-        raise NotImplementedError()
-
-    @abstractmethod
     def next(self) -> str:
         raise NotImplementedError()
 
@@ -69,9 +65,6 @@ class StringStream(Stream):
             position=0,
             length=len(content),
         )
-
-    def __len__(self):
-        return self.length - self._position
 
     def to_string(self):
         return self.content[self._position :]
@@ -136,9 +129,6 @@ class IOStream(Stream):
 
     def position(self):
         return self._position
-
-    def __len__(self):
-        return self._length - self._position
 
     def to_string(self):
         return self._stream.read()

@@ -77,18 +77,22 @@ def character(n: int = 1):
 
     def parser(stream, cont):
         result = []
+        read_count = 0
         for _ in range(0, n):
-            if not stream:
-                return Call(
-                    cont,
-                    stream,
-                    failure(
-                        message="Expected character but found end of string",
-                        position=stream.position(),
-                    ),
-                )
             char_found = stream.read()
+            if not char_found:
+                break
+            read_count += 1
             result.append(char_found)
+        if read_count < n:
+            return Call(
+                cont,
+                stream,
+                failure(
+                    message="Expected character but found end of string",
+                    position=stream.position(),
+                ),
+            )
         return Call(
             cont,
             stream,
@@ -154,7 +158,8 @@ def none_of(chars: str):
     """
 
     def parser(stream, cont):
-        if not stream:
+        next_char = stream.next()
+        if next_char is None:
             return Call(
                 cont,
                 stream,
@@ -170,7 +175,7 @@ def none_of(chars: str):
                     position=stream.position(),
                 ),
             )
-        if stream.next() not in chars:
+        if next_char not in chars:
             result = stream.read()
             return Call(
                 cont,
@@ -201,7 +206,8 @@ def one_of(expected: str):
     """Parse only characters contained in ``expected``."""
 
     def parser(stream, cont):
-        if not stream:
+        next_character = stream.next()
+        if next_character is None:
             return Call(
                 cont,
                 stream,
@@ -214,7 +220,7 @@ def one_of(expected: str):
                     position=stream.position(),
                 ),
             )
-        if stream.next() in expected:
+        if next_character in expected:
             result = stream.read()
             return Call(
                 cont,
