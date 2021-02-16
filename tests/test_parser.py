@@ -24,14 +24,11 @@ from parsemon import (
 )
 from parsemon.error import ParsingFailed
 from parsemon.sourcemap import display_location
-from parsemon.stream import CharacterStream, StringStream
+from parsemon.stream import StringStream
 
 
 @pytest.fixture(
-    params=(
-        CharacterStream,
-        StringStream,
-    ),
+    params=(StringStream,),
     scope="module",
 )
 def runner(request):

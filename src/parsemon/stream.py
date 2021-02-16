@@ -1,10 +1,10 @@
+from __future__ import annotations
+
 import io
 from abc import ABC, abstractmethod
-from functools import reduce
+from typing import Optional
 
-from attr import attrib, attrs, evolve
-
-from .deque import Stack, deque_empty
+from attr import attrib, attrs
 
 
 class Stream(ABC):
@@ -29,50 +29,31 @@ class Stream(ABC):
     def position(self) -> int:
         raise NotImplementedError()
 
+    @abstractmethod
+    def read(self) -> Optional[str]:
+        raise NotImplementedError()
 
-@attrs
-class CharacterStream(Stream):
-    content = attrib()
-    length = attrib()
-    _position = attrib()
+    @abstractmethod
+    def get_reset_point(self) -> ResetPoint:
+        raise NotImplementedError()
 
-    @classmethod
-    def from_string(cls, content):
-        return cls(
-            content=reduce(
-                lambda stack, character: stack.push(character),
-                reversed(content),
-                Stack(),
-            ),
-            length=len(content),
-            position=0,
-        )
+    @abstractmethod
+    def reset_stream(self, reset_point: ResetPoint) -> None:
+        pass
 
-    def next(self):
-        top_value = self.content.top()
-        return None if top_value is deque_empty else top_value
 
-    def read(self):
-        return (
-            self.next(),
-            evolve(
-                self,
-                content=self.content.pop(),
-                length=(self.length if self.content.empty() else self.length - 1),
-                position=(
-                    self._position if self.content.empty() else self._position + 1
-                ),
-            ),
-        )
+class ResetPoint(ABC):
+    @abstractmethod
+    def destroy(self) -> None:
+        pass
 
-    def __len__(self):
-        return self.length
 
-    def to_string(self):
-        return "".join(self.content)
+class StringStreamResetPoint(ResetPoint):
+    def __init__(self, position) -> None:
+        self.position = position
 
-    def position(self):
-        return self._position
+    def destroy(self) -> None:
+        pass
 
 
 @attrs
@@ -96,16 +77,10 @@ class StringStream(Stream):
         return self.content[self._position :]
 
     def read(self):
-        if self:
-            return (
-                self.content[self._position],
-                evolve(
-                    self,
-                    position=self._position + 1,
-                ),
-            )
-        else:
-            return (None, self)
+        read_char = self.next()
+        if read_char:
+            self._position += 1
+        return read_char
 
     def next(self):
         if self._position < self.length:
@@ -115,6 +90,20 @@ class StringStream(Stream):
 
     def position(self):
         return self._position
+
+    def get_reset_point(self):
+        return StringStreamResetPoint(self._position)
+
+    def reset_stream(self, reset_point):
+        self._position = reset_point.position
+
+
+class IOStreamResetPoint(ResetPoint):
+    def __init__(self, position):
+        self.position = position
+
+    def destroy(self):
+        pass
 
 
 @attrs
@@ -140,15 +129,10 @@ class IOStream(Stream):
         self._stream.seek(self._position)
         character_read = self._stream.read(1)
         if character_read:
-            return (
-                character_read,
-                evolve(
-                    self,
-                    position=self._stream.tell(),
-                ),
-            )
+            self._position = self._stream.tell()
+            return character_read
         else:
-            return None, self
+            return None
 
     def position(self):
         return self._position
@@ -158,3 +142,9 @@ class IOStream(Stream):
 
     def to_string(self):
         return self._stream.read()
+
+    def get_reset_point(self) -> IOStreamResetPoint:
+        return IOStreamResetPoint(self._position)
+
+    def reset_stream(self, reset_point) -> None:
+        self._position = reset_point.position

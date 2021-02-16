@@ -4,12 +4,13 @@ import hypothesis.strategies as st
 import pytest
 from hypothesis import given
 
-from parsemon.stream import CharacterStream, IOStream, StringStream
+from parsemon.stream import IOStream, StringStream
+
+from . import strategies
 
 
 @pytest.fixture(
     params=(
-        CharacterStream,
         StringStream,
         IOStream,
     ),
@@ -33,7 +34,7 @@ def test_1_character_stream_yields_content_as_next(stream_implementation):
 def test_1_character_stream_read_yields_content_back(stream_implementation):
     content = "1"
     stream = stream_implementation.from_string(content)
-    read_content, remainder = stream.read()
+    read_content = stream.read()
     assert read_content == content
 
 
@@ -49,12 +50,11 @@ def random_stream(request, stream_implementation):
     return stream_implementation.from_string(request.param)
 
 
-def test_that_reading_from_a_stream_reduces_its_length(random_stream):
-    _, new_stream = random_stream.read()
-    if random_stream:
-        assert len(random_stream) == len(new_stream) + 1
-    else:
-        assert len(random_stream) == len(new_stream) == 0
+@given(stream=strategies.stream(min_size=1))
+def test_that_reading_from_a_stream_reduces_its_length(stream):
+    original_length = len(stream)
+    stream.read()
+    assert original_length == len(stream) + 1
 
 
 def test_that_empty_character_stream_has_length_zero(stream_implementation):
@@ -70,8 +70,8 @@ def test_that_empty_stream_is_considered_false(content, stream_implementation):
 
 
 def test_that_read_gives_same_char_as_next(random_stream):
-    char_read, _ = random_stream.read()
-    assert char_read == random_stream.next()
+    expected_char = random_stream.next()
+    assert random_stream.read() == expected_char
 
 
 @given(text=st.text())
@@ -81,8 +81,7 @@ def test_that_characters_read_from_stream_are_in_same_order_as_original_string(
 ):
     stream = stream_implementation.from_string(text)
     for character in text:
-        read_char, stream = stream.read()
-        assert read_char == character
+        assert stream.read() == character
 
 
 @given(text=st.text())
@@ -97,17 +96,25 @@ def test_that_next_on_stream_that_was_emptied_gives_none(
 ):
     stream = stream_implementation.from_string(text)
     for _ in range(0, len(stream)):
-        stream = stream.read()[1]
+        stream.read()
     assert stream.next() is None
 
 
-@given(text=st.text())
-def test_that_reading_stream_advances_its_position_by_one_unless_it_is_empty(
+@given(text=st.text(min_size=1))
+def test_that_reading_stream_advances_its_position_by_one(
     text,
     stream_implementation,
 ):
     stream = stream_implementation.from_string(text)
-    if stream:
-        assert stream.position() == stream.read()[1].position() - 1
-    else:
-        assert stream.position() == stream.read()[1].position()
+    original_position = stream.position()
+    stream.read()
+
+    assert original_position == stream.position() - 1
+
+
+@given(stream=strategies.stream(min_size=1))
+def test_that_stream_can_be_reset(stream):
+    reset_point = stream.get_reset_point()
+    character_read = stream.read()
+    stream.reset_stream(reset_point)
+    assert stream.read() == character_read

@@ -3,21 +3,23 @@ from parsemon.trampoline import Call
 
 
 def look_ahead(parser):
-    def _wrapped_parser(original_stream, continuation):
-        def _reset_stream(progressed_stream, parsing_result):
+    def _wrapped_parser(stream, continuation):
+        reset_point = stream.get_reset_point()
+
+        def _reset_stream(stream, parsing_result):
             if parsing_result.is_failure():
-                future_stream = progressed_stream
+                reset_point.destroy()
             else:
-                future_stream = original_stream
+                stream.reset_stream(reset_point)
             return Call(
                 continuation,
-                future_stream,
+                stream,
                 parsing_result,
             )
 
         return Call(
             parser,
-            original_stream,
+            stream,
             _reset_stream,
         )
 
@@ -25,21 +27,23 @@ def look_ahead(parser):
 
 
 def try_parser(parser):
-    def _wrapped_parser(original_stream, continuation):
+    def _wrapped_parser(stream, continuation):
+        reset_point = stream.get_reset_point()
+
         def _reset_stream(progressed_stream, parsing_result):
             if parsing_result.is_failure():
-                future_stream = original_stream
+                stream.reset_stream(reset_point)
             else:
-                future_stream = progressed_stream
+                reset_point.destroy()
             return Call(
                 continuation,
-                future_stream,
+                stream,
                 parsing_result,
             )
 
         return Call(
             parser,
-            original_stream,
+            stream,
             _reset_stream,
         )
 
@@ -83,7 +87,7 @@ def character(n: int = 1):
                         position=stream.position(),
                     ),
                 )
-            char_found, stream = stream.read()
+            char_found = stream.read()
             result.append(char_found)
         return Call(
             cont,
@@ -118,7 +122,7 @@ def literal(expected):
                     ),
                 )
             if expected_char == character_read:
-                stream = stream.read()[1]
+                stream.read()
             else:
                 return Call(
                     cont,
@@ -167,7 +171,7 @@ def none_of(chars: str):
                 ),
             )
         if stream.next() not in chars:
-            result, stream = stream.read()
+            result = stream.read()
             return Call(
                 cont,
                 stream,
@@ -211,7 +215,7 @@ def one_of(expected: str):
                 ),
             )
         if stream.next() in expected:
-            result, stream = stream.read()
+            result = stream.read()
             return Call(
                 cont,
                 stream,

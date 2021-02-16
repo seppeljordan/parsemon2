@@ -1,12 +1,11 @@
 import pytest
 
 from parsemon import choices, literal, many, run_parser
-from parsemon.stream import CharacterStream, IOStream, StringStream
+from parsemon.stream import IOStream, StringStream
 
 
 @pytest.fixture(
     params=(
-        CharacterStream,
         StringStream,
         IOStream,
     )

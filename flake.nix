@@ -54,8 +54,6 @@
           defaultPackage = python.pkgs.parsemon2;
           packages = { inherit python; };
           checks = {
-            python36 = pkgs.python36.pkgs.parsemon2;
-            python37 = pkgs.python37.pkgs.parsemon2;
             python38 = pkgs.python38.pkgs.parsemon2;
             python39 = pkgs.python39.pkgs.parsemon2;
             nixfmt-check = runCodeAnalysis "nixfmt" ''
@@ -72,7 +70,8 @@
               ${python.pkgs.isort}/bin/isort \
                   --settings-path setup.cfg \
                   --check-only \
-                  -df \
+                  --diff \
+                  setup.py \
                   . \
                   test-pypi-install
             '';
@@ -89,10 +88,6 @@
           in {
             python3 = prev.python3.override { inherit packageOverrides; };
             python3Packages = final.python3.pkgs;
-            python36 = prev.python36.override { inherit packageOverrides; };
-            python36Packages = final.python36.pkgs;
-            python37 = prev.python37.override { inherit packageOverrides; };
-            python37Packages = final.python37.pkgs;
             python38 = prev.python38.override { inherit packageOverrides; };
             python38Packages = final.python38.pkgs;
             python39 = prev.python39.override { inherit packageOverrides; };

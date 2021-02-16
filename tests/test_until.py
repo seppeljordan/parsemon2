@@ -3,14 +3,11 @@ import pytest
 from hypothesis import given
 
 from parsemon import ParsingFailed, literal, run_parser, until
-from parsemon.stream import CharacterStream, StringStream
+from parsemon.stream import StringStream
 
 
 @pytest.fixture(
-    params=(
-        CharacterStream,
-        StringStream,
-    ),
+    params=(StringStream,),
     scope="module",
 )
 def runner(request):
