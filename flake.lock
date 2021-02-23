@@ -15,7 +15,70 @@
         "type": "github"
       }
     },
+    "flake-utils_2": {
+      "locked": {
+        "lastModified": 1610051610,
+        "narHash": "sha256-U9rPz/usA1/Aohhk7Cmc2gBrEEKRzcW4nwPWMPwja4Y=",
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "rev": "3982c9903e93927c2164caa727cd3f6a0e6d14cc",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "type": "github"
+      }
+    },
+    "nix-parsec": {
+      "locked": {
+        "lastModified": 1614005190,
+        "narHash": "sha256-QH7ikvLIK2E/+ql4cEl6/kUObaJhNXEXMzqokqT9wFg=",
+        "owner": "seppeljordan",
+        "repo": "nix-parsec",
+        "rev": "962eff37f778cd96644433e3d13ab9da680f4f90",
+        "type": "github"
+      },
+      "original": {
+        "owner": "seppeljordan",
+        "repo": "nix-parsec",
+        "type": "github"
+      }
+    },
+    "nix-setuptools": {
+      "inputs": {
+        "flake-utils": "flake-utils_2",
+        "nix-parsec": "nix-parsec",
+        "nixpkgs": "nixpkgs"
+      },
+      "locked": {
+        "lastModified": 1614079675,
+        "narHash": "sha256-UhpG1/76b5z3ARLJs7v0DwheCBnQWnYfTRoQYvJmnE8=",
+        "owner": "seppeljordan",
+        "repo": "nix-setuptools",
+        "rev": "274b1a23f3256251ceed44017b737cd9e1525838",
+        "type": "github"
+      },
+      "original": {
+        "owner": "seppeljordan",
+        "repo": "nix-setuptools",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
+      "locked": {
+        "lastModified": 1612545171,
+        "narHash": "sha256-AZkSuO7H055eDD4KWBEDCX/R5fvw0vUMCErvQvYSEhA=",
+        "path": "/nix/store/85kgdnkapn3sy1f985hln9gsvxxp8zfk-source",
+        "rev": "536fe36e23ab0fc8b7f35c24603422eee9fc17a2",
+        "type": "path"
+      },
+      "original": {
+        "id": "nixpkgs",
+        "type": "indirect"
+      }
+    },
+    "nixpkgs_2": {
       "locked": {
         "lastModified": 1612369752,
         "narHash": "sha256-JtncDAt+qqUvdaIEpXmLXveu/AeXOPOYGDbpPoG2zgA=",
@@ -34,7 +97,8 @@
     "root": {
       "inputs": {
         "flake-utils": "flake-utils",
-        "nixpkgs": "nixpkgs"
+        "nix-setuptools": "nix-setuptools",
+        "nixpkgs": "nixpkgs_2"
       }
     }
   },

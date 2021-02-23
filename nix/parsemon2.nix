@@ -1,9 +1,7 @@
-{ buildPythonPackage, attrs, hypothesis, pytest, pytest-benchmark
+{ buildSetuptoolsPackage, attrs, hypothesis, pytest, pytest-benchmark
 , pytest-profiling, pytestcov, sphinx, setuptools-rust, cargo, rustc
 , pytestCheckHook }:
-buildPythonPackage {
-  pname = "parsemon2";
-  version = "dev";
+buildSetuptoolsPackage {
   src = ../.;
 
   # building
