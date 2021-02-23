@@ -13,7 +13,7 @@
 [package]
 edition = "2018"
 name = "indoc"
-version = "1.0.3"
+version = "0.3.6"
 authors = ["David Tolnay <dtolnay@gmail.com>"]
 description = "Indented document literals"
 documentation = "https://docs.rs/indoc"
@@ -23,14 +23,17 @@ license = "MIT OR Apache-2.0"
 repository = "https://github.com/dtolnay/indoc"
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
+[dependencies.indoc-impl]
+version = "=0.3.6"
 
-[lib]
-proc-macro = true
-[dependencies.unindent]
-version = "0.1.7"
+[dependencies.proc-macro-hack]
+version = "0.5.10"
 [dev-dependencies.rustversion]
 version = "1.0"
 
 [dev-dependencies.trybuild]
 version = "1.0.19"
 features = ["diff"]
+
+[features]
+unstable = ["indoc-impl/unstable"]

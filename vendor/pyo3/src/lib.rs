@@ -57,7 +57,7 @@
 //! crate-type = ["cdylib"]
 //!
 //! [dependencies.pyo3]
-//! version = "0.13.1"
+//! version = "0.13.2"
 //! features = ["extension-module"]
 //! ```
 //!
@@ -120,7 +120,7 @@
 //!
 //! ```toml
 //! [dependencies.pyo3]
-//! version = "0.13.1"
+//! version = "0.13.2"
 //! features = ["auto-initialize"]
 //! ```
 //!
@@ -152,7 +152,7 @@ pub use crate::conversion::{
 };
 pub use crate::err::{PyDowncastError, PyErr, PyErrArguments, PyResult};
 #[cfg(all(Py_SHARED, not(PyPy)))]
-pub use crate::gil::prepare_freethreaded_python;
+pub use crate::gil::{prepare_freethreaded_python, with_embedded_python_interpreter};
 pub use crate::gil::{GILGuard, GILPool};
 pub use crate::instance::{Py, PyNativeType, PyObject};
 pub use crate::pycell::{PyCell, PyRef, PyRefMut};
@@ -207,6 +207,9 @@ mod python;
 pub mod type_object;
 pub mod types;
 
+#[cfg(feature = "serde")]
+pub mod serde;
+
 /// The proc macros, which are also part of the prelude.
 #[cfg(feature = "macros")]
 pub mod proc_macro {
@@ -221,7 +224,7 @@ pub mod proc_macro {
 #[macro_export]
 macro_rules! wrap_pyfunction {
     ($function_name: ident) => {{
-        &pyo3::paste::paste! { [<__pyo3_get_function_ $function_name>] }
+        &pyo3::paste::expr! { [<__pyo3_get_function_ $function_name>] }
     }};
 
     ($function_name: ident, $arg: expr) => {
@@ -254,7 +257,7 @@ macro_rules! wrap_pyfunction {
 #[macro_export]
 macro_rules! raw_pycfunction {
     ($function_name: ident) => {{
-        pyo3::paste::paste! { [<__pyo3_raw_ $function_name>] }
+        pyo3::paste::expr! { [<__pyo3_raw_ $function_name>] }
     }};
 }
 
@@ -264,7 +267,7 @@ macro_rules! raw_pycfunction {
 #[macro_export]
 macro_rules! wrap_pymodule {
     ($module_name:ident) => {{
-        pyo3::paste::paste! {
+        pyo3::paste::expr! {
             &|py| unsafe { pyo3::PyObject::from_owned_ptr(py, [<PyInit_ $module_name>]()) }
         }
     }};
@@ -376,22 +379,34 @@ pub mod doc_test {
         "../guide/src/building_and_distribution.md",
         guide_building_and_distribution_md
     );
+    doctest!(
+        "../guide/src/building_and_distribution/pypy.md",
+        guide_building_and_distribution_pypy_md
+    );
     doctest!("../guide/src/class.md", guide_class_md);
+    doctest!("../guide/src/class/protocols.md", guide_class_protocols_md);
     doctest!("../guide/src/conversions.md", guide_conversions_md);
+    doctest!(
+        "../guide/src/conversions/tables.md",
+        guide_conversions_tables_md
+    );
+    doctest!(
+        "../guide/src/conversions/traits.md",
+        guide_conversions_traits_md
+    );
     doctest!("../guide/src/debugging.md", guide_debugging_md);
     doctest!("../guide/src/exception.md", guide_exception_md);
     doctest!("../guide/src/function.md", guide_function_md);
     doctest!("../guide/src/migration.md", guide_migration_md);
     doctest!("../guide/src/module.md", guide_module_md);
+    doctest!("../guide/src/parallelism.md", guide_parallelism_md);
     doctest!(
         "../guide/src/python_from_rust.md",
         guide_python_from_rust_md
     );
-    doctest!("../guide/src/parallelism.md", guide_parallelism_md);
-    doctest!("../guide/src/pypy.md", guide_pypy_md);
     doctest!("../guide/src/rust_cpython.md", guide_rust_cpython_md);
-    doctest!("../guide/src/types.md", guide_types_md);
     doctest!("../guide/src/trait_bounds.md", guide_trait_bounds_md);
+    doctest!("../guide/src/types.md", guide_types_md);
 }
 
 // interim helper until #[cfg(panic = ...)] is stable

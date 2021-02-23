@@ -560,9 +560,20 @@ fn load_cross_compile_info(
 /// Run a python script using the specified interpreter binary.
 fn run_python_script(interpreter: &Path, script: &str) -> Result<String> {
     let out = Command::new(interpreter)
-        .args(&["-c", script])
+        .env("PYTHONIOENCODING", "utf-8")
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
         .stderr(Stdio::inherit())
-        .output();
+        .spawn()
+        .and_then(|mut child| {
+            use std::io::Write;
+            child
+                .stdin
+                .as_mut()
+                .expect("piped stdin")
+                .write_all(script.as_bytes())?;
+            child.wait_with_output()
+        });
 
     match out {
         Err(err) => {
@@ -580,24 +591,32 @@ fn run_python_script(interpreter: &Path, script: &str) -> Result<String> {
                 );
             }
         }
-        Ok(ok) if !ok.status.success() => bail!("Python script failed: {}"),
+        Ok(ok) if !ok.status.success() => bail!("Python script failed"),
         Ok(ok) => Ok(String::from_utf8(ok.stdout)?),
     }
 }
 
 fn get_rustc_link_lib(config: &InterpreterConfig) -> String {
     let link_name = if env::var("CARGO_CFG_TARGET_OS").unwrap().as_str() == "windows" {
-        // Link against python3.lib for the stable ABI on Windows.
-        // See https://www.python.org/dev/peps/pep-0384/#linkage
-        //
-        // This contains only the limited ABI symbols.
-        if env::var_os("CARGO_FEATURE_ABI3").is_some() {
-            "pythonXY:python3".to_owned()
-        } else {
+        if env::var("CARGO_CFG_TARGET_ENV").unwrap().as_str() == "gnu" {
+            // https://packages.msys2.org/base/mingw-w64-python
             format!(
-                "pythonXY:python{}{}",
+                "pythonXY:python{}.{}",
                 config.version.major, config.version.minor
             )
+        } else {
+            // Link against python3.lib for the stable ABI on Windows.
+            // See https://www.python.org/dev/peps/pep-0384/#linkage
+            //
+            // This contains only the limited ABI symbols.
+            if env::var_os("CARGO_FEATURE_ABI3").is_some() {
+                "pythonXY:python3".to_owned()
+            } else {
+                format!(
+                    "pythonXY:python{}{}",
+                    config.version.major, config.version.minor
+                )
+            }
         }
     } else {
         match config.version.implementation {
