@@ -1,7 +1,7 @@
-{ fetchFromGitHub, lib, parseSetupCfg }:
+{ lib, parseSetupCfg }:
 lib.fix (self:
   let callPackage = lib.callPackageWith self;
   in {
-    inherit fetchFromGitHub lib parseSetupCfg;
+    inherit lib parseSetupCfg;
     packageOverrides = callPackage ./package-overrides.nix { };
   })

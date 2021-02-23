@@ -9,6 +9,10 @@
 
   outputs = { self, nixpkgs, flake-utils, nix-setuptools }:
     let
+      modules = import nix/modules.nix {
+        inherit (nix-setuptools.lib.setuptools) parseSetupCfg;
+        inherit (nixpkgs) lib;
+      };
       systemDependent = flake-utils.lib.eachDefaultSystem (system:
         let
           pkgs = import nixpkgs {
@@ -82,13 +86,12 @@
           };
         });
       systemIndependent = {
-        lib = { package = import nix/parsemon2.nix; };
+        lib = {
+          inherit (modules) packageOverrides;
+          package = import nix/parsemon2.nix;
+        };
         overlay = final: prev:
-          let
-            modules = final.callPackage nix/modules.nix {
-              inherit (nix-setuptools.lib.setuptools) parseSetupCfg;
-            };
-            packageOverrides = modules.packageOverrides;
+          let packageOverrides = modules.packageOverrides;
           in {
             python3 = prev.python3.override { inherit packageOverrides; };
             python3Packages = final.python3.pkgs;

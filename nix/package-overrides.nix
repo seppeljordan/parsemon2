@@ -1,4 +1,4 @@
-{ fetchFromGitHub, parseSetupCfg }:
+{ parseSetupCfg }:
 self: super: {
   buildSetuptoolsPackage =
     self.callPackage ./setuptools.nix { inherit parseSetupCfg; };
