@@ -29,6 +29,8 @@ pub type Elf64_Sxword = i64;
 pub type Elf64_Word = u32;
 pub type Elf64_Xword = u64;
 
+pub type iconv_t = *mut ::c_void;
+
 cfg_if! {
     if #[cfg(target_pointer_width = "64")] {
         type Elf_Addr = Elf64_Addr;
@@ -295,6 +297,12 @@ s! {
         pub sc_egid: ::gid_t,
         pub sc_ngroups: ::c_int,
         pub sc_groups: [::gid_t; 1],
+    }
+
+    pub struct unpcbid {
+        pub unp_pid: ::pid_t,
+        pub unp_euid: ::uid_t,
+        pub unp_egid: ::gid_t,
     }
 
     pub struct sockaddr_dl {
@@ -1044,6 +1052,12 @@ pub const SO_ACCEPTFILTER: ::c_int = 0x1000;
 pub const SO_TIMESTAMP: ::c_int = 0x2000;
 pub const SO_OVERFLOWED: ::c_int = 0x1009;
 pub const SO_NOHEADER: ::c_int = 0x100a;
+
+// http://cvsweb.netbsd.org/bsdweb.cgi/src/sys/sys/un.h?annotate
+pub const LOCAL_OCREDS: ::c_int = 0x0001; // pass credentials to receiver
+pub const LOCAL_CONNWAIT: ::c_int = 0x0002; // connects block until accepted
+pub const LOCAL_PEEREID: ::c_int = 0x0003; // get peer identification
+pub const LOCAL_CREDS: ::c_int = 0x0004; // pass credentials to receiver
 
 // https://github.com/NetBSD/src/blob/trunk/sys/net/if.h#L373
 pub const IFF_UP: ::c_int = 0x0001; // interface is up
@@ -2081,6 +2095,19 @@ extern "C" {
         >,
         data: *mut ::c_void,
     ) -> ::c_int;
+
+    pub fn iconv_open(
+        tocode: *const ::c_char,
+        fromcode: *const ::c_char,
+    ) -> iconv_t;
+    pub fn iconv(
+        cd: iconv_t,
+        inbuf: *mut *mut ::c_char,
+        inbytesleft: *mut ::size_t,
+        outbuf: *mut *mut ::c_char,
+        outbytesleft: *mut ::size_t,
+    ) -> ::size_t;
+    pub fn iconv_close(cd: iconv_t) -> ::c_int;
 }
 
 #[link(name = "util")]

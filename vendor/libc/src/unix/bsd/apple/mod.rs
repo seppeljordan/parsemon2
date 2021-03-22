@@ -37,6 +37,8 @@ pub type sae_connid_t = u32;
 
 pub type mach_port_t = ::c_uint;
 
+pub type iconv_t = *mut ::c_void;
+
 deprecated_mach! {
     pub type vm_prot_t = ::c_int;
     pub type vm_size_t = ::uintptr_t;
@@ -1492,6 +1494,12 @@ pub const MAP_PRIVATE: ::c_int = 0x0002;
 pub const MAP_FIXED: ::c_int = 0x0010;
 pub const MAP_ANON: ::c_int = 0x1000;
 pub const MAP_ANONYMOUS: ::c_int = MAP_ANON;
+
+pub const CPU_STATE_USER: ::c_int = 0;
+pub const CPU_STATE_SYSTEM: ::c_int = 1;
+pub const CPU_STATE_IDLE: ::c_int = 2;
+pub const CPU_STATE_NICE: ::c_int = 3;
+pub const CPU_STATE_MAX: ::c_int = 4;
 
 deprecated_mach! {
     pub const VM_FLAGS_FIXED: ::c_int = 0x0000;
@@ -3764,6 +3772,19 @@ extern "C" {
         bufsize: ::c_int,
         flags: ::c_int,
     ) -> ::c_int;
+
+    pub fn iconv_open(
+        tocode: *const ::c_char,
+        fromcode: *const ::c_char,
+    ) -> iconv_t;
+    pub fn iconv(
+        cd: iconv_t,
+        inbuf: *mut *mut ::c_char,
+        inbytesleft: *mut ::size_t,
+        outbuf: *mut *mut ::c_char,
+        outbytesleft: *mut ::size_t,
+    ) -> ::size_t;
+    pub fn iconv_close(cd: iconv_t) -> ::c_int;
 }
 
 cfg_if! {
