@@ -6,7 +6,10 @@ cargo_arguments = ["--offline"]
 setup(
     rust_extensions=[
         RustExtension(
-            "parsemon.result", "Cargo.toml", debug=False, args=cargo_arguments
+            "parsemon.extensions",
+            "Cargo.toml",
+            debug=False,
+            args=cargo_arguments,
         )
     ]
 )

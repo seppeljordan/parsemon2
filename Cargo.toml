@@ -9,5 +9,5 @@ name = "parsemon"
 crate-type = ["cdylib"]
 
 [dependencies.pyo3]
-features = ["extension-module"]
+features = ["extension-module", "abi3"]
 version = "0.13.*"

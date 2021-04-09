@@ -1,6 +1,6 @@
 from functools import wraps
 
-from .result import success
+from .extensions import result
 from .trampoline import Call
 
 
@@ -46,7 +46,7 @@ def do(f):
                     return Call(
                         original_continuation,
                         progressed_stream,
-                        success(getattr(stop, "value", None)),
+                        result.success(getattr(stop, "value", None)),
                     )
 
             initial_parser = generator.send(None)

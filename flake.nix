@@ -33,18 +33,19 @@
                 with ps; [
                   attrs
                   black
-                  hypothesis
                   flake8
+                  hypothesis
+                  isort
                   mypy
+                  pip
                   pytest-benchmark
                   pytest-profiling
                   pytestcov
+                  setuptools-rust
                   sphinx
                   twine
-                  wheel
-                  isort
-                  setuptools-rust
                   virtualenv
+                  wheel
                 ]))
               pkgs.rustc
               pkgs.cargo

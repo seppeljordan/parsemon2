@@ -82,11 +82,18 @@ fn failure<'p>(_python: Python<'p>, message: String, position: usize) -> Result 
 }
 
 
-#[pymodule]
-fn result(_py: Python<'_>, module: &PyModule) -> PyResult<()> {
+fn initialize_result(module: &PyModule) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(success, module)?)?;
     module.add_function(wrap_pyfunction!(failure, module)?)?;
     module.add_class::<Failure>()?;
     module.add_class::<Result>()?;
+    Ok(())
+}
+
+#[pymodule]
+fn extensions(py: Python<'_>, module: &PyModule) -> PyResult<()> {
+    let result_submodule = PyModule::new(py, "result")?;
+    initialize_result(result_submodule)?;
+    module.add_submodule(result_submodule)?;
     Ok(())
 }

@@ -1,4 +1,4 @@
-from parsemon.result import failure, success
+from parsemon.extensions import result
 from parsemon.trampoline import Call
 
 
@@ -55,7 +55,7 @@ def unit(value):
         return Call(
             cont,
             stream,
-            success(
+            result.success(
                 value=value,
             ),
         )
@@ -67,7 +67,9 @@ def fail(msg):
     """This parser always fails with the message passed as ``msg``."""
 
     def parser(stream, cont):
-        return Call(cont, stream, failure(message=msg, position=stream.position()))
+        return Call(
+            cont, stream, result.failure(message=msg, position=stream.position())
+        )
 
     return parser
 
@@ -76,19 +78,19 @@ def character(n: int = 1):
     """Parse exactly n characters, the default is 1."""
 
     def parser(stream, cont):
-        result = []
+        results = []
         read_count = 0
         for _ in range(0, n):
             char_found = stream.read()
             if not char_found:
                 break
             read_count += 1
-            result.append(char_found)
+            results.append(char_found)
         if read_count < n:
             return Call(
                 cont,
                 stream,
-                failure(
+                result.failure(
                     message="Expected character but found end of string",
                     position=stream.position(),
                 ),
@@ -96,8 +98,8 @@ def character(n: int = 1):
         return Call(
             cont,
             stream,
-            success(
-                value="".join(result),
+            result.success(
+                value="".join(results),
             ),
         )
 
@@ -118,7 +120,7 @@ def literal(expected):
                 return Call(
                     cont,
                     stream,
-                    failure(
+                    result.failure(
                         "Expected `{expected}` but found end of string".format(
                             expected=expected,
                         ),
@@ -131,7 +133,7 @@ def literal(expected):
                 return Call(
                     cont,
                     stream,
-                    failure(
+                    result.failure(
                         message=("Expected `{expected}` but found `{actual}`.").format(
                             expected=expected, actual=character_read
                         ),
@@ -141,7 +143,7 @@ def literal(expected):
         return Call(
             cont,
             stream,
-            success(
+            result.success(
                 value=expected,
             ),
         )
@@ -163,7 +165,7 @@ def none_of(chars: str):
             return Call(
                 cont,
                 stream,
-                failure(
+                result.failure(
                     message=" ".join(
                         [
                             "Expected any char except `{forbidden}` but found end"
@@ -176,19 +178,19 @@ def none_of(chars: str):
                 ),
             )
         if next_char not in chars:
-            result = stream.read()
+            read_character = stream.read()
             return Call(
                 cont,
                 stream,
-                success(
-                    value=result,
+                result.success(
+                    value=read_character,
                 ),
             )
         else:
             return Call(
                 cont,
                 stream,
-                failure(
+                result.failure(
                     message=" ".join(
                         [
                             "Expected anything except one of `{forbidden}` but"
@@ -211,7 +213,7 @@ def one_of(expected: str):
             return Call(
                 cont,
                 stream,
-                failure(
+                result.failure(
                     message=(
                         "Expected on of `{expected}` but found end of string".format(
                             expected=expected
@@ -221,19 +223,19 @@ def one_of(expected: str):
                 ),
             )
         if next_character in expected:
-            result = stream.read()
+            read_character = stream.read()
             return Call(
                 cont,
                 stream,
-                success(
-                    value=result,
+                result.success(
+                    value=read_character,
                 ),
             )
         else:
             return Call(
                 cont,
                 stream,
-                failure(
+                result.failure(
                     message=("Expected one of `{expected}` but found {actual}").format(
                         expected=expected,
                         actual=stream.next(),
@@ -269,7 +271,7 @@ def end_of_file():
             return Call(
                 cont,
                 stream,
-                success(
+                result.success(
                     value=None,
                 ),
             )
@@ -277,7 +279,7 @@ def end_of_file():
             return Call(
                 cont,
                 stream,
-                failure(
+                result.failure(
                     message="Expected end-of-file but found `{char}`".format(
                         char=stream.next(),
                     ),
