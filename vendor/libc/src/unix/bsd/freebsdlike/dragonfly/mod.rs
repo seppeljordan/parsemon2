@@ -1020,8 +1020,10 @@ pub const SF_XLINK: ::c_ulong = 0x01000000;
 pub const UTIME_OMIT: c_long = -2;
 pub const UTIME_NOW: c_long = -1;
 
-fn _CMSG_ALIGN(n: usize) -> usize {
-    (n + 3) & !3
+const_fn! {
+    {const} fn _CMSG_ALIGN(n: usize) -> usize {
+        (n + 3) & !3
+    }
 }
 
 f! {
@@ -1050,7 +1052,7 @@ f! {
         }
     }
 
-    pub fn CMSG_SPACE(length: ::c_uint) -> ::c_uint {
+    pub {const} fn CMSG_SPACE(length: ::c_uint) -> ::c_uint {
         (_CMSG_ALIGN(::mem::size_of::<::cmsghdr>()) +
             _CMSG_ALIGN(length as usize)) as ::c_uint
     }
@@ -1065,18 +1067,11 @@ safe_f! {
 extern "C" {
     pub fn __errno_location() -> *mut ::c_int;
     pub fn setgrent();
-    pub fn mprotect(
-        addr: *mut ::c_void,
-        len: ::size_t,
-        prot: ::c_int,
-    ) -> ::c_int;
+    pub fn mprotect(addr: *mut ::c_void, len: ::size_t, prot: ::c_int) -> ::c_int;
 
     pub fn setutxdb(_type: ::c_uint, file: *mut ::c_char) -> ::c_int;
 
-    pub fn aio_waitcomplete(
-        iocbp: *mut *mut aiocb,
-        timeout: *mut ::timespec,
-    ) -> ::c_int;
+    pub fn aio_waitcomplete(iocbp: *mut *mut aiocb, timeout: *mut ::timespec) -> ::c_int;
 
     pub fn waitid(
         idtype: idtype_t,

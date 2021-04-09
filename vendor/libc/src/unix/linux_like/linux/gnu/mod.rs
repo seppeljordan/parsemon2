@@ -1223,33 +1223,6 @@ pub const STATX_ATTR_NODUMP: ::c_int = 0x0040;
 pub const STATX_ATTR_ENCRYPTED: ::c_int = 0x0800;
 pub const STATX_ATTR_AUTOMOUNT: ::c_int = 0x1000;
 
-// sys/auxv.h
-pub const AT_NULL: ::c_ulong = 0;
-pub const AT_IGNORE: ::c_ulong = 1;
-pub const AT_EXECFD: ::c_ulong = 2;
-pub const AT_PHDR: ::c_ulong = 3;
-pub const AT_PHENT: ::c_ulong = 4;
-pub const AT_PHNUM: ::c_ulong = 5;
-pub const AT_PAGESZ: ::c_ulong = 6;
-pub const AT_BASE: ::c_ulong = 7;
-pub const AT_FLAGS: ::c_ulong = 8;
-pub const AT_ENTRY: ::c_ulong = 9;
-pub const AT_NOTELF: ::c_ulong = 10;
-pub const AT_UID: ::c_ulong = 11;
-pub const AT_EUID: ::c_ulong = 12;
-pub const AT_GID: ::c_ulong = 13;
-pub const AT_EGID: ::c_ulong = 14;
-pub const AT_PLATFORM: ::c_ulong = 15;
-pub const AT_HWCAP: ::c_ulong = 16;
-pub const AT_CLKTCK: ::c_ulong = 17;
-// AT_* values 18 through 22 are reserved
-pub const AT_SECURE: ::c_ulong = 23;
-pub const AT_BASE_PLATFORM: ::c_ulong = 24;
-pub const AT_RANDOM: ::c_ulong = 25;
-pub const AT_HWCAP2: ::c_ulong = 26;
-
-pub const AT_EXECFN: ::c_ulong = 31;
-
 //sys/timex.h
 pub const ADJ_OFFSET: ::c_uint = 0x0001;
 pub const ADJ_FREQUENCY: ::c_uint = 0x0002;
@@ -1362,11 +1335,7 @@ extern "C" {
         num: ::size_t,
         size: ::size_t,
         compar: ::Option<
-            unsafe extern "C" fn(
-                *const ::c_void,
-                *const ::c_void,
-                *mut ::c_void,
-            ) -> ::c_int,
+            unsafe extern "C" fn(*const ::c_void, *const ::c_void, *mut ::c_void) -> ::c_int,
         >,
         arg: *mut ::c_void,
     );
@@ -1384,22 +1353,10 @@ extern "C" {
         timeout: *mut ::timespec,
     ) -> ::c_int;
 
-    pub fn getrlimit64(
-        resource: ::__rlimit_resource_t,
-        rlim: *mut ::rlimit64,
-    ) -> ::c_int;
-    pub fn setrlimit64(
-        resource: ::__rlimit_resource_t,
-        rlim: *const ::rlimit64,
-    ) -> ::c_int;
-    pub fn getrlimit(
-        resource: ::__rlimit_resource_t,
-        rlim: *mut ::rlimit,
-    ) -> ::c_int;
-    pub fn setrlimit(
-        resource: ::__rlimit_resource_t,
-        rlim: *const ::rlimit,
-    ) -> ::c_int;
+    pub fn getrlimit64(resource: ::__rlimit_resource_t, rlim: *mut ::rlimit64) -> ::c_int;
+    pub fn setrlimit64(resource: ::__rlimit_resource_t, rlim: *const ::rlimit64) -> ::c_int;
+    pub fn getrlimit(resource: ::__rlimit_resource_t, rlim: *mut ::rlimit) -> ::c_int;
+    pub fn setrlimit(resource: ::__rlimit_resource_t, rlim: *const ::rlimit) -> ::c_int;
     pub fn prlimit(
         pid: ::pid_t,
         resource: ::__rlimit_resource_t,
@@ -1430,11 +1387,7 @@ extern "C" {
         mask: ::c_uint,
         statxbuf: *mut statx,
     ) -> ::c_int;
-    pub fn getrandom(
-        buf: *mut ::c_void,
-        buflen: ::size_t,
-        flags: ::c_uint,
-    ) -> ::ssize_t;
+    pub fn getrandom(buf: *mut ::c_void, buflen: ::size_t, flags: ::c_uint) -> ::ssize_t;
 
     pub fn memmem(
         haystack: *const ::c_void,
@@ -1492,9 +1445,7 @@ extern "C" {
     pub fn glob64(
         pattern: *const ::c_char,
         flags: ::c_int,
-        errfunc: ::Option<
-            extern "C" fn(epath: *const ::c_char, errno: ::c_int) -> ::c_int,
-        >,
+        errfunc: ::Option<extern "C" fn(epath: *const ::c_char, errno: ::c_int) -> ::c_int>,
         pglob: *mut glob64_t,
     ) -> ::c_int;
     pub fn globfree64(pglob: *mut glob64_t);
@@ -1510,11 +1461,7 @@ extern "C" {
         cpuset: *const ::cpu_set_t,
     ) -> ::c_int;
     pub fn getpriority(which: ::__priority_which_t, who: ::id_t) -> ::c_int;
-    pub fn setpriority(
-        which: ::__priority_which_t,
-        who: ::id_t,
-        prio: ::c_int,
-    ) -> ::c_int;
+    pub fn setpriority(which: ::__priority_which_t, who: ::id_t, prio: ::c_int) -> ::c_int;
     pub fn pthread_getaffinity_np(
         thread: ::pthread_t,
         cpusetsize: ::size_t,
@@ -1548,28 +1495,13 @@ extern "C" {
         buflen: ::size_t,
         result: *mut *mut ::group,
     ) -> ::c_int;
-    pub fn pthread_getname_np(
-        thread: ::pthread_t,
-        name: *mut ::c_char,
-        len: ::size_t,
-    ) -> ::c_int;
-    pub fn pthread_setname_np(
-        thread: ::pthread_t,
-        name: *const ::c_char,
-    ) -> ::c_int;
+    pub fn pthread_getname_np(thread: ::pthread_t, name: *mut ::c_char, len: ::size_t) -> ::c_int;
+    pub fn pthread_setname_np(thread: ::pthread_t, name: *const ::c_char) -> ::c_int;
 }
 
 extern "C" {
-    pub fn dlmopen(
-        lmid: Lmid_t,
-        filename: *const ::c_char,
-        flag: ::c_int,
-    ) -> *mut ::c_void;
-    pub fn dlinfo(
-        handle: *mut ::c_void,
-        request: ::c_int,
-        info: *mut ::c_void,
-    ) -> ::c_int;
+    pub fn dlmopen(lmid: Lmid_t, filename: *const ::c_char, flag: ::c_int) -> *mut ::c_void;
+    pub fn dlinfo(handle: *mut ::c_void, request: ::c_int, info: *mut ::c_void) -> ::c_int;
 }
 
 cfg_if! {
