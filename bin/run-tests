@@ -2,6 +2,6 @@
 
 set -e
 
-nix build
-export PYTHONPATH=result/lib/python3.8/site-packages
+python setup.py build
+export PYTHONPATH=build/lib
 pytest --benchmark-skip $*

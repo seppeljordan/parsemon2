@@ -46,7 +46,6 @@
                   setuptools-rust
                   virtualenv
                 ]))
-              pkgs.bump2version
               pkgs.rustc
               pkgs.cargo
               pkgs.git
