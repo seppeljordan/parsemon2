@@ -1,4 +1,3 @@
-from functools import wraps
 from typing import Callable, Generic, TypeVar, Union
 
 T = TypeVar("T")
@@ -25,16 +24,12 @@ class Call(Generic[T]):
 Trampoline = Union[Result[T], Call[T]]
 
 
-def with_trampoline(f: Callable[..., Trampoline[T]]) -> Callable[..., T]:
-    @wraps(f)
-    def g(*args, **kwargs):
-        iteration_result = f(*args, **kwargs)
-        while True:
-            if isinstance(iteration_result, Result):
-                return iteration_result.value
-            else:
-                iteration_result = iteration_result.fun(
-                    *iteration_result.args, **iteration_result.kwargs
-                )
-
-    return g
+def with_trampoline(f, *args, **kwargs):
+    iteration_result = f(*args, **kwargs)
+    while True:
+        try:
+            iteration_result = iteration_result.fun(
+                *iteration_result.args, **iteration_result.kwargs
+            )
+        except AttributeError:
+            return iteration_result.value

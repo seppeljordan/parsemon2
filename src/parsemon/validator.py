@@ -18,7 +18,7 @@ class Validator(Generic[T]):
         def do_validation(
             to_validate: T,
         ):
-            is_validated, error_message = with_trampoline(self.function)(to_validate)
+            is_validated, error_message = with_trampoline(self.function, to_validate)
             if is_validated:
                 return unit(to_validate)
             else:
@@ -28,7 +28,7 @@ class Validator(Generic[T]):
 
     def __or__(self, other):
         def validator_function(value):
-            self_result, self_error_msg = with_trampoline(self.function)(value)
+            self_result, self_error_msg = with_trampoline(self.function, value)
             if self_result:
                 return Result((self_result, self_error_msg))
             else:
@@ -38,8 +38,8 @@ class Validator(Generic[T]):
 
     def __and__(self, other):
         def validator_function(value):
-            self_result, self_error = with_trampoline(self.function)(value)
-            other_result, other_error = with_trampoline(other.function)(value)
+            self_result, self_error = with_trampoline(self.function, value)
+            other_result, other_error = with_trampoline(other.function, value)
             return Result(
                 (
                     self_result and other_result,

@@ -63,7 +63,8 @@ def choose_parser(parser, other):
 
 
 def run(parser, input_string, stream_implementation=StringStream):
-    return with_trampoline(parser)(
+    return with_trampoline(
+        parser,
         stream_implementation.from_string(input_string),
         lambda stream, x: Result(
             (
