@@ -28,8 +28,9 @@ def with_trampoline(f, *args, **kwargs):
     iteration_result = f(*args, **kwargs)
     while True:
         try:
-            iteration_result = iteration_result.fun(
-                *iteration_result.args, **iteration_result.kwargs
-            )
+            tail_call_function = iteration_result.fun
         except AttributeError:
             return iteration_result.value
+        iteration_result = tail_call_function(
+            *iteration_result.args, **iteration_result.kwargs
+        )

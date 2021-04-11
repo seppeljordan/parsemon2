@@ -75,6 +75,11 @@ If you want to learn about the library we recommend checking out our
 Changes
 =======
 
+3.2.1
+-----
+
+- Fixed minor bug in error handling code
+
 3.2.0
 -----
 
