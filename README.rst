@@ -75,6 +75,13 @@ If you want to learn about the library we recommend checking out our
 Changes
 =======
 
+3.2.0
+-----
+
+- Slight performance improvements
+- Implement repeat combinator that tries to run a parser for a
+  specified number of times
+
 3.1.0
 -----
 
