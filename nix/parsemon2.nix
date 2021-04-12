@@ -1,19 +1,25 @@
 { buildSetuptoolsPackage, attrs, hypothesis, pytest, pytest-benchmark
-, pytest-profiling, pytestcov, sphinx, setuptools-rust, cargo, rustc
-, pytestCheckHook }:
-buildSetuptoolsPackage {
-  src = ../.;
+, pytest-profiling, pytestcov, sphinx, setuptools-rust, pytestCheckHook
+, rustPlatform }:
+let src = ../.;
+in buildSetuptoolsPackage {
+  inherit src;
+  cargoDeps = rustPlatform.fetchCargoTarball {
+    inherit src;
+    name = "parsemon2-3.2.1";
+    sha256 = "xeL+6+if8ydUFMzL/zePmnJ7hW+8t2Hn8EapnKVb9iE=";
+  };
 
   # building
-  nativeBuildInputs = [ sphinx rustc cargo ];
-  propagatedBuildInputs = [ attrs cargo rustc ];
-  buildInputs = [ setuptools-rust ];
-  preBuildPhases = [ "configureCargoPhase" ];
+  nativeBuildInputs = [
+    sphinx
+    rustPlatform.rust.cargo
+    rustPlatform.rust.rustc
+    setuptools-rust
+    rustPlatform.cargoSetupHook
+  ];
+  propagatedBuildInputs = [ attrs ];
   preInstallPhases = [ "buildDocsPhase" ];
-  configureCargoPhase = ''
-    mkdir -p .cargo
-    cp $src/nix/cargo/config.toml .cargo/config.toml
-  '';
   buildDocsPhase = ''
     make man 
   '';
@@ -27,12 +33,6 @@ buildSetuptoolsPackage {
 
   # tests
   pytestFlagsArray = [ "--benchmark-skip" ];
-  checkInputs = [
-    hypothesis
-    pytest
-    pytest-benchmark
-    pytest-profiling
-    pytestcov
-    setuptools-rust
-  ];
+  checkInputs =
+    [ hypothesis pytest pytest-benchmark pytest-profiling pytestcov ];
 }

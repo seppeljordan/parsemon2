@@ -43,7 +43,7 @@
                   pytestcov
                   setuptools-rust
                   sphinx
-                  twine
+                  # twine
                   virtualenv
                   wheel
                 ]))
