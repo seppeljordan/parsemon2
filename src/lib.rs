@@ -2,6 +2,7 @@ use pyo3::prelude::*;
 use pyo3::wrap_pyfunction;
 use pyo3::class::number::PyNumberProtocol;
 
+mod trampoline;
 
 #[pyclass]
 #[derive(Clone)]
@@ -95,5 +96,8 @@ fn extensions(py: Python<'_>, module: &PyModule) -> PyResult<()> {
     let result_submodule = PyModule::new(py, "result")?;
     initialize_result(result_submodule)?;
     module.add_submodule(result_submodule)?;
+    let trampoline_submodule = PyModule::new(py, "trampoline")?;
+    trampoline::initialize_trampoline(trampoline_submodule)?;
+    module.add_submodule(trampoline_submodule)?;
     Ok(())
 }

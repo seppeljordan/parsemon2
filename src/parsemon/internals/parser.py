@@ -1,23 +1,25 @@
 """Contains the implementation of the parser monad.  This module is
 not intended to be used from outside of this library.
 """
+from parsemon.extensions import trampoline
 from parsemon.stream import StringStream
-from parsemon.trampoline import Call, Result, with_trampoline
 
 
 def bind(parser, binding):
     def _combined_parser(stream, continuation):
         def bind_continuation(progressed_stream, previous_parsing_result):
             if previous_parsing_result.is_failure():
-                return Call(continuation, progressed_stream, previous_parsing_result)
+                return trampoline.Call(
+                    continuation, progressed_stream, previous_parsing_result
+                )
             next_parser = binding(previous_parsing_result.value)
-            return Call(
+            return trampoline.Call(
                 next_parser,
                 progressed_stream,
                 continuation,
             )
 
-        return Call(
+        return trampoline.Call(
             parser,
             stream,
             bind_continuation,
@@ -34,26 +36,26 @@ def choose_parser(parser, other):
                     final_result = parser_result + other_result
                 else:
                     final_result = other_result
-                return Call(
+                return trampoline.Call(
                     continuation,
                     final_stream,
                     final_result,
                 )
 
             if parser_result.is_failure():
-                return Call(
+                return trampoline.Call(
                     other,
                     progressed_stream,
                     _error_message_continuation,
                 )
             else:
-                return Call(
+                return trampoline.Call(
                     continuation,
                     progressed_stream,
                     parser_result,
                 )
 
-        return Call(
+        return trampoline.Call(
             parser,
             stream,
             _choice_continuation,
@@ -63,10 +65,10 @@ def choose_parser(parser, other):
 
 
 def run(parser, input_string, stream_implementation=StringStream):
-    return with_trampoline(
+    return trampoline.with_trampoline(
         parser,
         stream_implementation.from_string(input_string),
-        lambda stream, x: Result(
+        lambda stream, x: trampoline.Result(
             (
                 stream,
                 x,

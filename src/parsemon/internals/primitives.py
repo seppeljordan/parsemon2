@@ -1,5 +1,4 @@
-from parsemon.extensions import result
-from parsemon.trampoline import Call
+from parsemon.extensions import result, trampoline
 
 
 def look_ahead(parser):
@@ -11,13 +10,13 @@ def look_ahead(parser):
                 reset_point.destroy()
             else:
                 stream.reset_stream(reset_point)
-            return Call(
+            return trampoline.Call(
                 continuation,
                 stream,
                 parsing_result,
             )
 
-        return Call(
+        return trampoline.Call(
             parser,
             stream,
             _reset_stream,
@@ -35,13 +34,13 @@ def try_parser(parser):
                 stream.reset_stream(reset_point)
             else:
                 reset_point.destroy()
-            return Call(
+            return trampoline.Call(
                 continuation,
                 stream,
                 parsing_result,
             )
 
-        return Call(
+        return trampoline.Call(
             parser,
             stream,
             _reset_stream,
@@ -52,7 +51,7 @@ def try_parser(parser):
 
 def unit(value):
     def parser(stream, cont):
-        return Call(
+        return trampoline.Call(
             cont,
             stream,
             result.success(
@@ -67,7 +66,7 @@ def fail(msg):
     """This parser always fails with the message passed as ``msg``."""
 
     def parser(stream, cont):
-        return Call(
+        return trampoline.Call(
             cont, stream, result.failure(message=msg, position=stream.position())
         )
 
@@ -87,7 +86,7 @@ def character(n: int = 1):
             read_count += 1
             results.append(char_found)
         if read_count < n:
-            return Call(
+            return trampoline.Call(
                 cont,
                 stream,
                 result.failure(
@@ -95,7 +94,7 @@ def character(n: int = 1):
                     position=stream.position(),
                 ),
             )
-        return Call(
+        return trampoline.Call(
             cont,
             stream,
             result.success(
@@ -117,7 +116,7 @@ def literal(expected):
         for expected_char in expected:
             character_read = stream.next()
             if character_read is None:
-                return Call(
+                return trampoline.Call(
                     cont,
                     stream,
                     result.failure(
@@ -130,7 +129,7 @@ def literal(expected):
             if expected_char == character_read:
                 stream.read()
             else:
-                return Call(
+                return trampoline.Call(
                     cont,
                     stream,
                     result.failure(
@@ -140,7 +139,7 @@ def literal(expected):
                         position=stream.position(),
                     ),
                 )
-        return Call(
+        return trampoline.Call(
             cont,
             stream,
             result.success(
@@ -162,7 +161,7 @@ def none_of(chars: str):
     def parser(stream, cont):
         next_char = stream.next()
         if next_char is None:
-            return Call(
+            return trampoline.Call(
                 cont,
                 stream,
                 result.failure(
@@ -179,7 +178,7 @@ def none_of(chars: str):
             )
         if next_char not in chars:
             read_character = stream.read()
-            return Call(
+            return trampoline.Call(
                 cont,
                 stream,
                 result.success(
@@ -187,7 +186,7 @@ def none_of(chars: str):
                 ),
             )
         else:
-            return Call(
+            return trampoline.Call(
                 cont,
                 stream,
                 result.failure(
@@ -210,7 +209,7 @@ def one_of(expected: str):
     def parser(stream, cont):
         next_character = stream.next()
         if next_character is None:
-            return Call(
+            return trampoline.Call(
                 cont,
                 stream,
                 result.failure(
@@ -224,7 +223,7 @@ def one_of(expected: str):
             )
         if next_character in expected:
             read_character = stream.read()
-            return Call(
+            return trampoline.Call(
                 cont,
                 stream,
                 result.success(
@@ -232,7 +231,7 @@ def one_of(expected: str):
                 ),
             )
         else:
-            return Call(
+            return trampoline.Call(
                 cont,
                 stream,
                 result.failure(
@@ -251,10 +250,10 @@ def fmap(mapping, parser):
     """Applies a function to the result of a given parser"""
 
     def new_parser(stream, continuation):
-        return Call(
+        return trampoline.Call(
             parser,
             stream,
-            lambda resulting_stream, result: Call(
+            lambda resulting_stream, result: trampoline.Call(
                 continuation, resulting_stream, result.map_value(mapping)
             ),
         )
@@ -268,7 +267,7 @@ def end_of_file():
 
     def parser(stream, cont):
         if stream.next() is None:
-            return Call(
+            return trampoline.Call(
                 cont,
                 stream,
                 result.success(
@@ -276,7 +275,7 @@ def end_of_file():
                 ),
             )
         else:
-            return Call(
+            return trampoline.Call(
                 cont,
                 stream,
                 result.failure(

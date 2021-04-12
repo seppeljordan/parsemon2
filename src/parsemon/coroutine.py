@@ -1,7 +1,8 @@
 from functools import wraps
 
+from parsemon.extensions import trampoline
+
 from .extensions import result
-from .trampoline import Call
 
 
 def do(f):
@@ -30,27 +31,27 @@ def do(f):
 
             def do_continuation(progressed_stream, previous_parsing_result):
                 if previous_parsing_result.is_failure():
-                    return Call(
+                    return trampoline.Call(
                         original_continuation,
                         progressed_stream,
                         previous_parsing_result,
                     )
                 try:
                     next_parser = generator.send(previous_parsing_result.value)
-                    return Call(
+                    return trampoline.Call(
                         next_parser,
                         progressed_stream,
                         do_continuation,
                     )
                 except StopIteration as stop:
-                    return Call(
+                    return trampoline.Call(
                         original_continuation,
                         progressed_stream,
                         result.success(getattr(stop, "value", None)),
                     )
 
             initial_parser = generator.send(None)
-            return Call(
+            return trampoline.Call(
                 initial_parser,
                 stream,
                 do_continuation,
