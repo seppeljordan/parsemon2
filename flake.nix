@@ -81,6 +81,11 @@
             flake8-check = runCodeAnalysis "flake8" ''
               ${python.pkgs.flake8}/bin/flake8
             '';
+            rustfmt-check = runCodeAnalysis "rustfmt" ''
+              ${pkgs.rustfmt}/bin/rustfmt \
+                  --check \
+                  $(find src/ -type f -name '*.rs')
+            '';
           };
         });
       systemIndependent = {

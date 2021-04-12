@@ -1,4 +1,4 @@
-from typing import Callable, Generic, Tuple, TypeVar
+from typing import Generic, TypeVar
 
 from parsemon.extensions import trampoline
 
