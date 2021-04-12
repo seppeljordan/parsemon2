@@ -5,3 +5,4 @@ set -e
 isort . src/ bin/build-wheels
 black . src/ bin/build-wheels
 nixfmt $(find . -name '*.nix' -type f)
+cargo fmt

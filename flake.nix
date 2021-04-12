@@ -48,12 +48,10 @@
                   wheel
                 ]))
               pkgs.rustc
+              pkgs.rustfmt
               pkgs.cargo
               pkgs.git
               pkgs.graphviz
-
-              # nix linter is broken in the current version of nixpkgs
-              # pkgs.nix-linter
             ];
           };
           defaultPackage = python.pkgs.parsemon2;
