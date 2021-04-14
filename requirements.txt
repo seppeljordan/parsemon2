@@ -3,4 +3,4 @@
 # requirements.txt file as a source of truth for dependency
 # information. It could be out of date.
 
-sphinx
+sphinx==3.3.1

@@ -30,12 +30,6 @@ parsemon.parser
 .. automodule:: parsemon.parser
    :members:
 
-parsemon.trampoline
--------------------
-
-.. automodule:: parsemon.trampoline
-   :members:
-
 parsemon.validator
 ------------------
 

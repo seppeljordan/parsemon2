@@ -1,3 +1,6 @@
+import sys
+from os import path
+
 # -*- coding: utf-8 -*-
 #
 # Configuration file for the Sphinx documentation builder.
@@ -12,6 +15,7 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
+sys.path.insert(0, path.join(path.abspath(".."), "src"))
 
 # -- Project information -----------------------------------------------------
 
@@ -39,6 +43,8 @@ extensions = [
     "sphinx.ext.todo",
     "sphinx.ext.viewcode",
 ]
+
+autodoc_mock_imports = ["parsemon.extensions"]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["sphinx_templates"]
