@@ -4,8 +4,6 @@ import io
 from abc import ABC, abstractmethod
 from typing import Optional
 
-from attr import attrib, attrs
-
 
 class Stream(ABC):
     @classmethod
@@ -52,10 +50,10 @@ class StringStreamResetPoint(ResetPoint):
         pass
 
 
-@attrs
 class StringStream(Stream):
-    content = attrib()
-    _position = attrib()
+    def __init__(self, content: str, position: int):
+        self.content = content
+        self._position = position
 
     @classmethod
     def from_string(cls, content):

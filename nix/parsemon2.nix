@@ -1,6 +1,5 @@
-{ buildSetuptoolsPackage, attrs, hypothesis, pytest, pytest-benchmark
-, pytest-profiling, pytestcov, sphinx, setuptools-rust, pytestCheckHook
-, rustPlatform }:
+{ buildSetuptoolsPackage, hypothesis, pytest, pytest-benchmark, pytest-profiling
+, pytestcov, sphinx, setuptools-rust, pytestCheckHook, rustPlatform }:
 let src = ../.;
 in buildSetuptoolsPackage {
   inherit src;
@@ -18,7 +17,6 @@ in buildSetuptoolsPackage {
     setuptools-rust
     rustPlatform.cargoSetupHook
   ];
-  propagatedBuildInputs = [ attrs ];
   preInstallPhases = [ "buildDocsPhase" ];
   buildDocsPhase = ''
     make man 

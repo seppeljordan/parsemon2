@@ -31,7 +31,6 @@
             buildInputs = [
               (python.withPackages (ps:
                 with ps; [
-                  attrs
                   black
                   flake8
                   hypothesis

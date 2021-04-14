@@ -1,9 +1,8 @@
 """This module contains the basic building blocks for implementing parsers"""
 
+from dataclasses import dataclass
 from functools import reduce
-from typing import List, TypeVar
-
-from attr import attrib, attrs
+from typing import Any, List, TypeVar
 
 from .coroutine import do
 from .error import ParsingFailed
@@ -17,10 +16,10 @@ from .sourcemap import (
 T = TypeVar("T")
 
 
-@attrs
+@dataclass
 class ParsingResult:
-    value = attrib()
-    remaining_input = attrib()
+    value: Any
+    remaining_input: str
 
 
 def parsing_result(value, remaining_input):
