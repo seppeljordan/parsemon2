@@ -1,4 +1,4 @@
-from typing import List, Sized
+from typing import List
 
 
 def display_location(line, column) -> str:
@@ -8,7 +8,7 @@ def display_location(line, column) -> str:
     )
 
 
-def find_linebreak_indices(document: Sized) -> List[int]:
+def find_linebreak_indices(document) -> List[int]:
     def iterate():
         for (character, index) in zip(document, range(0, len(document))):
             if character == "\n":

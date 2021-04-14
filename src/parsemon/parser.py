@@ -115,7 +115,7 @@ def seperated_by(parser, seperator):
     parse the string ``1,2,3,4`` and return the list
     ``['1','2','3','4']``.
     """
-    results = []
+    results: List[Any] = []
     first_elem = yield choice(try_parser(parser), unit(_NO_FURTHER_RESULT))
     if first_elem is _NO_FURTHER_RESULT:
         return results
