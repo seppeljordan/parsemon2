@@ -13,7 +13,8 @@
         inherit (nix-setuptools.lib.setuptools) parseSetupCfg;
         inherit (nixpkgs) lib;
       };
-      systemDependent = flake-utils.lib.eachDefaultSystem (system:
+      supportedSystems = flake-utils.lib.defaultSystems;
+      systemDependent = flake-utils.lib.eachSystem supportedSystems (system:
         let
           pkgs = import nixpkgs {
             inherit system;
@@ -30,7 +31,8 @@
           devShell = pkgs.mkShell {
             buildInputs = [
               (python.withPackages (ps:
-                with ps; [
+                with ps;
+                [
                   black
                   flake8
                   hypothesis
@@ -42,10 +44,14 @@
                   pytestcov
                   setuptools-rust
                   sphinx
-                  # twine
                   virtualenv
                   wheel
-                ]))
+                ] ++
+                # as of april 2021 pandas does not support i686
+                # architecture.  Since this is a dependency of twine,
+                # we cannot support the release infrastructure on
+                # those machines.
+                nixpkgs.lib.optional (system != "i686-linux") twine))
               pkgs.rustc
               pkgs.rustfmt
               pkgs.cargo
