@@ -75,6 +75,11 @@ If you want to learn about the library we recommend checking out our
 Changes
 =======
 
+3.2.2
+=====
+
+- Further performance improvements
+
 3.2.1
 -----
 
