@@ -1,6 +1,8 @@
 use pyo3::class::number::PyNumberProtocol;
+use pyo3::gc::{PyGCProtocol, PyVisit};
 use pyo3::prelude::*;
 use pyo3::wrap_pyfunction;
+use pyo3::PyTraverseError;
 
 mod trampoline;
 
@@ -18,6 +20,19 @@ pub struct Failure {
 pub struct Result {
     value: Option<PyObject>,
     failures: Vec<Failure>,
+}
+
+#[pyproto]
+impl PyGCProtocol for Result {
+    fn __traverse__(&self, visit: PyVisit) -> std::result::Result<(), PyTraverseError> {
+        if let Some(value) = &self.value {
+            visit.call(value)?;
+        }
+        Ok(())
+    }
+    fn __clear__(&mut self) {
+        self.value = None;
+    }
 }
 
 #[pymethods]
