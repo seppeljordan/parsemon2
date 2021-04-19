@@ -64,10 +64,10 @@ def choose_parser(parser, other):
     return _choice_parser
 
 
-def run(parser, input_string, stream_implementation=StringStream):
+def run(parser, input_stream):
     return trampoline.with_trampoline(
         parser,
-        stream_implementation.from_string(input_string),
+        input_stream,
         lambda stream, x: trampoline.Result(
             (
                 stream,

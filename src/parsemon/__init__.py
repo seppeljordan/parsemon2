@@ -2,7 +2,7 @@
 
 from .basic import floating_point, integer
 from .coroutine import do
-from .error import ParsingFailed
+from .error import FileTooLarge, ParsingFailed
 from .internals import (
     bind,
     character,

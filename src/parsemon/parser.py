@@ -2,16 +2,17 @@
 
 from dataclasses import dataclass
 from functools import reduce
-from typing import Any, List, TypeVar
+from typing import Any, List, Type, TypeVar
 
 from .coroutine import do
-from .error import ParsingFailed
+from .error import FileTooLarge, ParsingFailed
 from .internals import bind, choose_parser, one_of, run, try_parser, unit
 from .sourcemap import (
     display_location,
     find_linebreak_indices,
     find_location_in_indices,
 )
+from .stream import Stream, StringStream
 
 T = TypeVar("T")
 
@@ -144,7 +145,7 @@ def enclosed_by(
 def run_parser(
     p,
     input_string: str,
-    stream_implementation=None,
+    stream_implementation: Type[Stream] = StringStream,
 ):
     """Parse string input_string with parser p"""
 
@@ -156,9 +157,7 @@ def run_parser(
         )
 
     kwargs = {}
-    if stream_implementation:
-        kwargs["stream_implementation"] = stream_implementation
-    stream, result = run(p, input_string, **kwargs)
+    stream, result = run(p, StringStream.from_string(input_string), **kwargs)
     if result.is_failure():
         failures = result.get_failures()
         final_message = " OR ".join(map(render_failure, failures))
@@ -167,8 +166,11 @@ def run_parser(
         return parsing_result(value=result.value, remaining_input=stream.to_string())
 
 
-def parse_file(parser, input_file):
-    return run_parser(parser, input_file.read())
+def parse_file(parser, input_file, max_size=None):
+    content = input_file.read(max_size)
+    if input_file.read(1):
+        raise FileTooLarge("File to be parsed exceeded maximum size")
+    return run_parser(parser, content)
 
 
 whitespace_unicode_characters_decimals: List[int] = [
