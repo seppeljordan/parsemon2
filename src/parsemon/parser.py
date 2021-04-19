@@ -167,6 +167,10 @@ def run_parser(
         return parsing_result(value=result.value, remaining_input=stream.to_string())
 
 
+def parse_file(parser, input_file):
+    return run_parser(parser, input_file.read())
+
+
 whitespace_unicode_characters_decimals: List[int] = [
     9,
     10,

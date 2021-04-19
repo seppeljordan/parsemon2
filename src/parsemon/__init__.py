@@ -23,6 +23,7 @@ from .parser import (
     enclosed_by,
     many,
     many1,
+    parse_file,
     repeat,
     run_parser,
     seperated_by,
