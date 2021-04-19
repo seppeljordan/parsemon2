@@ -3,20 +3,9 @@ import pytest
 from parsemon import chain, do, literal, run_parser, unit
 
 
-@pytest.fixture(
-    params=[
-        1,
-        2,
-        3,
-        4,
-        5,
-        10,
-        20,
-    ]
-)
+@pytest.fixture
 def document(request):
-    document_length = request.param
-    return "0123456789" * 1000 * document_length
+    return "0123456789" * 2000
 
 
 @pytest.fixture(
