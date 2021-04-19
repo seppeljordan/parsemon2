@@ -156,8 +156,7 @@ def run_parser(
             message=failure.message, location=display_location(line, column)
         )
 
-    kwargs = {}
-    stream, result = run(p, StringStream.from_string(input_string), **kwargs)
+    stream, result = run(p, StringStream.from_string(input_string))
     if result.is_failure():
         failures = result.get_failures()
         final_message = " OR ".join(map(render_failure, failures))

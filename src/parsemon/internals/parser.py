@@ -2,7 +2,6 @@
 not intended to be used from outside of this library.
 """
 from parsemon.extensions import trampoline
-from parsemon.stream import StringStream
 
 
 def bind(parser, binding):
