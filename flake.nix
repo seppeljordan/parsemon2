@@ -10,8 +10,8 @@
   outputs = { self, nixpkgs, flake-utils, nix-setuptools }:
     let
       modules = import nix/modules.nix {
-        inherit (nix-setuptools.lib.setuptools) parseSetupCfg;
         inherit (nixpkgs) lib;
+        nixSetuptools = nix-setuptools;
       };
       supportedSystems = flake-utils.lib.defaultSystems;
       systemDependent = flake-utils.lib.eachSystem supportedSystems (system:

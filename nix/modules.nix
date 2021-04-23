@@ -1,7 +1,7 @@
-{ lib, parseSetupCfg }:
+{ lib, nixSetuptools }:
 lib.fix (self:
   let callPackage = lib.callPackageWith self;
   in {
-    inherit lib parseSetupCfg;
+    inherit lib nixSetuptools;
     packageOverrides = callPackage ./package-overrides.nix { };
   })
