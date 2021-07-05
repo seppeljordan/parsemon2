@@ -31,8 +31,7 @@
           devShell = pkgs.mkShell {
             buildInputs = [
               (python.withPackages (ps:
-                with ps;
-                [
+                with ps; [
                   black
                   flake8
                   hypothesis
@@ -46,12 +45,8 @@
                   sphinx
                   virtualenv
                   wheel
-                ] ++
-                # as of april 2021 pandas does not support i686
-                # architecture.  Since this is a dependency of twine,
-                # we cannot support the release infrastructure on
-                # those machines.
-                nixpkgs.lib.optional (system != "i686-linux") twine))
+                  twine
+                ]))
               pkgs.rustc
               pkgs.rustfmt
               pkgs.cargo
