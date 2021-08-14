@@ -1,8 +1,9 @@
-{ buildSetuptoolsPackage, hypothesis, pytest, pytest-benchmark, pytest-profiling
+{ buildPythonPackage, hypothesis, pytest, pytest-benchmark, pytest-profiling
 , pytestcov, sphinx, setuptools-rust, pytestCheckHook, rustPlatform }:
-let src = ../.;
-in buildSetuptoolsPackage {
-  inherit src;
+buildPythonPackage rec {
+  pname = "parsemon2";
+  version = "dev";
+  src = ../.;
   cargoDeps = rustPlatform.fetchCargoTarball {
     inherit src;
     name = "parsemon2-3.2.1";

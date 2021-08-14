@@ -4,15 +4,10 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
-    nix-setuptools.url = "github:seppeljordan/nix-setuptools";
   };
 
-  outputs = { self, nixpkgs, flake-utils, nix-setuptools }:
+  outputs = { self, nixpkgs, flake-utils }:
     let
-      modules = import nix/modules.nix {
-        inherit (nixpkgs) lib;
-        nixSetuptools = nix-setuptools;
-      };
       supportedSystems = flake-utils.lib.defaultSystems;
       systemDependent = flake-utils.lib.eachSystem supportedSystems (system:
         let
@@ -90,11 +85,11 @@
         });
       systemIndependent = {
         lib = {
-          inherit (modules) packageOverrides;
+          packageOverrides = import nix/package-overrides.nix;
           package = import nix/parsemon2.nix;
         };
         overlay = final: prev:
-          let packageOverrides = modules.packageOverrides;
+          let packageOverrides = self.lib.packageOverrides;
           in {
             python3 = prev.python3.override { inherit packageOverrides; };
             python3Packages = final.python3.pkgs;
