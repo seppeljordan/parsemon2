@@ -110,13 +110,24 @@ fn initialize_result(module: &PyModule) -> PyResult<()> {
     Ok(())
 }
 
+fn add_submodule<F>(
+    py: Python<'_>,
+    name: &str,
+    initialize_submodule: F,
+    module: &PyModule,
+) -> PyResult<()>
+where
+    F: Fn(&PyModule) -> PyResult<()>,
+{
+    let submodule = PyModule::new(py, name)?;
+    initialize_submodule(submodule)?;
+    module.add_submodule(submodule)?;
+    Ok(())
+}
+
 #[pymodule]
 fn extensions(py: Python<'_>, module: &PyModule) -> PyResult<()> {
-    let result_submodule = PyModule::new(py, "result")?;
-    initialize_result(result_submodule)?;
-    module.add_submodule(result_submodule)?;
-    let trampoline_submodule = PyModule::new(py, "trampoline")?;
-    trampoline::initialize_trampoline(trampoline_submodule)?;
-    module.add_submodule(trampoline_submodule)?;
+    add_submodule(py, "result", initialize_result, &module)?;
+    add_submodule(py, "trampoline", trampoline::initialize_trampoline, &module)?;
     Ok(())
 }
