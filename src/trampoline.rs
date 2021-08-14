@@ -9,9 +9,9 @@ use pyo3::PyTraverseError;
 #[pyclass]
 #[derive(Clone)]
 pub struct Call {
-    function: Option<PyObject>,
-    args: Option<PyObject>,
-    kwargs: Option<PyObject>,
+    pub function: Option<PyObject>,
+    pub args: Option<PyObject>,
+    pub kwargs: Option<PyObject>,
 }
 
 #[pymethods]
