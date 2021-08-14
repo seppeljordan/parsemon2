@@ -47,6 +47,7 @@
               pkgs.cargo
               pkgs.git
               pkgs.graphviz
+              python.pkgs.gprof2dot
             ];
           };
           defaultPackage = python.pkgs.parsemon2;
