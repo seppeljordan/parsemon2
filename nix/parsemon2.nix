@@ -7,7 +7,7 @@ buildPythonPackage rec {
   cargoDeps = rustPlatform.fetchCargoTarball {
     inherit src;
     name = "parsemon2-3.2.1";
-    sha256 = "Ino+NhBAUbBfrCbCk4N9sA4/vYqRnXlBBe4UJ5aN6Uk=";
+    sha256 = "zGvgA3m7FQxwq+3+DvnDp2n5Tpydnt83iQBOHmVj1C4=";
   };
 
   # building
@@ -17,6 +17,7 @@ buildPythonPackage rec {
     rustPlatform.rust.rustc
     setuptools-rust
     rustPlatform.cargoSetupHook
+    pytestCheckHook
   ];
   preInstallPhases = [ "buildDocsPhase" ];
   buildDocsPhase = ''
