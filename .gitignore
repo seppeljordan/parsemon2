@@ -9,9 +9,12 @@
 /MANIFEST
 /htmlcov
 /.coverage
-/.hypothesis
 /prof/
 *.egg-info
+
+# hypothesis
+.hypothesis/*
+!.hypothesis/examples/
 
 # emacs
 *~
