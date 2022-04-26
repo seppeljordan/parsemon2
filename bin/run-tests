@@ -3,5 +3,5 @@
 set -e
 
 python setup.py build
-export PYTHONPATH=build/lib
+export PYTHONPATH=build/lib.linux-x86_64-3.9
 pytest --benchmark-skip $*
