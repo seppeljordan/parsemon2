@@ -1,4 +1,4 @@
-from parsemon.extensions import result, trampoline
+from parsemon.extensions import primitives, result, trampoline
 
 
 def look_ahead(parser):
@@ -111,43 +111,7 @@ def literal(expected):
     If the parser already fails on the first element, no input will be
     consumed.
     """
-
-    def parser(stream, cont):
-        for expected_char in expected:
-            character_read = stream.next()
-            if character_read is None:
-                return trampoline.Call(
-                    cont,
-                    stream,
-                    result.failure(
-                        "Expected `{expected}` but found end of string".format(
-                            expected=expected,
-                        ),
-                        position=stream.position(),
-                    ),
-                )
-            if expected_char == character_read:
-                stream.read()
-            else:
-                return trampoline.Call(
-                    cont,
-                    stream,
-                    result.failure(
-                        message=("Expected `{expected}` but found `{actual}`.").format(
-                            expected=expected, actual=character_read
-                        ),
-                        position=stream.position(),
-                    ),
-                )
-        return trampoline.Call(
-            cont,
-            stream,
-            result.success(
-                value=expected,
-            ),
-        )
-
-    return parser
+    return primitives.LiteralParser(expected)
 
 
 def none_of(chars: str):
