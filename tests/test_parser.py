@@ -44,7 +44,7 @@ def test_literal_parses_a_single_string(runner, text):
     assert runner(literal(text), text).value == text
 
 
-@given(char=st.characters(), text=st.text())
+@given(char=st.text(), text=st.text())
 def test_that_unit_returns_char_given_to_unit(runner, char, text):
     assert runner(unit(char), text).value == char
 
@@ -62,8 +62,8 @@ def test_fmap_can_map_1000_times(runner):
 
 
 @given(
-    a=st.characters(),
-    b=st.characters(),
+    a=st.text(),
+    b=st.text(),
 )
 def test_bind_can_chain_two_literal_parsers(runner, a, b):
     parser = bind(

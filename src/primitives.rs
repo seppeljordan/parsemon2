@@ -1,6 +1,5 @@
 use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyString, PyTuple};
-use unicode_segmentation::{Graphemes, UnicodeSegmentation};
 
 use crate::result;
 use crate::trampoline;
@@ -35,17 +34,13 @@ impl LiteralParser {
 }
 
 impl LiteralParser {
-    pub fn graphemes<'a>(&'a self) -> Graphemes<'a> {
-        self.expected_string.graphemes(true)
-    }
-
     fn parse(
         &self,
         py: Python,
         stream: &PyObject,
-        continuation: &PyObject,
+        _continuation: &PyObject,
     ) -> PyResult<result::Result> {
-        for expected_character in self.graphemes() {
+        for expected_character in self.expected_string.chars().map(|c| c.to_string()) {
             let next_character = stream
                 .call_method(py, "next", (), None)?
                 .into_ref(py)

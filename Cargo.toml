@@ -8,9 +8,6 @@ edition = "2018"
 name = "parsemon"
 crate-type = ["cdylib"]
 
-[dependencies]
-unicode-segmentation = "1"
-
 [dependencies.pyo3]
 features = ["extension-module", "abi3"]
 version = "0.13.*"
