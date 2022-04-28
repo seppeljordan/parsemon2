@@ -55,6 +55,7 @@
           checks = {
             python38 = pkgs.python38.pkgs.parsemon2;
             python39 = pkgs.python39.pkgs.parsemon2;
+            python310 = pkgs.python310.pkgs.parsemon2;
             nixfmt-check = runCodeAnalysis "nixfmt" ''
               ${pkgs.nixfmt}/bin/nixfmt --check \
                   $(find . -type f -name '*.nix')
@@ -98,6 +99,8 @@
             python38Packages = final.python38.pkgs;
             python39 = prev.python39.override { inherit packageOverrides; };
             python39Packages = final.python39.pkgs;
+            python310 = prev.python310.override { inherit packageOverrides; };
+            python310Packages = final.python310.pkgs;
           };
       };
     in systemDependent // systemIndependent;
