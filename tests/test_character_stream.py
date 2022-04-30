@@ -84,3 +84,12 @@ def test_that_stream_can_be_reset(stream):
     character_read = stream.read()
     stream.reset_stream(reset_point)
     assert stream.read() == character_read
+
+
+@given(content=st.text(min_size=1))
+def test_peeking_next_character_does_not_change_result_of_to_string(
+    content: str, stream_implementation
+) -> None:
+    stream = stream_implementation.from_string(content)
+    stream.next()
+    assert stream.to_string() == content
