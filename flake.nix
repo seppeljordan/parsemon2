@@ -8,12 +8,19 @@
 
   outputs = { self, nixpkgs, flake-utils }:
     let
-      supportedSystems = flake-utils.lib.defaultSystems;
+      supportedSystems = [
+        "aarch64-linux"
+        # pyopenssl is broken
+        # "aarch64-darwin" 
+        "i686-linux"
+        "x86_64-darwin"
+        "x86_64-linux"
+      ];
       systemDependent = flake-utils.lib.eachSystem supportedSystems (system:
         let
           pkgs = import nixpkgs {
             inherit system;
-            overlays = [ self.overlay ];
+            overlays = [ self.overlays.default ];
           };
           python = pkgs.python3;
           runCodeAnalysis = name: command:
@@ -22,8 +29,10 @@
               ${command}
               mkdir $out
             '';
-        in {
-          devShell = pkgs.mkShell {
+        in
+        {
+          formatter = pkgs.nixpkgs-fmt;
+          devShells.default = pkgs.mkShell {
             buildInputs = [
               (python.withPackages (ps:
                 with ps; [
@@ -50,16 +59,14 @@
               python.pkgs.gprof2dot
             ];
           };
-          defaultPackage = python.pkgs.parsemon2;
-          packages = { inherit python; };
+          packages = {
+            inherit python;
+            default = python.pkgs.parsemon2;
+          };
           checks = {
             python38 = pkgs.python38.pkgs.parsemon2;
             python39 = pkgs.python39.pkgs.parsemon2;
             python310 = pkgs.python310.pkgs.parsemon2;
-            nixfmt-check = runCodeAnalysis "nixfmt" ''
-              ${pkgs.nixfmt}/bin/nixfmt --check \
-                  $(find . -type f -name '*.nix')
-            '';
             black-check = runCodeAnalysis "black" ''
               ${python.pkgs.black}/bin/black --check .
             '';
@@ -90,9 +97,10 @@
           packageOverrides = import nix/package-overrides.nix;
           package = import nix/parsemon2.nix;
         };
-        overlay = final: prev:
+        overlays.default = final: prev:
           let packageOverrides = self.lib.packageOverrides;
-          in {
+          in
+          {
             python3 = prev.python3.override { inherit packageOverrides; };
             python3Packages = final.python3.pkgs;
             python38 = prev.python38.override { inherit packageOverrides; };
@@ -103,5 +111,6 @@
             python310Packages = final.python310.pkgs;
           };
       };
-    in systemDependent // systemIndependent;
+    in
+    systemDependent // systemIndependent;
 }

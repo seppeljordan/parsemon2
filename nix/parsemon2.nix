@@ -1,5 +1,14 @@
-{ buildPythonPackage, hypothesis, pytest, pytest-benchmark, pytest-profiling
-, pytestcov, sphinx, setuptools-rust, pytestCheckHook, rustPlatform }:
+{ buildPythonPackage
+, hypothesis
+, pytest
+, pytest-benchmark
+, pytest-profiling
+, pytestcov
+, sphinx
+, setuptools-rust
+, pytestCheckHook
+, rustPlatform
+}:
 buildPythonPackage rec {
   pname = "parsemon2";
   version = "dev";

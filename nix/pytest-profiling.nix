@@ -1,6 +1,11 @@
-{ buildPythonPackage, fetchPypi
+{ buildPythonPackage
+, fetchPypi
 
-, gprof2dot, six, pytest, setuptools-git }:
+, gprof2dot
+, six
+, pytest
+, setuptools-git
+}:
 buildPythonPackage rec {
   pname = "pytest-profiling";
   version = "1.7.0";
