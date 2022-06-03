@@ -16,7 +16,7 @@ buildPythonPackage rec {
   cargoDeps = rustPlatform.fetchCargoTarball {
     inherit src;
     name = "parsemon2-3.2.2";
-    sha256 = "DpwERlKdyy91B3g7VgFdI8YH79e/fPrI1QDVTsIJNmE=";
+    sha256 = "Uc4lQazPPkphMYZrQiytZl8oBcWHAEZXTdGNVFjDVzo=";
   };
 
   # building
