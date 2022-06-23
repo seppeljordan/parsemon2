@@ -17,7 +17,7 @@ impl LiteralParser {
             expected_string: expected,
         }
     }
-    #[call]
+
     fn __call__(
         &self,
         py: Python,

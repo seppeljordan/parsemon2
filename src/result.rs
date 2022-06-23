@@ -1,5 +1,4 @@
-use pyo3::class::number::PyNumberProtocol;
-use pyo3::gc::{PyGCProtocol, PyVisit};
+use pyo3::gc::PyVisit;
 use pyo3::prelude::*;
 use pyo3::wrap_pyfunction;
 use pyo3::PyTraverseError;
@@ -18,19 +17,6 @@ pub struct Failure {
 pub struct Result {
     value: Option<PyObject>,
     failures: Vec<Failure>,
-}
-
-#[pyproto]
-impl PyGCProtocol for Result {
-    fn __traverse__(&self, visit: PyVisit) -> std::result::Result<(), PyTraverseError> {
-        if let Some(value) = &self.value {
-            visit.call(value)?;
-        }
-        Ok(())
-    }
-    fn __clear__(&mut self) {
-        self.value = None;
-    }
 }
 
 #[pymethods]
@@ -61,25 +47,32 @@ impl Result {
     pub fn get_failures(&self, _py: Python) -> PyResult<Vec<Failure>> {
         Ok(self.failures.iter().cloned().collect())
     }
-}
 
-#[pyproto]
-impl<'e> PyNumberProtocol<'e> for Result {
-    fn __add__(lhs: Result, rhs: Result) -> Result {
-        if lhs.is_failure() {
+    fn __traverse__(&self, visit: PyVisit) -> std::result::Result<(), PyTraverseError> {
+        if let Some(value) = &self.value {
+            visit.call(value)?;
+        }
+        Ok(())
+    }
+    fn __clear__(&mut self) {
+        self.value = None;
+    }
+
+    fn __add__(&self, rhs: Result) -> PyResult<Result> {
+        if self.is_failure() {
             if rhs.is_failure() {
                 let mut failures = Vec::new();
-                failures.append(&mut lhs.failures.iter().cloned().collect());
+                failures.append(&mut self.failures.iter().cloned().collect());
                 failures.append(&mut rhs.failures.iter().cloned().collect());
-                Result {
+                Ok(Result {
                     value: None,
                     failures,
-                }
+                })
             } else {
-                rhs
+                Ok(rhs)
             }
         } else {
-            lhs
+            Ok(self.clone())
         }
     }
 }

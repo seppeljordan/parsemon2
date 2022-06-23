@@ -1,5 +1,5 @@
 use pyo3::exceptions::PyException;
-use pyo3::gc::{PyGCProtocol, PyVisit};
+use pyo3::gc::PyVisit;
 use pyo3::prelude::*;
 use pyo3::type_object::PyTypeInfo;
 use pyo3::types::{PyDict, PyTuple};
@@ -33,10 +33,7 @@ impl Call {
             },
         })
     }
-}
 
-#[pyproto]
-impl PyGCProtocol for Call {
     fn __traverse__(&self, visit: PyVisit) -> std::result::Result<(), PyTraverseError> {
         if let Some(function) = &self.function {
             visit.call(function)?;
@@ -96,10 +93,7 @@ impl Result {
     fn new(value: PyObject) -> PyResult<Self> {
         Ok(Self { value: Some(value) })
     }
-}
 
-#[pyproto]
-impl PyGCProtocol for Result {
     fn __traverse__(&self, visit: PyVisit) -> std::result::Result<(), PyTraverseError> {
         if let Some(value) = &self.value {
             visit.call(value)?;
