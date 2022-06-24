@@ -25,14 +25,14 @@ impl Result {
         self.failures.len() > 0
     }
 
-    pub fn map_value(&self, py: Python, mapping: PyObject) -> PyResult<Self> {
+    pub fn map_value(&self, py: Python, mapping: PyObject) -> Self {
         match &self.value {
             Some(old_value) => {
                 let mut other = self.clone();
                 other.value = mapping.call1(py, (old_value,)).ok();
-                Ok(other)
+                other
             }
-            None => Ok(self.clone()),
+            None => self.clone(),
         }
     }
 
