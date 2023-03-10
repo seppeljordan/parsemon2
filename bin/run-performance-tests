@@ -4,6 +4,8 @@ set -e
 
 python setup.py build
 export PYTHONPATH=build/lib.linux-x86_64-3.9
+
+
 pytest \
     tests/test_performance.py \
     tests/test_performance_without_choice.py \
