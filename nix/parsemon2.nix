@@ -8,6 +8,8 @@
 , setuptools-rust
 , pytestCheckHook
 , rustPlatform
+, rustc
+, cargo
 }:
 buildPythonPackage rec {
   pname = "parsemon2";
@@ -16,14 +18,14 @@ buildPythonPackage rec {
   cargoDeps = rustPlatform.fetchCargoTarball {
     inherit src;
     name = "parsemon2-3.2.2";
-    sha256 = "GvSNOhLrNZ+E50z1ThF/ZD3I6mL6SDj7lhwQsPiRjmg=";
+    hash = "sha256-I7pETxQTkxB8c1sVrs2h9yvhsCuMu3TFh3m1kznMu7k=";
   };
 
   # building
   nativeBuildInputs = [
     sphinx
-    rustPlatform.rust.cargo
-    rustPlatform.rust.rustc
+    cargo
+    rustc
     setuptools-rust
     rustPlatform.cargoSetupHook
     pytestCheckHook

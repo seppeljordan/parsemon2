@@ -10,7 +10,7 @@ def display_location(line, column) -> str:
 
 def find_linebreak_indices(document) -> List[int]:
     def iterate():
-        for (character, index) in zip(document, range(0, len(document))):
+        for character, index in zip(document, range(0, len(document))):
             if character == "\n":
                 yield index
 

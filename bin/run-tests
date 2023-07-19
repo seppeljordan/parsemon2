@@ -1,7 +1,15 @@
 #!/usr/bin/env sh
 
-set -e
+set -ex
 
+function join() {
+    local IFS=$1
+    shift
+    echo "$*"
+}
+
+rm -r build/*
 python setup.py build
-export PYTHONPATH=build/lib.linux-x86_64-3.9
+export PYTHONPATH=$(join ':' build/lib.*)
+echo $PYTHONPATH
 pytest --benchmark-skip $*

@@ -2,8 +2,15 @@
 
 set -e
 
+function join() {
+    local IFS=$1
+    shift
+    echo "$*"
+}
+
+rm -r build/*
 python setup.py build
-export PYTHONPATH=build/lib.linux-x86_64-3.9
+export PYTHONPATH=$(join ':' build/lib.*)
 pytest \
     tests/test_performance.py \
     tests/test_performance_without_choice.py \

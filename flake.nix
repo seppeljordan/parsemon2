@@ -64,9 +64,9 @@
             default = python.pkgs.parsemon2;
           };
           checks = {
-            python38 = pkgs.python38.pkgs.parsemon2;
             python39 = pkgs.python39.pkgs.parsemon2;
             python310 = pkgs.python310.pkgs.parsemon2;
+            python311 = pkgs.python311.pkgs.parsemon2;
             black-check = runCodeAnalysis "black" ''
               ${python.pkgs.black}/bin/black --check .
             '';
@@ -97,19 +97,10 @@
           packageOverrides = import nix/package-overrides.nix;
           package = import nix/parsemon2.nix;
         };
-        overlays.default = final: prev:
-          let packageOverrides = self.lib.packageOverrides;
-          in
-          {
-            python3 = prev.python3.override { inherit packageOverrides; };
-            python3Packages = final.python3.pkgs;
-            python38 = prev.python38.override { inherit packageOverrides; };
-            python38Packages = final.python38.pkgs;
-            python39 = prev.python39.override { inherit packageOverrides; };
-            python39Packages = final.python39.pkgs;
-            python310 = prev.python310.override { inherit packageOverrides; };
-            python310Packages = final.python310.pkgs;
-          };
+        overlays.default = final: prev: {
+          pythonPackagesExtensions =
+            prev.pythonPackagesExtensions ++ [ self.lib.packageOverrides ];
+        };
       };
     in
     systemDependent // systemIndependent;
